@@ -79,8 +79,13 @@ Migrations in `supabase/migrations` are applied in order (`supabase db reset` lo
 | `0001_init_identity_tenancy.sql` | enums, `profiles`, `academies`, `academy_members`, `academy_join_codes`, `join_requests`, the `auth.users` → `profiles` trigger |
 | `0002_rls_identity_tenancy.sql` | `SECURITY DEFINER` helpers (`is_member`, `is_staff`, `is_owner`, `is_super_admin`) and RLS on every table |
 | `0003_tenancy_rpcs.sql` | `create_academy`, `request_join_by_code`, `regenerate_join_code`, `academy_active_join_code`, `my_memberships`, `my_join_requests` |
+| `0004_people.sql` | `skill_level`, `players`, `coaches`, plus a backfill for members who predate the tables |
+| `0005_rls_people.sql` | RLS on `players` (staff, or the player themselves) and `coaches` (any member; owner or self writes) |
+| `0006_people_rpcs.sql` | `approve_join_request`, `reject_join_request`, `academy_join_requests`, `set_member_role`, `update_my_player_profile`, `ensure_person_row` |
 
-Every academy-scoped row carries `academy_id` and is readable only through an active membership, so isolation does not depend on client-side filtering. Multi-table writes (creating an academy with its owner membership and first join code, redeeming a code) run inside RPCs so they cannot half-apply. Join codes are never readable by non-staff: a player redeems one through `request_join_by_code`, which creates a **pending** request — the owner still approves it (approval UI is Phase 2).
+Every academy-scoped row carries `academy_id` and is readable only through an active membership, so isolation does not depend on client-side filtering. Multi-table writes (creating an academy with its owner membership and first join code, redeeming a code) run inside RPCs so they cannot half-apply. Join codes are never readable by non-staff: a player redeems one through `request_join_by_code`, which creates a **pending** request that the owner approves on `/members`. `approve_join_request` creates the membership *and* the matching `players`/`coaches` row in one transaction, and `set_member_role` does the same when a role changes, so a roster never contains a member without their profile.
+
+A player may edit their own contact details through `update_my_player_profile` rather than a wider RLS policy: the writable column set is fixed in the function, so skill level, player code and medical notes stay academy-controlled.
 
 `src/lib/supabase/database.types.ts` is generated — run `SUPABASE_PROJECT_ID=<ref> npm run db:types` after any migration, never edit it by hand.
 

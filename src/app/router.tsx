@@ -14,6 +14,10 @@ const JoinAcademyPage = lazy(() => import('@/features/onboarding/pages/JoinAcade
 const PendingApprovalPage = lazy(() => import('@/features/onboarding/pages/PendingApprovalPage'));
 const SelectAcademyPage = lazy(() => import('@/features/onboarding/pages/SelectAcademyPage'));
 const MembersPage = lazy(() => import('@/features/members/pages/MembersPage'));
+const PlayersPage = lazy(() => import('@/features/players/pages/PlayersPage'));
+const PlayerProfilePage = lazy(() => import('@/features/players/pages/PlayerProfilePage'));
+const CoachesPage = lazy(() => import('@/features/coaches/pages/CoachesPage'));
+const CoachProfilePage = lazy(() => import('@/features/coaches/pages/CoachProfilePage'));
 const OwnerDashboardPage = lazy(() => import('@/features/dashboard/pages/OwnerDashboardPage'));
 const CoachDashboardPage = lazy(() => import('@/features/dashboard/pages/CoachDashboardPage'));
 const PlayerDashboardPage = lazy(() => import('@/features/dashboard/pages/PlayerDashboardPage'));
@@ -79,7 +83,22 @@ export const router = createBrowserRouter([
               },
               {
                 element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
-                children: [{ path: '/members', element: <MembersPage /> }],
+                children: [
+                  { path: '/members', element: <MembersPage /> },
+                  { path: '/players', element: <PlayersPage /> },
+                ],
+              },
+              {
+                // Every member may read the coaching staff, and `/players/me`
+                // and `/coaches/me` resolve to the viewer's own profile.
+                element: (
+                  <RequireRole allow={['player', 'coach', 'academy_owner', 'super_admin']} />
+                ),
+                children: [
+                  { path: '/players/:playerId', element: <PlayerProfilePage /> },
+                  { path: '/coaches', element: <CoachesPage /> },
+                  { path: '/coaches/:coachId', element: <CoachProfilePage /> },
+                ],
               },
             ],
           },

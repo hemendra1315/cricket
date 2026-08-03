@@ -18,11 +18,26 @@ export const queryKeys = {
       ['academies', academyId, 'join-code', role] as const,
     members: (academyId: string, filters?: Record<string, string | undefined>) =>
       ['academies', academyId, 'members', filters ?? {}] as const,
+    joinRequests: (academyId: string, status: string) =>
+      ['academies', academyId, 'join-requests', status] as const,
+  },
+
+  players: {
+    list: (academyId: string, filters?: Record<string, string | undefined>) =>
+      ['academies', academyId, 'players', filters ?? {}] as const,
+    detail: (academyId: string, playerId: string) =>
+      ['academies', academyId, 'players', playerId] as const,
+    me: (academyId: string) => ['academies', academyId, 'players', 'me'] as const,
+  },
+
+  coaches: {
+    list: (academyId: string) => ['academies', academyId, 'coaches', {}] as const,
+    detail: (academyId: string, coachId: string) =>
+      ['academies', academyId, 'coaches', coachId] as const,
+    me: (academyId: string) => ['academies', academyId, 'coaches', 'me'] as const,
   },
 
   // Reserved for later phases; kept here so key shapes stay consistent.
-  players: (academyId: string) => ['academies', academyId, 'players'] as const,
-  coaches: (academyId: string) => ['academies', academyId, 'coaches'] as const,
   batches: (academyId: string) => ['academies', academyId, 'batches'] as const,
   sessions: (academyId: string) => ['academies', academyId, 'sessions'] as const,
   attendance: (academyId: string, sessionId: string) =>
