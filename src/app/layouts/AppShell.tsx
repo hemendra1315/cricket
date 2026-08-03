@@ -1,4 +1,12 @@
-import { GraduationCap, LayoutDashboard, Menu, User, Users, WifiOff } from 'lucide-react';
+import {
+  CalendarRange,
+  GraduationCap,
+  LayoutDashboard,
+  Menu,
+  User,
+  Users,
+  WifiOff,
+} from 'lucide-react';
 import { Suspense, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
@@ -51,6 +59,12 @@ const NAV_ITEMS: {
     label: 'Players',
     icon: <Users className="h-4 w-4" aria-hidden />,
     requiresCapability: 'players:read',
+  },
+  {
+    to: '/batches',
+    label: 'Batches',
+    icon: <CalendarRange className="h-4 w-4" aria-hidden />,
+    requiresCapability: 'batches:read',
   },
   {
     to: '/coaches',

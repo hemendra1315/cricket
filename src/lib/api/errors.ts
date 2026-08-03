@@ -82,6 +82,12 @@ const DOMAIN_MESSAGES: Record<string, string> = {
     'That join code has been used too many times. Ask your academy for a new one.',
   E_ALREADY_MEMBER: 'You are already part of this academy.',
   E_REQUEST_PENDING: 'Your request is already waiting for the academy owner to approve it.',
+  E_BATCH_NOT_FOUND: 'That batch no longer exists.',
+  E_BATCH_FULL: 'That batch is already at capacity. Raise the capacity or remove a player first.',
+  E_PLAYER_NOT_FOUND: 'That player is no longer part of this academy.',
+  E_COACH_NOT_FOUND: 'That coach is no longer part of this academy.',
+  E_CROSS_ACADEMY: 'That person belongs to a different academy.',
+  E_VENUE_OTHER_ACADEMY: 'That venue belongs to a different academy.',
 };
 
 function domainMessage(message: string): string | undefined {
@@ -118,6 +124,12 @@ export function errorMessage(error: unknown): string {
       return 'You appear to be offline. We will retry automatically.';
     case ApiErrorCode.RATE_LIMITED:
       return 'Too many attempts. Please try again in a few minutes.';
+    // Postgres phrases unique violations in terms of index names, which are
+    // meaningless to a user.
+    case ApiErrorCode.CONFLICT:
+      return 'That name is already taken. Choose a different one.';
+    case ApiErrorCode.VALIDATION:
+      return 'Some of those details are not valid. Check the form and try again.';
     default:
       return apiError.message || 'Something went wrong.';
   }

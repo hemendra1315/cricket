@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  batchFormSchema,
   coachProfileFormSchema,
   createAcademyFormSchema,
   joinAcademyFormSchema,
@@ -112,5 +113,40 @@ describe('coachProfileFormSchema', () => {
       false,
     );
     expect(coachProfileFormSchema.safeParse({ ...base, experienceYears: '12' }).success).toBe(true);
+  });
+});
+
+describe('batchFormSchema', () => {
+  const batch = {
+    name: 'Morning U16',
+    description: '',
+    ageGroup: 'U16',
+    skillLevel: '',
+    venueId: '',
+    capacity: '',
+    monthlyFeeRupees: '',
+    startDate: '',
+    endDate: '',
+  };
+
+  it('requires a usable name', () => {
+    expect(batchFormSchema.safeParse({ ...batch, name: 'A' }).success).toBe(false);
+    expect(batchFormSchema.safeParse(batch).success).toBe(true);
+  });
+
+  it('rejects an end date before the start date', () => {
+    expect(
+      batchFormSchema.safeParse({ ...batch, startDate: '2026-03-01', endDate: '2026-02-01' })
+        .success,
+    ).toBe(false);
+    expect(
+      batchFormSchema.safeParse({ ...batch, startDate: '2026-03-01', endDate: '2026-03-01' })
+        .success,
+    ).toBe(true);
+  });
+
+  it('rejects a capacity of zero', () => {
+    expect(batchFormSchema.safeParse({ ...batch, capacity: '0' }).success).toBe(false);
+    expect(batchFormSchema.safeParse({ ...batch, capacity: '20' }).success).toBe(true);
   });
 });

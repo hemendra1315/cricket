@@ -37,8 +37,20 @@ export const queryKeys = {
     me: (academyId: string) => ['academies', academyId, 'coaches', 'me'] as const,
   },
 
+  batches: {
+    list: (academyId: string, activeOnly: boolean) =>
+      ['academies', academyId, 'batches', { activeOnly }] as const,
+    detail: (academyId: string, batchId: string) =>
+      ['academies', academyId, 'batches', batchId] as const,
+    coaches: (academyId: string, batchId: string) =>
+      ['academies', academyId, 'batches', batchId, 'coaches'] as const,
+    players: (academyId: string, batchId: string) =>
+      ['academies', academyId, 'batches', batchId, 'players'] as const,
+  },
+
+  venues: (academyId: string) => ['academies', academyId, 'venues'] as const,
+
   // Reserved for later phases; kept here so key shapes stay consistent.
-  batches: (academyId: string) => ['academies', academyId, 'batches'] as const,
   sessions: (academyId: string) => ['academies', academyId, 'sessions'] as const,
   attendance: (academyId: string, sessionId: string) =>
     ['academies', academyId, 'sessions', sessionId, 'attendance'] as const,

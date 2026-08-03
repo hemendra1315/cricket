@@ -65,6 +65,9 @@ describe('useCan', () => {
     useAuthStore.getState().setMemberships([membership({ academyId: 'a-1', role: 'player' })]);
     expect(renderHook(() => useCan('members:manage')).result.current).toBe(false);
     expect(renderHook(() => useCan('stats:read_own')).result.current).toBe(true);
+    // A player reads the batches they train in; RLS narrows which rows.
+    expect(renderHook(() => useCan('batches:read')).result.current).toBe(true);
+    expect(renderHook(() => useCan('batches:manage')).result.current).toBe(false);
   });
 
   it('grants join-code rotation to the academy owner', () => {
@@ -79,5 +82,6 @@ describe('useCan', () => {
       .getState()
       .setMemberships([membership({ academyId: 'a-1', role: 'coach', status: 'pending' })]);
     expect(renderHook(() => useCan('attendance:mark')).result.current).toBe(false);
+    expect(renderHook(() => useCan('batches:read')).result.current).toBe(false);
   });
 });

@@ -44,3 +44,22 @@ describe('errorMessage', () => {
     expect(toApiError(new TypeError('fetch failed')).code).toBe(ApiErrorCode.NETWORK);
   });
 });
+
+describe('errorMessage for constraint violations', () => {
+  it('never shows a Postgres index name for a duplicate batch name', () => {
+    const duplicate = {
+      code: '23505',
+      message: 'duplicate key value violates unique constraint "batches_academy_name_idx"',
+      details: null,
+      hint: null,
+    };
+
+    expect(errorMessage(duplicate)).toBe('That name is already taken. Choose a different one.');
+  });
+
+  it('translates the batch capacity identifier', () => {
+    expect(
+      errorMessage({ code: '23514', message: 'E_BATCH_FULL', details: null, hint: null }),
+    ).toBe('That batch is already at capacity. Raise the capacity or remove a player first.');
+  });
+});

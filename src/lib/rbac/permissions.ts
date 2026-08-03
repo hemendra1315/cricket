@@ -37,6 +37,8 @@ export const CAPABILITIES = [
 export type Capability = (typeof CAPABILITIES)[number];
 
 const PLAYER: Capability[] = [
+  // A player may read the batches they train in; RLS narrows the rows.
+  'batches:read',
   'sessions:read',
   'attendance:read',
   'drills:read',

@@ -234,6 +234,183 @@ export type Database = {
           },
         ]
       }
+      batch_coaches: {
+        Row: {
+          academy_id: string
+          assigned_at: string
+          batch_id: string
+          coach_id: string
+          is_primary: boolean
+        }
+        Insert: {
+          academy_id: string
+          assigned_at?: string
+          batch_id: string
+          coach_id: string
+          is_primary?: boolean
+        }
+        Update: {
+          academy_id?: string
+          assigned_at?: string
+          batch_id?: string
+          coach_id?: string
+          is_primary?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_coaches_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_coaches_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_coaches_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batch_players: {
+        Row: {
+          academy_id: string
+          batch_id: string
+          id: string
+          is_active: boolean | null
+          joined_at: string
+          left_at: string | null
+          player_id: string
+        }
+        Insert: {
+          academy_id: string
+          batch_id: string
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          left_at?: string | null
+          player_id: string
+        }
+        Update: {
+          academy_id?: string
+          batch_id?: string
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          left_at?: string | null
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_players_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_players_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batches: {
+        Row: {
+          academy_id: string
+          age_group: string | null
+          capacity: number | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean
+          monthly_fee_paise: number | null
+          name: string
+          skill_level: Database["public"]["Enums"]["skill_level"] | null
+          start_date: string | null
+          updated_at: string
+          venue_id: string | null
+        }
+        Insert: {
+          academy_id: string
+          age_group?: string | null
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_fee_paise?: number | null
+          name: string
+          skill_level?: Database["public"]["Enums"]["skill_level"] | null
+          start_date?: string | null
+          updated_at?: string
+          venue_id?: string | null
+        }
+        Update: {
+          academy_id?: string
+          age_group?: string | null
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_fee_paise?: number | null
+          name?: string
+          skill_level?: Database["public"]["Enums"]["skill_level"] | null
+          start_date?: string | null
+          updated_at?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batches_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batches_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaches: {
         Row: {
           academy_id: string
@@ -494,6 +671,41 @@ export type Database = {
         }
         Relationships: []
       }
+      venues: {
+        Row: {
+          academy_id: string
+          address: string | null
+          created_at: string
+          id: string
+          name: string
+          nets_count: number | null
+        }
+        Insert: {
+          academy_id: string
+          address?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          nets_count?: number | null
+        }
+        Update: {
+          academy_id?: string
+          address?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          nets_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venues_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -523,6 +735,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      add_players_to_batch: {
+        Args: { p_batch: string; p_players: string[] }
+        Returns: number
+      }
       approve_join_request: {
         Args: { p_request: string }
         Returns: {
@@ -544,6 +760,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assign_coach_to_batch: {
+        Args: { p_batch: string; p_coach: string; p_is_primary?: boolean }
+        Returns: undefined
+      }
+      assign_player_to_batches: {
+        Args: { p_batches: string[]; p_player: string }
+        Returns: number
+      }
+      coaches_batch: { Args: { p_batch: string }; Returns: boolean }
       create_academy: {
         Args: {
           p_city?: string
@@ -581,6 +806,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_batch: { Args: { p_batch: string }; Returns: undefined }
       ensure_person_row: {
         Args: {
           p_academy: string
@@ -657,6 +883,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      remove_coach_from_batch: {
+        Args: { p_batch: string; p_coach: string }
+        Returns: undefined
+      }
+      remove_player_from_batch: {
+        Args: { p_batch: string; p_player: string }
+        Returns: undefined
+      }
       request_join_by_code: {
         Args: { p_code: string; p_message?: string }
         Returns: {
@@ -703,6 +937,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      shares_batch_with_player: { Args: { p_player: string }; Returns: boolean }
       slugify: { Args: { p_value: string }; Returns: string }
       update_my_player_profile: {
         Args: {
