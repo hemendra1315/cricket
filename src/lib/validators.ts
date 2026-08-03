@@ -44,3 +44,50 @@ export const joinAcademyFormSchema = z.object({
 });
 
 export type JoinAcademyFormValues = z.infer<typeof joinAcademyFormSchema>;
+
+const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(''));
+
+// Stays a string end to end: coercion would turn a blank input into 0, and the
+// resolver needs the form's input and output types to match.
+const optionalInteger = (min: number, max: number) =>
+  z
+    .string()
+    .trim()
+    .refine(
+      (value) =>
+        value === '' || (/^\d+$/.test(value) && Number(value) >= min && Number(value) <= max),
+      `Enter a whole number between ${min} and ${max}.`,
+    );
+
+/**
+ * Player profile form. Fields an academy controls (player code, skill level,
+ * medical notes) are rendered only for staff; the RPC a player uses to edit
+ * their own row ignores them regardless.
+ */
+export const playerProfileFormSchema = z.object({
+  dateOfBirth: isoDateSchema.optional().or(z.literal('')),
+  battingStyle: z.enum(['right_hand', 'left_hand']).optional().or(z.literal('')),
+  bowlingStyle: optionalText(60),
+  playerRole: z
+    .enum(['batsman', 'bowler', 'all_rounder', 'wicketkeeper'])
+    .optional()
+    .or(z.literal('')),
+  jerseyNumber: optionalInteger(0, 999),
+  guardianName: optionalText(80),
+  guardianPhone: indianPhoneSchema.optional().or(z.literal('')),
+  guardianEmail: emailSchema.optional().or(z.literal('')),
+  emergencyContact: optionalText(120),
+  playerCode: optionalText(32),
+  skillLevel: z.enum(['beginner', 'intermediate', 'advanced', 'elite']),
+  medicalNotes: optionalText(2000),
+});
+
+export type PlayerProfileFormValues = z.infer<typeof playerProfileFormSchema>;
+
+export const coachProfileFormSchema = z.object({
+  bio: optionalText(2000),
+  experienceYears: optionalInteger(0, 70),
+  specialization: z.array(z.string()),
+});
+
+export type CoachProfileFormValues = z.infer<typeof coachProfileFormSchema>;

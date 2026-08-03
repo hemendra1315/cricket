@@ -234,6 +234,66 @@ export type Database = {
           },
         ]
       }
+      coaches: {
+        Row: {
+          academy_id: string
+          availability: Json
+          bio: string | null
+          certifications: Json
+          created_at: string
+          deleted_at: string | null
+          experience_years: number | null
+          id: string
+          is_active: boolean
+          specialization: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academy_id: string
+          availability?: Json
+          bio?: string | null
+          certifications?: Json
+          created_at?: string
+          deleted_at?: string | null
+          experience_years?: number | null
+          id?: string
+          is_active?: boolean
+          specialization?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academy_id?: string
+          availability?: Json
+          bio?: string | null
+          certifications?: Json
+          created_at?: string
+          deleted_at?: string | null
+          experience_years?: number | null
+          id?: string
+          is_active?: boolean
+          specialization?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaches_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       join_requests: {
         Row: {
           academy_id: string
@@ -305,6 +365,90 @@ export type Database = {
           },
         ]
       }
+      players: {
+        Row: {
+          academy_id: string
+          batting_style: string | null
+          bowling_style: string | null
+          created_at: string
+          date_of_birth: string | null
+          deleted_at: string | null
+          emergency_contact: string | null
+          guardian_email: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          id: string
+          is_active: boolean
+          jersey_number: number | null
+          joined_on: string
+          medical_notes: string | null
+          player_code: string | null
+          player_role: string | null
+          skill_level: Database["public"]["Enums"]["skill_level"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          academy_id: string
+          batting_style?: string | null
+          bowling_style?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          deleted_at?: string | null
+          emergency_contact?: string | null
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          is_active?: boolean
+          jersey_number?: number | null
+          joined_on?: string
+          medical_notes?: string | null
+          player_code?: string | null
+          player_role?: string | null
+          skill_level?: Database["public"]["Enums"]["skill_level"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          academy_id?: string
+          batting_style?: string | null
+          bowling_style?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          deleted_at?: string | null
+          emergency_contact?: string | null
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          is_active?: boolean
+          jersey_number?: number | null
+          joined_on?: string
+          medical_notes?: string | null
+          player_code?: string | null
+          player_role?: string | null
+          skill_level?: Database["public"]["Enums"]["skill_level"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -362,6 +506,44 @@ export type Database = {
         }
         Returns: string
       }
+      academy_join_requests: {
+        Args: {
+          p_academy: string
+          p_status?: Database["public"]["Enums"]["join_status"]
+        }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          full_name: string
+          message: string
+          request_id: string
+          requested_role: Database["public"]["Enums"]["app_role"]
+          status: Database["public"]["Enums"]["join_status"]
+          user_id: string
+        }[]
+      }
+      approve_join_request: {
+        Args: { p_request: string }
+        Returns: {
+          academy_id: string
+          created_at: string
+          id: string
+          invited_by: string | null
+          joined_at: string | null
+          left_at: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: Database["public"]["Enums"]["member_status"]
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "academy_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_academy: {
         Args: {
           p_city?: string
@@ -398,6 +580,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      ensure_person_row: {
+        Args: {
+          p_academy: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user: string
+        }
+        Returns: undefined
       }
       generate_join_code: { Args: { p_length?: number }; Returns: string }
       has_role: {
@@ -445,6 +635,28 @@ export type Database = {
         }
         Returns: string
       }
+      reject_join_request: {
+        Args: { p_reason?: string; p_request: string }
+        Returns: {
+          academy_id: string
+          created_at: string
+          id: string
+          join_code_id: string | null
+          message: string | null
+          rejection_reason: string | null
+          requested_role: Database["public"]["Enums"]["app_role"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["join_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "join_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       request_join_by_code: {
         Args: { p_code: string; p_message?: string }
         Returns: {
@@ -467,13 +679,80 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_member_role: {
+        Args: {
+          p_member: string
+          p_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: {
+          academy_id: string
+          created_at: string
+          id: string
+          invited_by: string | null
+          joined_at: string | null
+          left_at: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: Database["public"]["Enums"]["member_status"]
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "academy_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       slugify: { Args: { p_value: string }; Returns: string }
+      update_my_player_profile: {
+        Args: {
+          p_academy: string
+          p_batting_style?: string
+          p_bowling_style?: string
+          p_date_of_birth?: string
+          p_emergency_contact?: string
+          p_guardian_email?: string
+          p_guardian_name?: string
+          p_guardian_phone?: string
+          p_jersey_number?: number
+          p_player_role?: string
+        }
+        Returns: {
+          academy_id: string
+          batting_style: string | null
+          bowling_style: string | null
+          created_at: string
+          date_of_birth: string | null
+          deleted_at: string | null
+          emergency_contact: string | null
+          guardian_email: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          id: string
+          is_active: boolean
+          jersey_number: number | null
+          joined_on: string
+          medical_notes: string | null
+          player_code: string | null
+          player_role: string | null
+          skill_level: Database["public"]["Enums"]["skill_level"]
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "players"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "super_admin" | "academy_owner" | "coach" | "player"
       fee_mode: "academy_pays" | "player_pays"
       join_status: "pending" | "approved" | "rejected" | "cancelled"
       member_status: "pending" | "active" | "suspended" | "rejected" | "left"
+      skill_level: "beginner" | "intermediate" | "advanced" | "elite"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1058,6 +1337,7 @@ export const Constants = {
       fee_mode: ["academy_pays", "player_pays"],
       join_status: ["pending", "approved", "rejected", "cancelled"],
       member_status: ["pending", "active", "suspended", "rejected", "left"],
+      skill_level: ["beginner", "intermediate", "advanced", "elite"],
     },
   },
   storage: {

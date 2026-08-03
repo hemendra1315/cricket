@@ -20,6 +20,44 @@ export const FEE_MODE_LABELS: Record<FeeMode, string> = {
 export const JOINABLE_ROLES = ['player', 'coach'] as const;
 export type JoinableRole = (typeof JOINABLE_ROLES)[number];
 
+export const SKILL_LEVELS = ['beginner', 'intermediate', 'advanced', 'elite'] as const;
+export type SkillLevel = (typeof SKILL_LEVELS)[number];
+
+export const SKILL_LEVEL_LABELS: Record<SkillLevel, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+  elite: 'Elite',
+};
+
+export const BATTING_STYLES = ['right_hand', 'left_hand'] as const;
+export type BattingStyle = (typeof BATTING_STYLES)[number];
+
+export const BATTING_STYLE_LABELS: Record<BattingStyle, string> = {
+  right_hand: 'Right hand',
+  left_hand: 'Left hand',
+};
+
+export const PLAYER_ROLES = ['batsman', 'bowler', 'all_rounder', 'wicketkeeper'] as const;
+export type PlayerRole = (typeof PLAYER_ROLES)[number];
+
+export const PLAYER_ROLE_LABELS: Record<PlayerRole, string> = {
+  batsman: 'Batsman',
+  bowler: 'Bowler',
+  all_rounder: 'All-rounder',
+  wicketkeeper: 'Wicketkeeper',
+};
+
+/** Coaching specialisations stored as a text[] on `coaches`. */
+export const COACH_SPECIALIZATIONS = [
+  'batting',
+  'bowling',
+  'fielding',
+  'wicketkeeping',
+  'fitness',
+] as const;
+export type CoachSpecialization = (typeof COACH_SPECIALIZATIONS)[number];
+
 export const THEMES = ['light', 'dark', 'system'] as const;
 export type Theme = (typeof THEMES)[number];
 

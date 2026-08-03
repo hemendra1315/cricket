@@ -23,8 +23,15 @@ import { useCan } from '@/lib/rbac';
 import { formatDate } from '@/lib/utils/date';
 import { useUiStore } from '@/stores';
 import type { AcademyMember } from '@/types';
-import { JOINABLE_ROLES, ROLE_LABELS, type JoinableRole, type MemberStatus } from '@/types/enums';
+import {
+  JOINABLE_ROLES,
+  MEMBER_STATUSES,
+  ROLE_LABELS,
+  type JoinableRole,
+  type MemberStatus,
+} from '@/types/enums';
 
+import { JoinRequestsCard } from '../components/JoinRequestsCard';
 import { useAcademyMembers, useUpdateMember } from '../hooks/useMembers';
 
 const STATUS_TONES: Record<MemberStatus, 'success' | 'warning' | 'danger' | 'neutral'> = {
@@ -39,39 +46,61 @@ const STATUS_TONES: Record<MemberStatus, 'success' | 'warning' | 'danger' | 'neu
 export default function MembersPage() {
   const { academyId } = useActiveAcademy();
   const [roleFilter, setRoleFilter] = useState<'all' | JoinableRole | 'academy_owner'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | MemberStatus>('all');
   const canManage = useCan('members:manage');
 
   const query = useAcademyMembers(academyId, {
     ...(roleFilter === 'all' ? {} : { role: roleFilter }),
+    ...(statusFilter === 'all' ? {} : { status: statusFilter }),
   });
 
   return (
     <div className="space-y-4">
       <h1 className="text-fg text-xl font-semibold">Members</h1>
 
-      {canManage && academyId ? <JoinCodeCard academyId={academyId} /> : null}
+      {canManage && academyId ? (
+        <>
+          <JoinRequestsCard academyId={academyId} />
+          <JoinCodeCard academyId={academyId} />
+        </>
+      ) : null}
 
       <Card>
         <CardHeader
           title="Roster"
           description="Everyone who belongs to this academy."
           action={
-            <Select
-              aria-label="Filter by role"
-              value={roleFilter}
-              className="h-8 w-40"
-              onChange={(event) =>
-                setRoleFilter(event.target.value as 'all' | JoinableRole | 'academy_owner')
-              }
-            >
-              <option value="all">All roles</option>
-              <option value="academy_owner">{ROLE_LABELS.academy_owner}</option>
-              {JOINABLE_ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {ROLE_LABELS[role]}
-                </option>
-              ))}
-            </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                aria-label="Filter by role"
+                value={roleFilter}
+                className="h-8 w-40"
+                onChange={(event) =>
+                  setRoleFilter(event.target.value as 'all' | JoinableRole | 'academy_owner')
+                }
+              >
+                <option value="all">All roles</option>
+                <option value="academy_owner">{ROLE_LABELS.academy_owner}</option>
+                {JOINABLE_ROLES.map((role) => (
+                  <option key={role} value={role}>
+                    {ROLE_LABELS[role]}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                aria-label="Filter by status"
+                value={statusFilter}
+                className="h-8 w-36"
+                onChange={(event) => setStatusFilter(event.target.value as 'all' | MemberStatus)}
+              >
+                <option value="all">All statuses</option>
+                {MEMBER_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </Select>
+            </div>
           }
         />
         <CardBody>

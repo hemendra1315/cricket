@@ -1,4 +1,12 @@
-import type { AppRole, FeeMode, JoinStatus, MemberStatus } from './enums';
+import type {
+  AppRole,
+  BattingStyle,
+  FeeMode,
+  JoinStatus,
+  MemberStatus,
+  PlayerRole,
+  SkillLevel,
+} from './enums';
 
 /**
  * Camel-cased domain types. Row → domain mapping lives in the feature api
@@ -72,6 +80,58 @@ export type AcademyMember = {
   email: string;
   avatarUrl: string | null;
   phone: string | null;
+};
+
+/** A join request awaiting the owner's decision, with the requester's identity. */
+export type PendingJoinRequest = {
+  id: UUID;
+  userId: UUID;
+  fullName: string | null;
+  email: string;
+  avatarUrl: string | null;
+  requestedRole: AppRole;
+  status: JoinStatus;
+  message: string | null;
+  createdAt: string;
+};
+
+/** Identity fields every people row carries from the linked profile. */
+type PersonIdentity = {
+  userId: UUID | null;
+  fullName: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+  phone: string | null;
+};
+
+export type Player = PersonIdentity & {
+  id: UUID;
+  academyId: UUID;
+  playerCode: string | null;
+  dateOfBirth: string | null;
+  battingStyle: BattingStyle | null;
+  bowlingStyle: string | null;
+  playerRole: PlayerRole | null;
+  skillLevel: SkillLevel;
+  jerseyNumber: number | null;
+  guardianName: string | null;
+  guardianPhone: string | null;
+  guardianEmail: string | null;
+  emergencyContact: string | null;
+  medicalNotes: string | null;
+  joinedOn: string;
+  isActive: boolean;
+};
+
+export type Coach = PersonIdentity & {
+  id: UUID;
+  academyId: UUID;
+  userId: UUID;
+  specialization: string[];
+  bio: string | null;
+  experienceYears: number | null;
+  isActive: boolean;
+  createdAt: string;
 };
 
 /** Uniform shape returned by Edge Functions on failure. */

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAcademyFormSchema, joinAcademyFormSchema, joinCodeSchema } from './validators';
+import {
+  coachProfileFormSchema,
+  createAcademyFormSchema,
+  joinAcademyFormSchema,
+  joinCodeSchema,
+  playerProfileFormSchema,
+} from './validators';
 
 describe('joinCodeSchema', () => {
   it('normalises casing and surrounding whitespace', () => {
@@ -51,5 +57,60 @@ describe('createAcademyFormSchema', () => {
         feeMode: 'academy_pays',
       }).name,
     ).toBe('Chennai Academy');
+  });
+});
+
+const player = {
+  dateOfBirth: '',
+  battingStyle: '',
+  bowlingStyle: '',
+  playerRole: '',
+  jerseyNumber: '',
+  guardianName: '',
+  guardianPhone: '',
+  guardianEmail: '',
+  emergencyContact: '',
+  playerCode: '',
+  skillLevel: 'beginner',
+  medicalNotes: '',
+};
+
+describe('playerProfileFormSchema', () => {
+  it('accepts an untouched profile', () => {
+    expect(playerProfileFormSchema.safeParse(player).success).toBe(true);
+  });
+
+  it('rejects a jersey number that is not a whole number in range', () => {
+    expect(playerProfileFormSchema.safeParse({ ...player, jerseyNumber: '1000' }).success).toBe(
+      false,
+    );
+    expect(playerProfileFormSchema.safeParse({ ...player, jerseyNumber: '7.5' }).success).toBe(
+      false,
+    );
+    expect(playerProfileFormSchema.safeParse({ ...player, jerseyNumber: '12' }).success).toBe(true);
+  });
+
+  it('validates guardian contact details when provided', () => {
+    expect(playerProfileFormSchema.safeParse({ ...player, guardianPhone: '12345' }).success).toBe(
+      false,
+    );
+    expect(
+      playerProfileFormSchema.safeParse({ ...player, guardianPhone: '9876543210' }).success,
+    ).toBe(true);
+    expect(playerProfileFormSchema.safeParse({ ...player, guardianEmail: 'nope' }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe('coachProfileFormSchema', () => {
+  it('accepts an empty experience field but not a negative one', () => {
+    const base = { bio: '', experienceYears: '', specialization: [] };
+
+    expect(coachProfileFormSchema.safeParse(base).success).toBe(true);
+    expect(coachProfileFormSchema.safeParse({ ...base, experienceYears: '-2' }).success).toBe(
+      false,
+    );
+    expect(coachProfileFormSchema.safeParse({ ...base, experienceYears: '12' }).success).toBe(true);
   });
 });

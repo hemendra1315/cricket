@@ -1,4 +1,4 @@
-import { unwrap } from '@/lib/api';
+import { rpc, unwrap } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { AcademyMember, UUID } from '@/types';
 import type { AppRole, JoinableRole, MemberStatus } from '@/types/enums';
@@ -56,10 +56,13 @@ export async function fetchAcademyMembers(
   return rows.map(toMember);
 }
 
+/**
+ * Goes through `set_member_role` rather than updating the row directly: the role
+ * change must also create the player/coach profile behind it and retire the one
+ * for the role the member left.
+ */
 export async function updateMemberRole(membershipId: UUID, role: JoinableRole): Promise<void> {
-  await unwrap(
-    supabase.from('academy_members').update({ role }).eq('id', membershipId).select('id').single(),
-  );
+  await rpc<unknown>('set_member_role', { p_member: membershipId, p_role: role });
 }
 
 export async function updateMemberStatus(
