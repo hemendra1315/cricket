@@ -1,0 +1,81 @@
+# Cricket Academy Manager
+
+Multi-tenant SaaS for cricket academies: batches, sessions, attendance, drills, coach feedback, match stats, fees and reports.
+
+**Status: Phase 0 (Foundation) complete.** No domain features are implemented yet — see `docs/ROADMAP.md`.
+The approved design documents in `docs/` are the source of truth: `PRD.md`, `DB-SCHEMA.sql`, `API-PLAN.md`, `FOLDER-STRUCTURE.md`, `ROADMAP.md`.
+
+## Stack
+
+React 19 · TypeScript (strict) · Vite · Tailwind CSS v4 · React Router · TanStack Query · Zustand · React Hook Form + Zod · Supabase (Auth/Postgres/Storage/Edge Functions) · Vitest + Testing Library · Playwright · vite-plugin-pwa
+
+## Requirements
+
+- Node **22.12+** (`.nvmrc` pins 22.12.0; Vite 8 requires ≥ 20.19)
+- npm 10+
+- Docker (optional, for the containerised dev server)
+
+## Getting started
+
+```bash
+nvm use                 # Node 22.12.0
+npm install
+cp .env.example .env    # fill in VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY
+npm run dev             # http://localhost:5173
+```
+
+`src/lib/env.ts` validates the environment with Zod at startup, so a missing variable fails fast with a readable message.
+
+### Docker
+
+```bash
+cp .env.example .env
+npm run docker:dev      # docker compose up --build → http://localhost:5173
+```
+
+## Scripts
+
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Vite dev server |
+| `npm run build` | Typecheck (`tsc -b`) + production build + service worker |
+| `npm run preview` | Serve the production build |
+| `npm run lint` / `lint:fix` | ESLint (zero warnings allowed) |
+| `npm run format` / `format:check` | Prettier |
+| `npm run typecheck` | TypeScript project references, no emit |
+| `npm run test` / `test:coverage` | Vitest unit/component tests |
+| `npm run test:e2e` | Playwright (builds and previews automatically) |
+| `npm run db:types` | Regenerate `src/lib/supabase/database.types.ts` |
+
+Husky + lint-staged run ESLint and Prettier on staged files before each commit. CI (`.github/workflows/ci.yml`) runs format check → lint → typecheck → unit tests → build, then Playwright.
+
+## Architecture
+
+Feature-sliced: each domain lives in `src/features/<domain>` with its own `api/`, `hooks/`, `components/`, `pages/`. Cross-feature imports go through a feature's `index.ts` barrel only, and data access is confined to `features/*/api` plus `src/lib`.
+
+```
+src/
+  app/          router, providers, guards (RequireAuth/RequireRole/RequireAcademy), layouts
+  components/   ui/ primitives, feedback/ states, form/ RHF helpers, charts/, data/
+  features/     auth, onboarding, dashboard, admin (+ empty dirs reserved per phase)
+  lib/          env, logger, api (client + error normalisation), query, rbac, supabase, utils, validators
+  stores/       Zustand: auth, academy (active tenant), theme, ui/toasts
+  hooks/        useDebounce, useMediaQuery, useOnlineStatus, useLocalStorage, useThemeEffect
+supabase/       config.toml, migrations/, seed/, functions/, tests/ (populated from Phase 1)
+```
+
+### Permissions
+
+`src/lib/rbac` holds the capability map from the PRD permission matrix, exposed as `useCan()` and `<Can do="…">`, with `RequireRole` gating routes. This is **UI gating only** — Postgres RLS remains the authority once the schema lands in Phase 1.
+
+### Theming
+
+Semantic CSS variables in `src/styles/index.css` are swapped by a `.dark` class on `<html>`. The choice (light/dark/system) is persisted by `themeStore` and applied by `useThemeEffect`.
+
+### Errors and logging
+
+`src/lib/logger.ts` is the only module allowed to touch `console`; everything unexpected funnels through `reportError` (the future Sentry hook). `src/lib/api/errors.ts` normalises Postgrest/network failures into `ApiError` codes with user-facing copy, which the query client uses to decide what is retryable.
+
+## Known issue
+
+`npm audit` reports a high-severity advisory in `react-router` for **RSC mode** (`GHSA-qwww-vcr4-c8h2`). This app is a client-side SPA and does not use RSC mode; every older 7.x release carries strictly more (and applicable) advisories, so 7.18.2 is the safest available version. Revisit when a patched release ships.
