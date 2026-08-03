@@ -69,9 +69,44 @@ function isPostgrestError(value: unknown): value is PostgrestError {
   );
 }
 
+/**
+ * Database functions raise stable `E_*` identifiers so behaviour can be asserted
+ * without matching on prose; those identifiers are never shown to a user.
+ */
+const DOMAIN_MESSAGES: Record<string, string> = {
+  E_UNAUTHENTICATED: 'Your session expired. Please sign in again.',
+  E_FORBIDDEN: 'You do not have permission to do that.',
+  E_JOIN_CODE_INVALID: 'That join code is not valid. Check it with your academy and try again.',
+  E_JOIN_CODE_EXPIRED: 'That join code has expired. Ask your academy for a new one.',
+  E_JOIN_CODE_EXHAUSTED:
+    'That join code has been used too many times. Ask your academy for a new one.',
+  E_ALREADY_MEMBER: 'You are already part of this academy.',
+  E_REQUEST_PENDING: 'Your request is already waiting for the academy owner to approve it.',
+};
+
+function domainMessage(message: string): string | undefined {
+  const separator = message.indexOf(':');
+  const identifier = (separator === -1 ? message : message.slice(0, separator)).trim();
+  if (!identifier.startsWith('E_')) return undefined;
+
+  const known = DOMAIN_MESSAGES[identifier];
+  if (known) return known;
+
+  // Identifiers such as `E_VALIDATION` carry their own explanation after the colon.
+  const detail = separator === -1 ? '' : message.slice(separator + 1).trim();
+  return detail === '' ? 'Something went wrong.' : capitalize(detail);
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 /** Human-readable message for UI surfaces. */
 export function errorMessage(error: unknown): string {
   const apiError = toApiError(error);
+  const domain = domainMessage(apiError.message);
+  if (domain) return domain;
+
   switch (apiError.code) {
     case ApiErrorCode.UNAUTHENTICATED:
       return 'Your session expired. Please sign in again.';
