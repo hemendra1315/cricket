@@ -1,18 +1,19 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
-import { useAuth } from '@/features/auth';
-import { useAcademyStore } from '@/stores';
+import { LoadingScreen } from '@/components/feedback';
+import { useMemberships } from '@/features/academies';
 
 /**
- * Ensures an active tenant is selected before rendering academy-scoped routes.
- * Membership loading and the academy chooser land in Phase 1.
+ * Gate for academy-scoped routes. Waits for memberships to load, then routes
+ * users without an academy into onboarding and users with several to the chooser.
  */
 export function RequireAcademy() {
-  const { memberships } = useAuth();
-  const activeAcademyId = useAcademyStore((state) => state.activeAcademyId);
+  const { isLoading, hasAnyAcademy, isAwaitingApproval, current } = useMemberships();
 
-  if (memberships.length === 0) return <Navigate to="/onboarding" replace />;
-  if (!activeAcademyId) return <Navigate to="/onboarding/select-academy" replace />;
+  if (isLoading) return <LoadingScreen message="Loading your academies…" />;
+  if (isAwaitingApproval) return <Navigate to="/onboarding/pending" replace />;
+  if (!hasAnyAcademy) return <Navigate to="/onboarding" replace />;
+  if (!current) return <Navigate to="/onboarding/select-academy" replace />;
 
   return <Outlet />;
 }

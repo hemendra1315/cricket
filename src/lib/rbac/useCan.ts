@@ -5,19 +5,23 @@ import type { AppRole } from '@/types/enums';
 
 import { hasCapability, type Capability } from './permissions';
 
-/** Roles the current user holds in the active academy (plus super admin). */
+/**
+ * Roles the current user holds in the active academy. Only `active` memberships
+ * count — a pending join request grants nothing. Super admin comes from the
+ * profile flag (`profiles.is_super_admin`), which RLS also reads.
+ */
 export function useActiveRoles(): AppRole[] {
   const memberships = useAuthStore((state) => state.memberships);
-  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = useAuthStore((state) => state.profile?.isSuperAdmin === true);
   const activeAcademyId = useAcademyStore((state) => state.activeAcademyId);
 
   return useMemo(() => {
     const roles = memberships
       .filter((m) => m.academyId === activeAcademyId && m.status === 'active')
       .map((m) => m.role);
-    if (user?.app_metadata?.is_super_admin === true) roles.push('super_admin');
+    if (isSuperAdmin) roles.push('super_admin');
     return roles;
-  }, [memberships, activeAcademyId, user]);
+  }, [memberships, activeAcademyId, isSuperAdmin]);
 }
 
 /** UI-level permission check. Server-side RLS remains the authority. */

@@ -17,3 +17,19 @@ test.describe('Phase 0 smoke', () => {
     await expect(page.locator('html')).toHaveClass(/dark/);
   });
 });
+
+test.describe('Phase 1 routing', () => {
+  test('onboarding routes require authentication', async ({ page }) => {
+    for (const path of ['/onboarding', '/onboarding/create-academy', '/onboarding/join-academy']) {
+      await page.goto(path);
+      await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible();
+    }
+  });
+
+  test('academy-scoped routes require authentication', async ({ page }) => {
+    for (const path of ['/dashboard', '/members', '/profile']) {
+      await page.goto(path);
+      await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible();
+    }
+  });
+});

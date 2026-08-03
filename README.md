@@ -57,16 +57,32 @@ Feature-sliced: each domain lives in `src/features/<domain>` with its own `api/`
 src/
   app/          router, providers, guards (RequireAuth/RequireRole/RequireAcademy), layouts
   components/   ui/ primitives, feedback/ states, form/ RHF helpers, charts/, data/
-  features/     auth, onboarding, dashboard, admin (+ empty dirs reserved per phase)
+  features/     auth, onboarding, academies, members, dashboard, admin (+ dirs reserved per phase)
   lib/          env, logger, api (client + error normalisation), query, rbac, supabase, utils, validators
   stores/       Zustand: auth, academy (active tenant), theme, ui/toasts
   hooks/        useDebounce, useMediaQuery, useOnlineStatus, useLocalStorage, useThemeEffect
-supabase/       config.toml, migrations/, seed/, functions/, tests/ (populated from Phase 1)
+supabase/       config.toml, migrations/, seed/, functions/, tests/
 ```
 
 ### Permissions
 
-`src/lib/rbac` holds the capability map from the PRD permission matrix, exposed as `useCan()` and `<Can do="…">`, with `RequireRole` gating routes. This is **UI gating only** — Postgres RLS remains the authority once the schema lands in Phase 1.
+`src/lib/rbac` holds the capability map from the PRD permission matrix, exposed as `useCan()` and `<Can do="…">`, with `RequireRole` gating routes. This is **UI gating only** — Postgres RLS is the authority.
+
+Roles come from *active* memberships in the currently selected academy, so a pending join request grants nothing; `super_admin` comes from `profiles.is_super_admin`, which RLS reads too.
+
+## Database
+
+Migrations in `supabase/migrations` are applied in order (`supabase db reset` locally):
+
+| File | Contents |
+| --- | --- |
+| `0001_init_identity_tenancy.sql` | enums, `profiles`, `academies`, `academy_members`, `academy_join_codes`, `join_requests`, the `auth.users` → `profiles` trigger |
+| `0002_rls_identity_tenancy.sql` | `SECURITY DEFINER` helpers (`is_member`, `is_staff`, `is_owner`, `is_super_admin`) and RLS on every table |
+| `0003_tenancy_rpcs.sql` | `create_academy`, `request_join_by_code`, `regenerate_join_code`, `academy_active_join_code`, `my_memberships`, `my_join_requests` |
+
+Every academy-scoped row carries `academy_id` and is readable only through an active membership, so isolation does not depend on client-side filtering. Multi-table writes (creating an academy with its owner membership and first join code, redeeming a code) run inside RPCs so they cannot half-apply. Join codes are never readable by non-staff: a player redeems one through `request_join_by_code`, which creates a **pending** request — the owner still approves it (approval UI is Phase 2).
+
+`src/lib/supabase/database.types.ts` is hand-maintained until a hosted project exists to run `npm run db:types` against.
 
 ### Theming
 

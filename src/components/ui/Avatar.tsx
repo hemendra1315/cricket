@@ -4,11 +4,16 @@ import { cn } from '@/lib/utils/cn';
 type AvatarProps = {
   name?: string | null;
   src?: string | null;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 };
 
-const SIZES = { sm: 'h-7 w-7 text-xs', md: 'h-9 w-9 text-sm', lg: 'h-12 w-12 text-base' } as const;
+const SIZES = {
+  xs: 'h-5 w-5 text-[10px]',
+  sm: 'h-7 w-7 text-xs',
+  md: 'h-9 w-9 text-sm',
+  lg: 'h-12 w-12 text-base',
+} as const;
 
 export function Avatar({ name, src, size = 'md', className }: AvatarProps) {
   const base = cn('inline-flex items-center justify-center rounded-full', SIZES[size], className);

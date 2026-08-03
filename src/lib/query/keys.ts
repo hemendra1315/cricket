@@ -6,11 +6,18 @@ export const queryKeys = {
   session: ['session'] as const,
   profile: (userId: string) => ['profile', userId] as const,
   memberships: (userId: string) => ['memberships', userId] as const,
+  /** Profile + memberships + join requests: everything routing depends on. */
+  identity: (userId: string) => ['identity', userId] as const,
+  joinRequests: (userId: string) => ['join-requests', userId] as const,
 
   academy: {
     all: ['academies'] as const,
     detail: (academyId: string) => ['academies', academyId] as const,
     dashboard: (academyId: string) => ['academies', academyId, 'dashboard'] as const,
+    joinCode: (academyId: string, role: string) =>
+      ['academies', academyId, 'join-code', role] as const,
+    members: (academyId: string, filters?: Record<string, string | undefined>) =>
+      ['academies', academyId, 'members', filters ?? {}] as const,
   },
 
   // Reserved for later phases; kept here so key shapes stay consistent.

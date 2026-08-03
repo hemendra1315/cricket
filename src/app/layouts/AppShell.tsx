@@ -1,27 +1,70 @@
-import { Menu, WifiOff } from 'lucide-react';
-import { Suspense } from 'react';
+import { LayoutDashboard, Menu, User, Users, WifiOff } from 'lucide-react';
+import { Suspense, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 import { LoadingScreen } from '@/components/feedback';
 import { Avatar, Button, ThemeToggle } from '@/components/ui';
+import { AcademySwitcher } from '@/features/academies';
 import { useAuth } from '@/features/auth';
 import { useOnlineStatus } from '@/hooks';
+import { hasCapability, useActiveRoles, type Capability } from '@/lib/rbac';
 import { cn } from '@/lib/utils/cn';
+import { ROLE_HOME } from '@/types/enums';
 import { useUiStore } from '@/stores';
 
-/** Navigation is capability-free in Phase 0; feature links arrive with each phase. */
-const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Owner dashboard' },
-  { to: '/coach', label: 'Coach dashboard' },
-  { to: '/me', label: 'My dashboard' },
+/**
+ * Navigation entries are filtered by capability, so a coach never sees owner-only
+ * destinations. `requiresCapability: null` means "visible to any member".
+ */
+const NAV_ITEMS: {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  requiresCapability: Capability | null;
+}[] = [
+  {
+    to: ROLE_HOME.academy_owner,
+    label: 'Dashboard',
+    icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
+    requiresCapability: 'members:manage',
+  },
+  {
+    to: ROLE_HOME.coach,
+    label: 'Coaching',
+    icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
+    requiresCapability: 'attendance:mark',
+  },
+  {
+    to: ROLE_HOME.player,
+    label: 'My cricket',
+    icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
+    requiresCapability: null,
+  },
+  {
+    to: '/members',
+    label: 'Members',
+    icon: <Users className="h-4 w-4" aria-hidden />,
+    requiresCapability: 'players:read',
+  },
+  {
+    to: '/profile',
+    label: 'My profile',
+    icon: <User className="h-4 w-4" aria-hidden />,
+    requiresCapability: null,
+  },
 ];
 
 /** Authenticated application chrome: sidebar, top bar and routed content. */
 export function AppShell() {
-  const { user, logout } = useAuth();
+  const { profile, displayName, logout } = useAuth();
+  const roles = useActiveRoles();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const online = useOnlineStatus();
+
+  const navItems = NAV_ITEMS.filter(
+    (item) => item.requiresCapability === null || hasCapability(roles, item.requiresCapability),
+  );
 
   return (
     <div className="bg-bg min-h-screen">
@@ -29,7 +72,7 @@ export function AppShell() {
         <Button variant="ghost" size="icon" onClick={toggleSidebar} aria-label="Toggle navigation">
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="text-fg font-semibold">Cricket Academy Manager</span>
+        <AcademySwitcher />
 
         <div className="ml-auto flex items-center gap-3">
           {!online ? (
@@ -38,7 +81,7 @@ export function AppShell() {
             </span>
           ) : null}
           <ThemeToggle />
-          <Avatar name={user?.user_metadata?.full_name ?? user?.email} size="sm" />
+          <Avatar name={displayName} src={profile?.avatarUrl} size="sm" />
           <Button variant="secondary" size="sm" onClick={() => void logout()}>
             Sign out
           </Button>
@@ -53,19 +96,20 @@ export function AppShell() {
           )}
         >
           <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'block rounded-lg px-3 py-2 text-sm',
+                    'flex items-center gap-2 rounded-lg px-3 py-2 text-sm',
                     isActive
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-fg-muted hover:bg-surface-muted',
                   )
                 }
               >
+                {item.icon}
                 {item.label}
               </NavLink>
             ))}

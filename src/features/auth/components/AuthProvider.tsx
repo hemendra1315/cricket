@@ -4,9 +4,11 @@ import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase/client';
 import { useAuthStore } from '@/stores';
 
+import { useIdentity } from '../hooks/useIdentity';
+
 /**
- * Bridges Supabase auth events into the auth store. It only manages the
- * session; memberships are loaded in Phase 1.
+ * Bridges Supabase auth events into the auth store, then loads the identity
+ * (profile, memberships, pending join requests) that routing depends on.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const setSession = useAuthStore((state) => state.setSession);
@@ -35,5 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [setSession]);
 
+  return <IdentityLoader>{children}</IdentityLoader>;
+}
+
+/** Runs the identity query for as long as a session exists. */
+function IdentityLoader({ children }: { children: ReactNode }) {
+  useIdentity();
   return <>{children}</>;
 }

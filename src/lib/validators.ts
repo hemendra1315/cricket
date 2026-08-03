@@ -28,3 +28,19 @@ export const profileFormSchema = z.object({
 });
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+export const createAcademyFormSchema = z.object({
+  name: z.string().trim().min(2, 'Academy name must be at least 2 characters.').max(120),
+  city: z.string().trim().max(80).optional().or(z.literal('')),
+  timezone: z.string().min(1),
+  feeMode: z.enum(['player_pays', 'academy_pays']),
+});
+
+export type CreateAcademyFormValues = z.infer<typeof createAcademyFormSchema>;
+
+export const joinAcademyFormSchema = z.object({
+  code: joinCodeSchema,
+  message: z.string().trim().max(280).optional().or(z.literal('')),
+});
+
+export type JoinAcademyFormValues = z.infer<typeof joinAcademyFormSchema>;

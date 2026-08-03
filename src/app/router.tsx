@@ -1,13 +1,19 @@
 import { lazy } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 
+import { HomeRedirect, RequireAcademy, RequireAuth, RequireRole } from './guards';
 import { AppShell, AuthLayout, OnboardingLayout, PrintLayout } from './layouts';
-import { RequireAuth, RequireRole } from './guards';
 
 /** Route-level code splitting keeps the initial bundle small. */
 const SignInPage = lazy(() => import('@/features/auth/pages/SignInPage'));
 const AuthCallbackPage = lazy(() => import('@/features/auth/pages/AuthCallbackPage'));
+const ProfilePage = lazy(() => import('@/features/auth/pages/ProfilePage'));
 const OnboardingStartPage = lazy(() => import('@/features/onboarding/pages/OnboardingStartPage'));
+const CreateAcademyPage = lazy(() => import('@/features/onboarding/pages/CreateAcademyPage'));
+const JoinAcademyPage = lazy(() => import('@/features/onboarding/pages/JoinAcademyPage'));
+const PendingApprovalPage = lazy(() => import('@/features/onboarding/pages/PendingApprovalPage'));
+const SelectAcademyPage = lazy(() => import('@/features/onboarding/pages/SelectAcademyPage'));
+const MembersPage = lazy(() => import('@/features/members/pages/MembersPage'));
 const OwnerDashboardPage = lazy(() => import('@/features/dashboard/pages/OwnerDashboardPage'));
 const CoachDashboardPage = lazy(() => import('@/features/dashboard/pages/CoachDashboardPage'));
 const PlayerDashboardPage = lazy(() => import('@/features/dashboard/pages/PlayerDashboardPage'));
@@ -16,12 +22,11 @@ const ForbiddenPage = lazy(() => import('@/pages/ForbiddenPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 /**
- * Route tree. Guards are composed as layout routes:
- * RequireAuth → (RequireAcademy in later phases) → RequireRole → page.
+ * Route tree. Guards compose as layout routes:
+ * RequireAuth → RequireAcademy → RequireRole → page.
  *
- * RequireAcademy is intentionally not applied yet: memberships are only loaded
- * from the database in Phase 1, so applying it now would trap every user on the
- * onboarding screen.
+ * Onboarding routes sit inside RequireAuth but outside RequireAcademy, since
+ * that is exactly where users without a membership need to go.
  */
 export const router = createBrowserRouter([
   {
@@ -34,33 +39,49 @@ export const router = createBrowserRouter([
   {
     element: <RequireAuth />,
     children: [
+      { index: true, element: <HomeRedirect /> },
       {
         element: <OnboardingLayout />,
         children: [
           { path: '/onboarding', element: <OnboardingStartPage /> },
-          { path: '/onboarding/select-academy', element: <OnboardingStartPage /> },
+          { path: '/onboarding/create-academy', element: <CreateAcademyPage /> },
+          { path: '/onboarding/join-academy', element: <JoinAcademyPage /> },
+          { path: '/onboarding/pending', element: <PendingApprovalPage /> },
+          { path: '/onboarding/select-academy', element: <SelectAcademyPage /> },
         ],
       },
       {
         element: <AppShell />,
         children: [
-          { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: '/forbidden', element: <ForbiddenPage /> },
+          { path: '/profile', element: <ProfilePage /> },
           {
-            element: <RequireRole allow={['academy_owner', 'super_admin']} />,
-            children: [{ path: '/dashboard', element: <OwnerDashboardPage /> }],
-          },
-          {
-            element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
-            children: [{ path: '/coach', element: <CoachDashboardPage /> }],
-          },
-          {
-            element: <RequireRole allow={['player', 'academy_owner', 'coach', 'super_admin']} />,
-            children: [{ path: '/me', element: <PlayerDashboardPage /> }],
-          },
-          {
+            // Platform administration is not academy-scoped.
             element: <RequireRole allow={['super_admin']} />,
             children: [{ path: '/admin', element: <PlatformDashboardPage /> }],
+          },
+          {
+            element: <RequireAcademy />,
+            children: [
+              {
+                element: <RequireRole allow={['academy_owner', 'super_admin']} />,
+                children: [{ path: '/dashboard', element: <OwnerDashboardPage /> }],
+              },
+              {
+                element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
+                children: [{ path: '/coach', element: <CoachDashboardPage /> }],
+              },
+              {
+                element: (
+                  <RequireRole allow={['player', 'coach', 'academy_owner', 'super_admin']} />
+                ),
+                children: [{ path: '/me', element: <PlayerDashboardPage /> }],
+              },
+              {
+                element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
+                children: [{ path: '/members', element: <MembersPage /> }],
+              },
+            ],
           },
         ],
       },

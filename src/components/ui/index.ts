@@ -1,6 +1,7 @@
 export { Avatar } from './Avatar';
 export { Badge, type BadgeTone } from './Badge';
-export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
+export { Button, type ButtonProps } from './Button';
+export { buttonStyles, type ButtonSize, type ButtonVariant } from './buttonStyles';
 export { Card, CardBody, CardFooter, CardHeader } from './Card';
 export { Input, type InputProps } from './Input';
 export { Modal } from './Modal';
