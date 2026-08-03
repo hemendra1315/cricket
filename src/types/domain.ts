@@ -134,6 +134,54 @@ export type Coach = PersonIdentity & {
   createdAt: string;
 };
 
+export type Venue = {
+  id: UUID;
+  academyId: UUID;
+  name: string;
+  address: string | null;
+  netsCount: number | null;
+};
+
+export type Batch = {
+  id: UUID;
+  academyId: UUID;
+  name: string;
+  description: string | null;
+  ageGroup: string | null;
+  skillLevel: SkillLevel | null;
+  venueId: UUID | null;
+  venueName: string | null;
+  capacity: number | null;
+  monthlyFeePaise: number | null;
+  startDate: string | null;
+  endDate: string | null;
+  isActive: boolean;
+  /** Active roster size, so a list can show "12 / 20" without a second query. */
+  playerCount: number;
+  coachCount: number;
+};
+
+export type BatchCoach = {
+  batchId: UUID;
+  coachId: UUID;
+  isPrimary: boolean;
+  fullName: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+};
+
+export type BatchPlayer = {
+  id: UUID;
+  batchId: UUID;
+  playerId: UUID;
+  joinedAt: string;
+  fullName: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+  playerCode: string | null;
+  skillLevel: SkillLevel;
+};
+
 /** Uniform shape returned by Edge Functions on failure. */
 export type ApiErrorResponse = {
   error: { code: string; message: string; details?: unknown };

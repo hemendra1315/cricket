@@ -84,6 +84,29 @@ export const playerProfileFormSchema = z.object({
 
 export type PlayerProfileFormValues = z.infer<typeof playerProfileFormSchema>;
 
+/**
+ * Batch form. The fee is entered in rupees and stored in paise, so it stays a
+ * string here and is converted once, next to the other numeric fields.
+ */
+export const batchFormSchema = z
+  .object({
+    name: z.string().trim().min(2, 'Give the batch a name.').max(80),
+    description: optionalText(1000),
+    ageGroup: optionalText(20),
+    skillLevel: z.enum(['beginner', 'intermediate', 'advanced', 'elite']).or(z.literal('')),
+    venueId: z.string(),
+    capacity: optionalInteger(1, 500),
+    monthlyFeeRupees: optionalInteger(0, 1_000_000),
+    startDate: isoDateSchema.or(z.literal('')),
+    endDate: isoDateSchema.or(z.literal('')),
+  })
+  .refine((values) => !values.startDate || !values.endDate || values.endDate >= values.startDate, {
+    path: ['endDate'],
+    message: 'The end date cannot be before the start date.',
+  });
+
+export type BatchFormValues = z.infer<typeof batchFormSchema>;
+
 export const coachProfileFormSchema = z.object({
   bio: optionalText(2000),
   experienceYears: optionalInteger(0, 70),

@@ -16,6 +16,8 @@ const SelectAcademyPage = lazy(() => import('@/features/onboarding/pages/SelectA
 const MembersPage = lazy(() => import('@/features/members/pages/MembersPage'));
 const PlayersPage = lazy(() => import('@/features/players/pages/PlayersPage'));
 const PlayerProfilePage = lazy(() => import('@/features/players/pages/PlayerProfilePage'));
+const BatchesPage = lazy(() => import('@/features/batches/pages/BatchesPage'));
+const BatchDetailPage = lazy(() => import('@/features/batches/pages/BatchDetailPage'));
 const CoachesPage = lazy(() => import('@/features/coaches/pages/CoachesPage'));
 const CoachProfilePage = lazy(() => import('@/features/coaches/pages/CoachProfilePage'));
 const OwnerDashboardPage = lazy(() => import('@/features/dashboard/pages/OwnerDashboardPage'));
@@ -97,6 +99,8 @@ export const router = createBrowserRouter([
                 children: [
                   { path: '/players/:playerId', element: <PlayerProfilePage /> },
                   { path: '/coaches', element: <CoachesPage /> },
+                  { path: '/batches', element: <BatchesPage /> },
+                  { path: '/batches/:batchId', element: <BatchDetailPage /> },
                   { path: '/coaches/:coachId', element: <CoachProfilePage /> },
                 ],
               },

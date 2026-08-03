@@ -82,6 +82,12 @@ const DOMAIN_MESSAGES: Record<string, string> = {
     'That join code has been used too many times. Ask your academy for a new one.',
   E_ALREADY_MEMBER: 'You are already part of this academy.',
   E_REQUEST_PENDING: 'Your request is already waiting for the academy owner to approve it.',
+  E_BATCH_NOT_FOUND: 'That batch no longer exists.',
+  E_BATCH_FULL: 'That batch is already at capacity. Raise the capacity or remove a player first.',
+  E_PLAYER_NOT_FOUND: 'That player is no longer part of this academy.',
+  E_COACH_NOT_FOUND: 'That coach is no longer part of this academy.',
+  E_CROSS_ACADEMY: 'That person belongs to a different academy.',
+  E_VENUE_OTHER_ACADEMY: 'That venue belongs to a different academy.',
 };
 
 function domainMessage(message: string): string | undefined {
