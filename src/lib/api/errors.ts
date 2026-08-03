@@ -124,6 +124,12 @@ export function errorMessage(error: unknown): string {
       return 'You appear to be offline. We will retry automatically.';
     case ApiErrorCode.RATE_LIMITED:
       return 'Too many attempts. Please try again in a few minutes.';
+    // Postgres phrases unique violations in terms of index names, which are
+    // meaningless to a user.
+    case ApiErrorCode.CONFLICT:
+      return 'That name is already taken. Choose a different one.';
+    case ApiErrorCode.VALIDATION:
+      return 'Some of those details are not valid. Check the form and try again.';
     default:
       return apiError.message || 'Something went wrong.';
   }

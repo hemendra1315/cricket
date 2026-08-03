@@ -84,6 +84,7 @@ Migrations in `supabase/migrations` are applied in order (`supabase db reset` lo
 | `0006_people_rpcs.sql` | `approve_join_request`, `reject_join_request`, `academy_join_requests`, `set_member_role`, `update_my_player_profile`, `ensure_person_row` |
 | `0007_batches.sql` | `venues`, `batches`, `batch_coaches`, `batch_players`, plus triggers asserting every child row's `academy_id` matches its parents |
 | `0008_rls_batches.sql` | RLS on the batch tables and a tightened `players_select` (a coach now sees only players sharing a batch) |
+| `0010_batches_fixes.sql` | `created_by` defaults to `auth.uid()`, and batch names are unique only among live batches so a deleted name can be reused |
 | `0009_batch_rpcs.sql` | `add_players_to_batch`, `remove_player_from_batch`, `assign_player_to_batches`, `assign_coach_to_batch`, `remove_coach_from_batch`, `delete_batch` |
 
 Every academy-scoped row carries `academy_id` and is readable only through an active membership, so isolation does not depend on client-side filtering. Multi-table writes (creating an academy with its owner membership and first join code, redeeming a code) run inside RPCs so they cannot half-apply. Join codes are never readable by non-staff: a player redeems one through `request_join_by_code`, which creates a **pending** request that the owner approves on `/members`. `approve_join_request` creates the membership *and* the matching `players`/`coaches` row in one transaction, and `set_member_role` does the same when a role changes, so a roster never contains a member without their profile.
