@@ -18,8 +18,12 @@ type MemberRow = {
   } | null;
 };
 
+/**
+ * The FK is named explicitly because `academy_members` references `profiles`
+ * twice (`user_id` and `invited_by`), which makes a bare embed ambiguous.
+ */
 const MEMBER_COLUMNS =
-  'id, academy_id, user_id, role, status, joined_at, profiles!inner(full_name, email, avatar_url, phone)';
+  'id, academy_id, user_id, role, status, joined_at, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url, phone)';
 
 function toMember(row: MemberRow): AcademyMember {
   return {

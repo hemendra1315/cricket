@@ -82,7 +82,13 @@ Migrations in `supabase/migrations` are applied in order (`supabase db reset` lo
 
 Every academy-scoped row carries `academy_id` and is readable only through an active membership, so isolation does not depend on client-side filtering. Multi-table writes (creating an academy with its owner membership and first join code, redeeming a code) run inside RPCs so they cannot half-apply. Join codes are never readable by non-staff: a player redeems one through `request_join_by_code`, which creates a **pending** request — the owner still approves it (approval UI is Phase 2).
 
-`src/lib/supabase/database.types.ts` is hand-maintained until a hosted project exists to run `npm run db:types` against.
+`src/lib/supabase/database.types.ts` is generated — run `SUPABASE_PROJECT_ID=<ref> npm run db:types` after any migration, never edit it by hand.
+
+### Connecting to a hosted project
+
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` come from the environment (a git-ignored `.env` locally, secrets in CI/Devin); no credential belongs in source. Only the anon key ever reaches the browser — RLS is what protects the data. A `SUPABASE_ACCESS_TOKEN` is needed for the CLI (`db:types`, `db push`) and stays server-side.
+
+Google sign-in additionally requires the Google provider to be enabled in Dashboard → Authentication → Providers with a Google Cloud OAuth client, whose **Authorized redirect URI** must be `https://<project-ref>.supabase.co/auth/v1/callback`. The app's own redirect (`/auth/callback`) must be in the Supabase URL allow list.
 
 ### Theming
 
