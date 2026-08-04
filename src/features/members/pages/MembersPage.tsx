@@ -22,6 +22,7 @@ import { useAuth } from '@/features/auth';
 import { useCan } from '@/lib/rbac';
 import { formatDate } from '@/lib/utils/date';
 import { useUiStore } from '@/stores';
+import { Link } from 'react-router-dom';
 import type { AcademyMember } from '@/types';
 import { JOINABLE_ROLES, ROLE_LABELS, type JoinableRole, type MemberStatus } from '@/types/enums';
 
@@ -44,6 +45,7 @@ export default function MembersPage() {
   const requestsQuery = usePendingJoinRequests(academyId);
 
   const query = useAcademyMembers(academyId, {
+    status: 'active',
     ...(roleFilter === 'all' ? {} : { role: roleFilter }),
   });
 
@@ -75,7 +77,7 @@ export default function MembersPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-fg text-xl font-semibold">Members</h1>
+      <h1 className="text-fg text-xl font-semibold">Players</h1>
 
       {canManage && academyId ? <JoinCodeCard academyId={academyId} /> : null}
 
@@ -189,8 +191,8 @@ export default function MembersPage() {
             <ErrorState error={query.error} onRetry={() => void query.refetch()} />
           ) : query.data.length === 0 ? (
             <EmptyState
-              title="No members yet"
-              description="Share your join code so coaches and players can request access."
+              title="No players yet"
+              description="Share your join code so players can request access."
             />
           ) : (
             <MemberTable members={query.data} academyId={academyId ?? ''} canManage={canManage} />
@@ -210,7 +212,7 @@ function MemberTable({
   academyId: string;
   canManage: boolean;
 }) {
-  const { changeRole, changeStatus } = useUpdateMember(academyId);
+  const { changeRole, changeStatus, removeMember } = useUpdateMember(academyId);
   const { user } = useAuth();
   const pushToast = useUiStore((state) => state.pushToast);
 
@@ -218,7 +220,7 @@ function MemberTable({
     <Table>
       <THead>
         <TR>
-          <TH>Member</TH>
+          <TH>Player</TH>
           <TH>Role</TH>
           <TH>Status</TH>
           <TH>Joined</TH>
@@ -234,10 +236,12 @@ function MemberTable({
                 <div className="flex items-center gap-2">
                   <Avatar name={member.fullName ?? member.email} src={member.avatarUrl} size="sm" />
                   <div className="min-w-0">
-                    <p className="text-fg truncate text-sm font-medium">
-                      {member.fullName ?? '—'}
-                      {isSelf ? ' (you)' : ''}
-                    </p>
+                    <Link
+                      to={`/members/${member.id}`}
+                      className="text-fg truncate text-sm font-medium hover:underline"
+                    >
+                      {member.fullName ?? member.email}
+                    </Link>
                     <p className="text-fg-muted truncate text-xs">{member.email}</p>
                   </div>
                 </div>
@@ -279,29 +283,48 @@ function MemberTable({
               </TD>
               {canManage ? (
                 <TD>
-                  {member.role === 'academy_owner' || isSelf ? null : member.status ===
-                    'suspended' ? (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      isLoading={changeStatus.isPending}
-                      onClick={() =>
-                        changeStatus.mutate({ membershipId: member.id, status: 'active' })
-                      }
-                    >
-                      Reactivate
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      isLoading={changeStatus.isPending}
-                      onClick={() =>
-                        changeStatus.mutate({ membershipId: member.id, status: 'suspended' })
-                      }
-                    >
-                      Suspend
-                    </Button>
+                  {member.role === 'academy_owner' || isSelf ? null : (
+                    <div className="flex flex-wrap gap-2">
+                      {member.status === 'suspended' ? (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          isLoading={changeStatus.isPending}
+                          onClick={() =>
+                            changeStatus.mutate({ membershipId: member.id, status: 'active' })
+                          }
+                        >
+                          Reactivate
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          isLoading={changeStatus.isPending}
+                          onClick={() =>
+                            changeStatus.mutate({ membershipId: member.id, status: 'suspended' })
+                          }
+                        >
+                          Suspend
+                        </Button>
+                      )}
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        isLoading={removeMember.isPending}
+                        onClick={() =>
+                          removeMember.mutate(
+                            { membershipId: member.id },
+                            {
+                              onSuccess: () =>
+                                pushToast({ title: 'Player removed', variant: 'success' }),
+                            },
+                          )
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   )}
                 </TD>
               ) : null}

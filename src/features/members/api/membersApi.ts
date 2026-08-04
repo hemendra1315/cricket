@@ -100,6 +100,13 @@ export async function fetchAcademyMembers(
   return rows.map(toMember);
 }
 
+export async function fetchAcademyMember(memberId: UUID): Promise<AcademyMember> {
+  const row = await unwrap<MemberRow>(
+    supabase.from('academy_members').select(MEMBER_COLUMNS).eq('id', memberId).single(),
+  );
+  return toMember(row);
+}
+
 export async function approveJoinRequest(requestId: UUID): Promise<void> {
   await rpc<void>('approve_join_request', { p_request_id: requestId, p_batch_ids: null });
 }

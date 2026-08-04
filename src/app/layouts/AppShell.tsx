@@ -1,4 +1,4 @@
-import { LayoutDashboard, Menu, User, Users, WifiOff } from 'lucide-react';
+import { CalendarDays, LayoutDashboard, Menu, User, Users, WifiOff } from 'lucide-react';
 import { Suspense, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
@@ -45,6 +45,18 @@ const NAV_ITEMS: {
     label: 'Members',
     icon: <Users className="h-4 w-4" aria-hidden />,
     requiresCapability: 'players:read',
+  },
+  {
+    to: '/batches',
+    label: 'Batches',
+    icon: <Menu className="h-4 w-4" aria-hidden />,
+    requiresCapability: 'batches:read',
+  },
+  {
+    to: '/sessions',
+    label: 'Sessions',
+    icon: <CalendarDays className="h-4 w-4" aria-hidden />,
+    requiresCapability: 'sessions:read',
   },
   {
     to: '/profile',

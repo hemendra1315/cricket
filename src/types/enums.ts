@@ -8,6 +8,18 @@ export type MemberStatus = (typeof MEMBER_STATUSES)[number];
 export const JOIN_STATUSES = ['pending', 'approved', 'rejected', 'cancelled'] as const;
 export type JoinStatus = (typeof JOIN_STATUSES)[number];
 
+export const ATTENDANCE_STATUSES = ['present', 'absent'] as const;
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
+
+export const DRILL_CATEGORIES = ['batting', 'bowling', 'fielding', 'fitness'] as const;
+export type DrillCategory = (typeof DRILL_CATEGORIES)[number];
+
+export const DIFFICULTY_LEVELS = ['beginner', 'intermediate', 'advanced', 'elite'] as const;
+export type DifficultyLevel = (typeof DIFFICULTY_LEVELS)[number];
+
+export const DRILL_ASSIGNMENT_STATUSES = ['assigned', 'completed'] as const;
+export type DrillAssignmentStatus = (typeof DRILL_ASSIGNMENT_STATUSES)[number];
+
 export const FEE_MODES = ['academy_pays', 'player_pays'] as const;
 export type FeeMode = (typeof FEE_MODES)[number];
 

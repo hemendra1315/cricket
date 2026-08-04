@@ -6,6 +6,7 @@ import type { AppRole, JoinableRole, MemberStatus } from '@/types/enums';
 
 import {
   approveJoinRequest,
+  fetchAcademyMember,
   fetchAcademyMembers,
   fetchPendingJoinRequests,
   rejectJoinRequest,
@@ -23,6 +24,14 @@ export function useAcademyMembers(academyId: UUID | null, filters: Filters = {})
     }),
     enabled: Boolean(academyId),
     queryFn: () => fetchAcademyMembers(academyId as UUID, filters),
+  });
+}
+
+export function useAcademyMember(memberId: UUID | null) {
+  return useQuery<AcademyMember>({
+    queryKey: queryKeys.academy.member('none', memberId ?? 'none'),
+    enabled: Boolean(memberId),
+    queryFn: () => fetchAcademyMember(memberId as UUID),
   });
 }
 
@@ -60,6 +69,12 @@ export function useUpdateMember(academyId: UUID) {
     onSuccess: invalidate,
   });
 
+  const removeMember = useMutation({
+    mutationFn: ({ membershipId }: { membershipId: UUID }) =>
+      updateMemberStatus(membershipId, 'left'),
+    onSuccess: invalidate,
+  });
+
   const approveRequest = useMutation({
     mutationFn: ({ requestId }: { requestId: UUID }) => approveJoinRequest(requestId),
     onSuccess: () => {
@@ -75,5 +90,5 @@ export function useUpdateMember(academyId: UUID) {
     },
   });
 
-  return { changeRole, changeStatus, approveRequest, rejectRequest };
+  return { changeRole, changeStatus, removeMember, approveRequest, rejectRequest };
 }

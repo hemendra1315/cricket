@@ -18,7 +18,31 @@ export const queryKeys = {
       ['academies', academyId, 'join-code', role] as const,
     members: (academyId: string, filters?: Record<string, string | undefined>) =>
       ['academies', academyId, 'members', filters ?? {}] as const,
+    member: (academyId: string, memberId: string) =>
+      ['academies', academyId, 'members', memberId] as const,
     pendingRequests: (academyId: string) => ['academies', academyId, 'pending-requests'] as const,
+    batches: (academyId: string) => ['academies', academyId, 'batches'] as const,
+    batch: (academyId: string, batchId: string) =>
+      ['academies', academyId, 'batches', batchId] as const,
+    batchPlayers: (academyId: string, batchId: string) =>
+      ['academies', academyId, 'batches', batchId, 'players'] as const,
+    batchAvailablePlayers: (academyId: string) =>
+      ['academies', academyId, 'batches', 'available-players'] as const,
+    sessions: (academyId: string) => ['academies', academyId, 'sessions'] as const,
+    session: (academyId: string, sessionId: string) =>
+      ['academies', academyId, 'sessions', sessionId] as const,
+    sessionAttendance: (academyId: string, sessionId: string) =>
+      ['academies', academyId, 'sessions', sessionId, 'attendance'] as const,
+    playerAttendance: (academyId: string, playerId: string) =>
+      ['academies', academyId, 'players', playerId, 'attendance'] as const,
+    batchAttendance: (academyId: string, batchId: string) =>
+      ['academies', academyId, 'batches', batchId, 'attendance'] as const,
+    drills: (academyId: string) => ['academies', academyId, 'drills'] as const,
+    drill: (academyId: string, drillId: string) =>
+      ['academies', academyId, 'drills', drillId] as const,
+    drillAssignments: (academyId: string) => ['academies', academyId, 'drill-assignments'] as const,
+    playerDrillAssignments: (academyId: string, playerId: string) =>
+      ['academies', academyId, 'players', playerId, 'drill-assignments'] as const,
   },
 
   // Reserved for later phases; kept here so key shapes stay consistent.
