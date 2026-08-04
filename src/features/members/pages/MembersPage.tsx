@@ -25,7 +25,7 @@ import { useUiStore } from '@/stores';
 import type { AcademyMember } from '@/types';
 import { JOINABLE_ROLES, ROLE_LABELS, type JoinableRole, type MemberStatus } from '@/types/enums';
 
-import { useAcademyMembers, useUpdateMember } from '../hooks/useMembers';
+import { useAcademyMembers, usePendingJoinRequests, useUpdateMember } from '../hooks/useMembers';
 
 const STATUS_TONES: Record<MemberStatus, 'success' | 'warning' | 'danger' | 'neutral'> = {
   active: 'success',
@@ -40,16 +40,124 @@ export default function MembersPage() {
   const { academyId } = useActiveAcademy();
   const [roleFilter, setRoleFilter] = useState<'all' | JoinableRole | 'academy_owner'>('all');
   const canManage = useCan('members:manage');
+  const canApproveRequests = useCan('players:approve');
+  const requestsQuery = usePendingJoinRequests(academyId);
 
   const query = useAcademyMembers(academyId, {
     ...(roleFilter === 'all' ? {} : { role: roleFilter }),
   });
+
+  const { approveRequest, rejectRequest } = useUpdateMember(academyId as string);
+
+  const pushToast = useUiStore((state) => state.pushToast);
+
+  const handleApprove = (requestId: string) => {
+    approveRequest.mutate(
+      { requestId },
+      {
+        onSuccess: () => pushToast({ title: 'Request approved', variant: 'success' }),
+      },
+    );
+  };
+
+  const handleReject = (requestId: string) => {
+    rejectRequest.mutate(
+      { requestId },
+      {
+        onSuccess: () => pushToast({ title: 'Request rejected', variant: 'success' }),
+      },
+    );
+  };
+
+  if (!academyId) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
       <h1 className="text-fg text-xl font-semibold">Members</h1>
 
       {canManage && academyId ? <JoinCodeCard academyId={academyId} /> : null}
+
+      {canApproveRequests ? (
+        <Card>
+          <CardHeader
+            title="Pending join requests"
+            description="Review every request before granting academy access."
+          />
+          <CardBody>
+            {requestsQuery.isPending ? (
+              <SkeletonText lines={4} />
+            ) : requestsQuery.isError ? (
+              <ErrorState
+                error={requestsQuery.error}
+                onRetry={() => void requestsQuery.refetch()}
+              />
+            ) : requestsQuery.data.length === 0 ? (
+              <EmptyState
+                title="No pending requests"
+                description="Players have not requested to join yet."
+              />
+            ) : (
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>Player</TH>
+                    <TH>Requested role</TH>
+                    <TH>Message</TH>
+                    <TH>Requested</TH>
+                    <TH>Actions</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {requestsQuery.data.map((request) => (
+                    <TR key={request.id}>
+                      <TD>
+                        <div className="flex items-center gap-2">
+                          <Avatar
+                            name={request.fullName ?? request.email}
+                            src={request.avatarUrl}
+                            size="sm"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-fg truncate text-sm font-medium">
+                              {request.fullName ?? 'Unknown player'}
+                            </p>
+                            <p className="text-fg-muted truncate text-xs">{request.email}</p>
+                          </div>
+                        </div>
+                      </TD>
+                      <TD>{ROLE_LABELS[request.requestedRole]}</TD>
+                      <TD className="text-fg-muted max-w-xs truncate text-sm">
+                        {request.message || '—'}
+                      </TD>
+                      <TD className="text-fg-muted text-sm">{formatDate(request.createdAt)}</TD>
+                      <TD className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          isLoading={approveRequest.isPending}
+                          onClick={() => handleApprove(request.id)}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          isLoading={rejectRequest.isPending}
+                          onClick={() => handleReject(request.id)}
+                        >
+                          Reject
+                        </Button>
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            )}
+          </CardBody>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader

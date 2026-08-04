@@ -18,6 +18,7 @@ export const queryKeys = {
       ['academies', academyId, 'join-code', role] as const,
     members: (academyId: string, filters?: Record<string, string | undefined>) =>
       ['academies', academyId, 'members', filters ?? {}] as const,
+    pendingRequests: (academyId: string) => ['academies', academyId, 'pending-requests'] as const,
   },
 
   // Reserved for later phases; kept here so key shapes stay consistent.

@@ -60,6 +60,19 @@ export type JoinRequest = {
   createdAt: string;
 };
 
+export type PendingJoinRequest = {
+  id: UUID;
+  academyId: UUID;
+  userId: UUID;
+  requestedRole: AppRole;
+  status: JoinStatus;
+  message: string | null;
+  createdAt: string;
+  fullName: string | null;
+  email: string;
+  avatarUrl: string | null;
+};
+
 /** A roster row: the membership joined to the member's profile. */
 export type AcademyMember = {
   id: UUID;

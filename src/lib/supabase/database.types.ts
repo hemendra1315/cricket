@@ -467,6 +467,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      approve_join_request: {
+        Args: { p_request_id: string; p_batch_ids?: string[] | null }
+        Returns: void
+      }
+      reject_join_request: {
+        Args: { p_request_id: string; p_reason?: string }
+        Returns: void
+      }
       slugify: { Args: { p_value: string }; Returns: string }
     }
     Enums: {
