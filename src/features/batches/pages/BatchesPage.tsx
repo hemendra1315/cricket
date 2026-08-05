@@ -36,10 +36,13 @@ const DEFAULT_BATCH_FORM: BatchFormValues = {
 export default function BatchesPage() {
   const { academyId } = useActiveAcademy();
   const canManage = useCan('batches:manage');
+
   const batchesQuery = useBatches(academyId);
   const membersQuery = useAcademyMembers(academyId, { status: 'active' });
+
   const createBatch = useCreateBatch(academyId as string);
   const deleteBatch = useDeleteBatch(academyId as string);
+
   const pushToast = useUiStore((state) => state.pushToast);
 
   const [showForm, setShowForm] = useState(false);
@@ -62,9 +65,11 @@ export default function BatchesPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { isDirty },
     reset,
-  } = useForm<BatchFormValues>({ defaultValues: DEFAULT_BATCH_FORM });
+  } = useForm<BatchFormValues>({
+    defaultValues: DEFAULT_BATCH_FORM,
+  });
 
   const handleCreate = handleSubmit(async (value) => {
     await createBatch.mutateAsync({
@@ -75,9 +80,15 @@ export default function BatchesPage() {
       trainingDays: selectedDays.join(', '),
       trainingTime: `${value.startTime} - ${value.endTime}`,
       coachId: value.coachId,
+      startTime: value.startTime,
+      endTime: value.endTime,
     });
 
-    pushToast({ title: 'Batch created', variant: 'success' });
+    pushToast({
+      title: 'Batch created',
+      variant: 'success',
+    });
+
     reset(DEFAULT_BATCH_FORM);
     setSelectedDays([]);
     setShowForm(false);
@@ -85,7 +96,11 @@ export default function BatchesPage() {
 
   const handleDelete = async (batchId: string) => {
     await deleteBatch.mutateAsync({ batchId });
-    pushToast({ title: 'Batch deleted', variant: 'success' });
+
+    pushToast({
+      title: 'Batch deleted',
+      variant: 'success',
+    });
   };
 
   if (!academyId) return null;
@@ -95,6 +110,7 @@ export default function BatchesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-fg text-xl font-semibold">Batches</h1>
+
           <p className="text-fg-muted">Create and manage your academy training groups.</p>
         </div>
 
@@ -155,12 +171,45 @@ export default function BatchesPage() {
                   <label className="text-fg block text-sm font-medium">Training time</label>
 
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <Input type="time" {...register('startTime')} />
+                    <Select {...register('startTime')}>
+                      <option value="">Start time</option>
 
-                    <Input type="time" {...register('endTime')} />
+                      {Array.from({ length: 24 }).map((_, hour) =>
+                        ['00', '30'].map((minute) => {
+                          const h = hour % 12 || 12;
+                          const ampm = hour < 12 ? 'AM' : 'PM';
+                          const value = `${h}:${minute} ${ampm}`;
+
+                          return (
+                            <option key={value} value={value}>
+                              {value}
+                            </option>
+                          );
+                        }),
+                      )}
+                    </Select>
+
+                    <Select {...register('endTime')}>
+                      <option value="">End time</option>
+
+                      {Array.from({ length: 24 }).map((_, hour) =>
+                        ['00', '30'].map((minute) => {
+                          const h = hour % 12 || 12;
+                          const ampm = hour < 12 ? 'AM' : 'PM';
+                          const value = `${h}:${minute} ${ampm}`;
+
+                          return (
+                            <option key={value} value={value}>
+                              {value}
+                            </option>
+                          );
+                        }),
+                      )}
+                    </Select>
                   </div>
                 </div>
               </div>
+
               <div>
                 <label className="text-fg block text-sm font-medium">Assigned coach</label>
 
@@ -168,7 +217,6 @@ export default function BatchesPage() {
                   {...register('coachId', {
                     required: 'Coach is required',
                   })}
-                  hasError={Boolean(errors.coachId)}
                 >
                   <option value="">Select coach</option>
 
@@ -178,10 +226,6 @@ export default function BatchesPage() {
                     </option>
                   ))}
                 </Select>
-
-                {errors.coachId ? (
-                  <p className="text-danger text-xs">{errors.coachId.message}</p>
-                ) : null}
               </div>
 
               <div>
