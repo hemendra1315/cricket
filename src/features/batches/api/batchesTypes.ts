@@ -40,6 +40,8 @@ export type CreateBatchInput = {
   trainingDays: string;
   trainingTime: string;
   coachId: UUID;
+  startTime?: string;
+  endTime?: string;
 };
 
 export type UpdateBatchInput = Omit<CreateBatchInput, 'academyId'>;
