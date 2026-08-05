@@ -7,7 +7,7 @@ import { useActiveAcademy } from '@/features/academies';
 import { useCan } from '@/lib/rbac';
 import { useUiStore } from '@/stores';
 import { useBatchPlayers } from '@/features/batches';
-import { useSessionAttendance, useMarkAttendance } from '../hooks/useAttendance';
+import { useSessionAttendance, useMarkAttendance, useMarkAllPresent } from '../hooks/useAttendance';
 import { useTrainingSession } from '@/features/sessions';
 import type { AttendanceStatus } from '@/types/enums';
 import { formatDate, formatTime } from '@/lib/utils/date';
@@ -25,6 +25,7 @@ export default function AttendanceSessionPage() {
   const sessionQuery = useTrainingSession(sessionId ?? null, academyId);
   const attendanceQuery = useSessionAttendance(sessionId ?? null, academyId);
   const markAttendance = useMarkAttendance(academyId as string);
+  const markAllPresent = useMarkAllPresent(academyId as string);
   const pushToast = useUiStore((state) => state.pushToast);
 
   const session = sessionQuery.data;
@@ -40,6 +41,24 @@ export default function AttendanceSessionPage() {
     await markAttendance.mutateAsync({ sessionId, playerId, status });
     pushToast({ title: 'Attendance updated', variant: 'success' });
   };
+
+  const handleMarkAllPresent = async () => {
+    if (!academyId || !sessionId || !batchPlayersQuery.data?.length) return;
+    const playerIds = batchPlayersQuery.data.map((player) => player.academyMemberId);
+    await markAllPresent.mutateAsync({ sessionId, playerIds });
+    pushToast({ title: 'All players marked present', variant: 'success' });
+  };
+
+  const presentCount =
+    attendanceQuery.data?.filter((record) => record.status === 'present').length ?? 0;
+  const totalPlayers = batchPlayersQuery.data?.length ?? 0;
+  const playerNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    batchPlayersQuery.data?.forEach((player) => {
+      map.set(player.academyMemberId, player.fullName ?? player.email);
+    });
+    return map;
+  }, [batchPlayersQuery.data]);
 
   if (!academyId || !sessionId) return null;
 
@@ -83,8 +102,28 @@ export default function AttendanceSessionPage() {
           </Card>
 
           <Card>
-            <CardHeader title="Players" description="Mark each player present or absent." />
+            <CardHeader
+              title="Players"
+              description="Mark each player present or absent."
+              action={
+                canManage && totalPlayers > 0 ? (
+                  <Button
+                    size="sm"
+                    isLoading={markAllPresent.isPending}
+                    onClick={() => void handleMarkAllPresent()}
+                  >
+                    Mark all present
+                  </Button>
+                ) : null
+              }
+            />
             <CardBody className="space-y-3">
+              {totalPlayers > 0 ? (
+                <div className="bg-surface-muted text-fg-muted rounded-lg px-4 py-2 text-sm">
+                  Present: <span className="text-fg font-semibold">{presentCount}</span> /{' '}
+                  {totalPlayers} players
+                </div>
+              ) : null}
               {batchPlayersQuery.isPending || attendanceQuery.isPending ? (
                 <p className="text-fg-muted">Loading players…</p>
               ) : batchPlayersQuery.isError ? (
@@ -145,7 +184,9 @@ export default function AttendanceSessionPage() {
                 <div className="space-y-2">
                   {attendanceQuery.data.map((record) => (
                     <div key={record.id} className="border-border-subtle rounded-2xl border p-3">
-                      <p className="text-fg text-sm">Player ID: {record.playerId}</p>
+                      <p className="text-fg text-sm">
+                        {playerNameById.get(record.playerId) ?? record.playerId}
+                      </p>
                       <p className="text-fg-muted text-xs">Status: {record.status}</p>
                     </div>
                   ))}

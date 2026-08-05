@@ -12,6 +12,7 @@ import {
   fetchBatchAttendance,
   fetchPlayerAttendance,
   fetchSessionAttendance,
+  markAllPresent,
   markAttendance,
 } from '../api/attendanceApi';
 
@@ -41,6 +42,19 @@ export function useMarkAttendance(academyId: UUID) {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.academy.playerAttendance(academyId, variables.playerId),
+      });
+    },
+  });
+}
+
+export function useMarkAllPresent(academyId: UUID) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, playerIds }: { sessionId: UUID; playerIds: UUID[] }) =>
+      markAllPresent(sessionId, playerIds, academyId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.academy.sessionAttendance(academyId, variables.sessionId),
       });
     },
   });

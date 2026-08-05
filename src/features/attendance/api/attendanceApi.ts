@@ -30,6 +30,29 @@ export async function fetchSessionAttendance(sessionId: UUID): Promise<Attendanc
   }));
 }
 
+export async function markAllPresent(
+  sessionId: UUID,
+  playerIds: UUID[],
+  academyId: UUID,
+): Promise<void> {
+  if (playerIds.length === 0) return;
+  await unwrap(
+    (supabase as any)
+      .from('attendance')
+      .upsert(
+        playerIds.map((playerId) => ({
+          academy_id: academyId,
+          session_id: sessionId,
+          player_id: playerId,
+          status: 'present' as AttendanceStatus,
+          marked_by: null,
+        })),
+        { onConflict: ['session_id', 'player_id'] },
+      )
+      .select('id'),
+  );
+}
+
 export async function markAttendance(
   sessionId: UUID,
   playerId: UUID,

@@ -1,18 +1,43 @@
 import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Button, Card, CardBody, CardHeader, Select } from '@/components/ui';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Input,
+  Select,
+  Textarea,
+} from '@/components/ui';
 import { EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
 import { useCan } from '@/lib/rbac';
 import { useUiStore } from '@/stores';
+import type { Batch } from '../api/batchesTypes';
 import {
   useBatchAvailablePlayers,
   useBatchMemberships,
   useBatchPlayers,
   useBatches,
+  useUpdateBatch,
 } from '../hooks/useBatches';
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+type BatchFormValues = {
+  name: string;
+  ageGroup: string;
+  description: string;
+  trainingDays: string;
+  trainingTime: string;
+  coachId: string;
+};
 
 export default function BatchDetailPage() {
   const { batchId } = useParams();
@@ -24,8 +49,10 @@ export default function BatchDetailPage() {
   const availablePlayersQuery = useBatchAvailablePlayers(academyId);
   const membersQuery = useAcademyMembers(academyId, { status: 'active' });
   const { addPlayer, removePlayer } = useBatchMemberships(batchId as string, academyId as string);
+  const updateBatch = useUpdateBatch(academyId as string);
   const pushToast = useUiStore((state) => state.pushToast);
   const [selectedMember, setSelectedMember] = useState<string>('');
+  const [showEditForm, setShowEditForm] = useState(false);
 
   const batch = batchesQuery.data?.find((item) => item.id === batchId);
   const coach = membersQuery.data?.find((member) => member.id === batch?.coachId);
@@ -57,9 +84,16 @@ export default function BatchDetailPage() {
           <h1 className="text-fg text-xl font-semibold">{batch?.name ?? 'Batch detail'}</h1>
           <p className="text-fg-muted">Manage players assigned to this batch.</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => void navigate('/batches')}>
-          Back to batches
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {canManage ? (
+            <Button variant="secondary" size="sm" onClick={() => setShowEditForm((open) => !open)}>
+              {showEditForm ? 'Cancel edit' : 'Edit batch'}
+            </Button>
+          ) : null}
+          <Button variant="secondary" size="sm" onClick={() => void navigate('/batches')}>
+            Back to batches
+          </Button>
+        </div>
       </div>
 
       {!batch ? (
@@ -96,6 +130,18 @@ export default function BatchDetailPage() {
               </div>
             </CardBody>
           </Card>
+
+          {showEditForm && canManage ? (
+            <BatchEditForm
+              batch={batch}
+              coaches={membersQuery.data?.filter((member) => member.role === 'coach') ?? []}
+              updateBatch={updateBatch}
+              onSuccess={() => {
+                setShowEditForm(false);
+                pushToast({ title: 'Batch updated', variant: 'success' });
+              }}
+            />
+          ) : null}
 
           <Card>
             <CardHeader title="Players" description="Players currently assigned to this batch." />
@@ -175,5 +221,179 @@ export default function BatchDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function BatchEditForm({
+  batch,
+  coaches,
+  updateBatch,
+  onSuccess,
+}: {
+  batch: Batch;
+  coaches: Array<{ id: string; fullName: string | null; email: string }>;
+  updateBatch: ReturnType<typeof useUpdateBatch>;
+  onSuccess: () => void;
+}) {
+  const initialDays = batch.trainingDays
+    .split(',')
+    .map((day: string) => day.trim())
+    .filter((day: string) => DAYS.includes(day));
+
+  const parseTime = (time: string): Date | null => {
+    const match = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match || !match[3]) return null;
+    const hours = (Number(match[1]) % 12) + (match[3].toUpperCase() === 'PM' ? 12 : 0);
+    const minutes = Number(match[2]);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  };
+
+  const [startTimeText = '', endTimeText = ''] = batch.trainingTime
+    .split('-')
+    .map((part: string) => part.trim());
+
+  const [selectedDays, setSelectedDays] = useState<string[]>(initialDays);
+  const [startTime, setStartTime] = useState<Date | null>(parseTime(startTimeText));
+  const [endTime, setEndTime] = useState<Date | null>(parseTime(endTimeText));
+
+  const {
+    register,
+    handleSubmit,
+    formState: { isDirty },
+  } = useForm<BatchFormValues>({
+    defaultValues: {
+      name: batch.name,
+      ageGroup: batch.ageGroup,
+      description: batch.description ?? '',
+      trainingDays: batch.trainingDays,
+      trainingTime: batch.trainingTime,
+      coachId: batch.coachId,
+    },
+  });
+
+  const toggleDay = (day: string) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((item) => item !== day) : [...prev, day],
+    );
+  };
+
+  const handleSubmitEdit = handleSubmit(async (value) => {
+    await updateBatch.mutateAsync({
+      batchId: batch.id,
+      input: {
+        name: value.name,
+        ageGroup: value.ageGroup,
+        description: value.description || null,
+        trainingDays: selectedDays.join(', '),
+        trainingTime: `${startTime?.toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit',
+        })} - ${endTime?.toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit',
+        })}`,
+        coachId: value.coachId,
+      },
+    });
+    onSuccess();
+  });
+
+  return (
+    <Card>
+      <form onSubmit={handleSubmitEdit} noValidate>
+        <CardHeader title="Edit batch" description="Update the batch details." />
+        <CardBody className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-fg block text-sm font-medium">Batch name</label>
+              <Input
+                {...register('name', {
+                  required: 'Batch name is required',
+                })}
+              />
+            </div>
+            <div>
+              <label className="text-fg block text-sm font-medium">Age group</label>
+              <Input
+                {...register('ageGroup', {
+                  required: 'Age group is required',
+                })}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-fg block text-sm font-medium">Training days</label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {DAYS.map((day) => (
+                  <Button
+                    key={day}
+                    type="button"
+                    variant={selectedDays.includes(day) ? 'primary' : 'secondary'}
+                    onClick={() => toggleDay(day)}
+                  >
+                    {day}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-fg block text-sm font-medium">Training time</label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <DatePicker
+                  selected={startTime}
+                  onChange={(date: Date | null) => setStartTime(date)}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={30}
+                  dateFormat="h:mm aa"
+                  placeholderText="Start Time"
+                  className="w-full rounded-lg border px-3 py-2"
+                />
+                <DatePicker
+                  selected={endTime}
+                  onChange={(date: Date | null) => setEndTime(date)}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={30}
+                  dateFormat="h:mm aa"
+                  placeholderText="End Time"
+                  className="w-full rounded-lg border px-3 py-2"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-fg block text-sm font-medium">Assigned coach</label>
+            <Select
+              {...register('coachId', {
+                required: 'Coach is required',
+              })}
+            >
+              <option value="">Select coach</option>
+              {coaches.map((coach) => (
+                <option key={coach.id} value={coach.id}>
+                  {coach.fullName ?? coach.email}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-fg block text-sm font-medium">Description</label>
+            <Textarea {...register('description')} />
+          </div>
+        </CardBody>
+        <CardFooter>
+          <Button type="submit" isLoading={updateBatch.isPending} disabled={!isDirty}>
+            Save changes
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
   );
 }

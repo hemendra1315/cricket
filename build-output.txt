@@ -1,0 +1,65 @@
+
+> cricket-academy-manager@0.1.0 build
+> tsc -b && vite build
+
+[36mvite v8.2.0 [32mbuilding client environment for production...[36m[39m
+[2Ktransforming...✓ 2411 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                            0.50 kB
+dist/index.html                                      1.14 kB │ gzip:  0.54 kB
+dist/assets/react-datepicker-Wk3Ob2xl.css           22.63 kB │ gzip:  3.08 kB
+dist/assets/index-DOF60Otp.css                      23.56 kB │ gzip:  5.28 kB
+dist/assets/batches-0_Y7guqJ.js                      0.03 kB │ gzip:  0.05 kB
+dist/assets/members-BIhdMqv-.js                      0.03 kB │ gzip:  0.05 kB
+dist/assets/AuthCallbackPage-dar7peJn.js             0.42 kB │ gzip:  0.31 kB │ map:     1.21 kB
+dist/assets/PlatformDashboardPage-DoXLZH7i.js        0.57 kB │ gzip:  0.38 kB │ map:     1.19 kB
+dist/assets/NotFoundPage-CRMfAuox.js                 0.58 kB │ gzip:  0.37 kB │ map:     0.94 kB
+dist/assets/CoachDashboardPage-BmiH--x3.js           0.62 kB │ gzip:  0.40 kB │ map:     1.30 kB
+dist/assets/ForbiddenPage-BEY7YYGQ.js                0.73 kB │ gzip:  0.44 kB │ map:     1.23 kB
+dist/assets/SignInPage-BOBvyKQz.js                   1.07 kB │ gzip:  0.60 kB │ map:     2.77 kB
+dist/assets/SelectAcademyPage-DOZuTMye.js            1.36 kB │ gzip:  0.76 kB │ map:     3.97 kB
+dist/assets/OwnerDashboardPage-BiZUnTdA.js           1.50 kB │ gzip:  0.70 kB │ map:     3.76 kB
+dist/assets/BatchAttendancePage-BG4N9Rc6.js          1.54 kB │ gzip:  0.71 kB │ map:     3.70 kB
+dist/assets/PlayerAttendancePage-BVz27M3D.js         1.56 kB │ gzip:  0.73 kB │ map:     3.67 kB
+dist/assets/JoinAcademyPage-ELZwpIG_.js              1.66 kB │ gzip:  0.92 kB │ map:     4.70 kB
+dist/assets/PendingApprovalPage-DIZF-ubm.js          2.06 kB │ gzip:  1.03 kB │ map:     5.98 kB
+dist/assets/CreateAcademyPage-BXM-pMLm.js            2.20 kB │ gzip:  1.08 kB │ map:     6.58 kB
+dist/assets/OnboardingStartPage-DkgwWkyE.js          2.36 kB │ gzip:  0.93 kB │ map:     6.05 kB
+dist/assets/useSessions-ChaaldFL.js                  2.50 kB │ gzip:  0.88 kB │ map:     8.52 kB
+dist/assets/ProfilePage-Fjm26MCM.js                  2.76 kB │ gzip:  1.20 kB │ map:     7.80 kB
+dist/assets/useMembers--9NPaNTC.js                   2.76 kB │ gzip:  0.97 kB │ map:    10.56 kB
+dist/assets/PlayerDashboardPage-Cclj0kpE.js          2.86 kB │ gzip:  1.11 kB │ map:     7.28 kB
+dist/assets/useAttendance-BMkuLuZz.js                3.05 kB │ gzip:  0.86 kB │ map:     9.84 kB
+dist/assets/MemberProfilePage-p3ZmApmr.js            3.39 kB │ gzip:  1.00 kB │ map:     7.35 kB
+dist/assets/DrillDetailPage-BUH7ITq6.js              3.52 kB │ gzip:  1.29 kB │ map:     8.96 kB
+dist/assets/useBatches-ClhgmpHJ.js                   3.87 kB │ gzip:  1.15 kB │ map:    11.76 kB
+dist/assets/useDrills-B-XPBmy4.js                    4.14 kB │ gzip:  1.17 kB │ map:    14.29 kB
+dist/assets/validators-BOK-fI0x.js                   4.86 kB │ gzip:  2.03 kB │ map:    13.47 kB
+dist/assets/AttendanceSessionPage-BLblNe5q.js        4.93 kB │ gzip:  1.71 kB │ map:    14.24 kB
+dist/assets/MembersPage-CduwEW87.js                  5.51 kB │ gzip:  1.81 kB │ map:    18.04 kB
+dist/assets/workbox-window.prod.es5-Bd17z0YL.js      5.71 kB │ gzip:  2.25 kB │ map:    13.14 kB
+dist/assets/BatchesPage-NDiwatSm.js                  5.83 kB │ gzip:  1.99 kB │ map:    15.62 kB
+dist/assets/TrainingSessionsPage-DL5GkDjr.js         6.85 kB │ gzip:  1.91 kB │ map:    17.77 kB
+dist/assets/TrainingSessionDetailPage-cs3Ug5yz.js    8.09 kB │ gzip:  2.15 kB │ map:    21.42 kB
+dist/assets/BatchDetailPage-CqydBUQl.js              8.20 kB │ gzip:  2.59 kB │ map:    23.33 kB
+dist/assets/DrillsPage-C31YCWBw.js                   8.38 kB │ gzip:  2.39 kB │ map:    23.46 kB
+dist/assets/jsx-runtime-B5yqYJvp.js                  8.79 kB │ gzip:  3.39 kB │ map:    28.99 kB
+dist/assets/date-CWUsm2X6.js                        12.02 kB │ gzip:  4.70 kB │ map:    29.74 kB
+dist/assets/keys-C6E_CGMz.js                        12.59 kB │ gzip:  4.21 kB │ map:    51.14 kB
+dist/assets/mutation-CQoI61i1.js                    18.20 kB │ gzip:  5.73 kB │ map:    71.45 kB
+dist/assets/index.esm-DW3O4crM.js                   27.39 kB │ gzip: 10.08 kB │ map:   176.55 kB
+dist/assets/react-datepicker-DYT6p-me.js           173.49 kB │ gzip: 44.52 kB │ map: 1,059.02 kB
+dist/assets/index-CBNS-eZP.js                      306.67 kB │ gzip: 97.34 kB │ map: 1,451.24 kB
+dist/assets/api-Dy4_0nIT.js                        321.73 kB │ gzip: 87.12 kB │ map: 1,743.28 kB
+
+[32m✓ built in 2.97s[39m
+
+PWA v1.3.0
+mode      generateSW
+precache  54 entries (1025.09 KiB)
+files generated
+  dist/sw.js.map
+  dist/sw.js
+  dist/workbox-2fbc6a65.js.map
+  dist/workbox-2fbc6a65.js

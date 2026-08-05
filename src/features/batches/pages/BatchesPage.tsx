@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 import {
   Button,
@@ -16,12 +18,17 @@ import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
 import { useCan } from '@/lib/rbac';
 import { useUiStore } from '@/stores';
-import type { CreateBatchInput } from '../api/batchesTypes';
 import { useBatches, useCreateBatch, useDeleteBatch } from '../hooks/useBatches';
 import { Link } from 'react-router-dom';
 
-type BatchFormValues = Omit<CreateBatchInput, 'academyId'>;
-
+type BatchFormValues = {
+  name: string;
+  ageGroup: string;
+  description: string;
+  trainingDays: string;
+  trainingTime: string;
+  coachId: string;
+};
 const DEFAULT_BATCH_FORM: BatchFormValues = {
   name: '',
   ageGroup: '',
@@ -29,8 +36,6 @@ const DEFAULT_BATCH_FORM: BatchFormValues = {
   trainingDays: '',
   trainingTime: '',
   coachId: '',
-  startTime: '',
-  endTime: '',
 };
 
 export default function BatchesPage() {
@@ -50,6 +55,8 @@ export default function BatchesPage() {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [endTime, setEndTime] = useState<Date | null>(null);
 
   const toggleDay = (day: string) => {
     setSelectedDays((prev) =>
@@ -78,10 +85,14 @@ export default function BatchesPage() {
       ageGroup: value.ageGroup,
       description: value.description || null,
       trainingDays: selectedDays.join(', '),
-      trainingTime: `${value.startTime} - ${value.endTime}`,
+      trainingTime: `${startTime?.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      })} - ${endTime?.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      })}`,
       coachId: value.coachId,
-      startTime: value.startTime,
-      endTime: value.endTime,
     });
 
     pushToast({
@@ -90,6 +101,8 @@ export default function BatchesPage() {
     });
 
     reset(DEFAULT_BATCH_FORM);
+    setStartTime(null);
+    setEndTime(null);
     setSelectedDays([]);
     setShowForm(false);
   });
@@ -171,41 +184,27 @@ export default function BatchesPage() {
                   <label className="text-fg block text-sm font-medium">Training time</label>
 
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <Select {...register('startTime')}>
-                      <option value="">Start time</option>
+                    <DatePicker
+                      selected={startTime}
+                      onChange={(date: Date | null) => setStartTime(date)}
+                      showTimeSelect
+                      showTimeSelectOnly
+                      timeIntervals={30}
+                      dateFormat="h:mm aa"
+                      placeholderText="Start Time"
+                      className="w-full rounded-lg border px-3 py-2"
+                    />
 
-                      {Array.from({ length: 24 }).map((_, hour) =>
-                        ['00', '30'].map((minute) => {
-                          const h = hour % 12 || 12;
-                          const ampm = hour < 12 ? 'AM' : 'PM';
-                          const value = `${h}:${minute} ${ampm}`;
-
-                          return (
-                            <option key={value} value={value}>
-                              {value}
-                            </option>
-                          );
-                        }),
-                      )}
-                    </Select>
-
-                    <Select {...register('endTime')}>
-                      <option value="">End time</option>
-
-                      {Array.from({ length: 24 }).map((_, hour) =>
-                        ['00', '30'].map((minute) => {
-                          const h = hour % 12 || 12;
-                          const ampm = hour < 12 ? 'AM' : 'PM';
-                          const value = `${h}:${minute} ${ampm}`;
-
-                          return (
-                            <option key={value} value={value}>
-                              {value}
-                            </option>
-                          );
-                        }),
-                      )}
-                    </Select>
+                    <DatePicker
+                      selected={endTime}
+                      onChange={(date: Date | null) => setEndTime(date)}
+                      showTimeSelect
+                      showTimeSelectOnly
+                      timeIntervals={30}
+                      dateFormat="h:mm aa"
+                      placeholderText="End Time"
+                      className="w-full rounded-lg border px-3 py-2"
+                    />
                   </div>
                 </div>
               </div>
