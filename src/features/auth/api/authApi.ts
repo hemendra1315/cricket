@@ -1,16 +1,22 @@
-import { env } from '@/lib/env';
 import { toApiError } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 
 /**
- * Auth transport only — no business rules. Membership/approval logic arrives in
- * Phase 1 and Phase 2 respectively.
+ * Auth transport only — no business rules.
  */
-export async function signInWithGoogle(redirectTo = `${env.appUrl}/auth/callback`): Promise<void> {
+export async function signInWithGoogle(
+  redirectTo = `${window.location.origin}/auth/callback`,
+): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo, queryParams: { prompt: 'select_account' } },
+    options: {
+      redirectTo,
+      queryParams: {
+        prompt: 'select_account',
+      },
+    },
   });
+
   if (error) throw toApiError(error);
 }
 
