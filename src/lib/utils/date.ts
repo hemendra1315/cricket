@@ -31,4 +31,19 @@ export function toIsoDate(value: string | Date, timezone = env.defaultTimezone):
   return inAcademyTz(value, timezone).format('YYYY-MM-DD');
 }
 
+/**
+ * True when `value` falls on today's date or any future date, evaluated in the
+ * academy timezone. Used by the dashboards to split "today/upcoming" sessions.
+ */
+export function isTodayOrUpcoming(value: string | Date, timezone = env.defaultTimezone): boolean {
+  const today = dayjs().tz(timezone).format('YYYY-MM-DD');
+  return inAcademyTz(value, timezone).format('YYYY-MM-DD') >= today;
+}
+
+/** True when `value` falls on today's date in the academy timezone. */
+export function isToday(value: string | Date, timezone = env.defaultTimezone): boolean {
+  const today = dayjs().tz(timezone).format('YYYY-MM-DD');
+  return inAcademyTz(value, timezone).format('YYYY-MM-DD') === today;
+}
+
 export { dayjs };

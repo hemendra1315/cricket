@@ -1,10 +1,15 @@
-import { EmptyState } from '@/components/feedback';
+import { useMemo } from 'react';
+
+import { EmptyState, ErrorState } from '@/components/feedback';
 import { Card, CardBody, CardHeader } from '@/components/ui';
 import { useAcademyStore } from '@/stores';
 import { useAcademyMembers } from '@/features/members';
 import { useActiveAcademy } from '@/features/academies';
+import { useTrainingSessions } from '@/features/sessions';
 import { usePlayerAttendance } from '@/features/attendance/hooks/useAttendance';
 import { usePlayerDrillAssignments } from '@/features/drills/hooks/useDrills';
+import { isTodayOrUpcoming } from '@/lib/utils/date';
+import { SessionRow } from '../components/SessionRow';
 
 export default function PlayerDashboardPage() {
   const academyId = useAcademyStore((state) => state.activeAcademyId);
@@ -13,8 +18,16 @@ export default function PlayerDashboardPage() {
   const playerAssignmentsQuery = usePlayerDrillAssignments(membership?.id ?? null, academyId);
 
   const { data: members = [] } = useAcademyMembers(academyId);
+  const sessionsQuery = useTrainingSessions(academyId);
 
   const isEnrolled = members.some((member) => member.status === 'active');
+
+  const nextSession = useMemo(() => {
+    const upcoming = (sessionsQuery.data ?? [])
+      .filter((session) => isTodayOrUpcoming(session.sessionDate) && session.status === 'scheduled')
+      .sort((a, b) => a.startAt.localeCompare(b.startAt));
+    return upcoming[0] ?? null;
+  }, [sessionsQuery.data]);
 
   const attendancePercent = playerAttendanceQuery.data
     ? Math.round(
@@ -29,6 +42,27 @@ export default function PlayerDashboardPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-fg text-xl font-semibold">My dashboard</h1>
+
+      <Card>
+        <CardHeader
+          title="Next upcoming session"
+          description="Your next scheduled training session."
+        />
+        <CardBody>
+          {sessionsQuery.isPending ? (
+            <p className="text-fg-muted">Loading sessions…</p>
+          ) : sessionsQuery.isError ? (
+            <ErrorState error={sessionsQuery.error} onRetry={() => void sessionsQuery.refetch()} />
+          ) : nextSession ? (
+            <SessionRow session={nextSession} />
+          ) : (
+            <EmptyState
+              title="No upcoming sessions"
+              description="Nothing scheduled for today or later."
+            />
+          )}
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader title="Attendance" description="Your attendance percentage for this academy." />
