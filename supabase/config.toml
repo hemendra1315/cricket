@@ -1,27 +1,12 @@
-# Supabase local development configuration (`supabase start`).
-# Migrations, seeds and Edge Functions are added from Phase 1 onwards.
-project_id = "cricket-academy-manager"
-
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "storage", "graphql_public"]
-extra_search_path = ["public", "extensions"]
-max_rows = 1000
-
-[db]
-port = 54322
-shadow_port = 54320
-major_version = 15
-
-[studio]
-enabled = true
-port = 54323
-
 [auth]
 enabled = true
-site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173/auth/callback"]
+site_url = "https://cricos08.vercel.app"
+additional_redirect_urls = [
+  "https://cricos08.vercel.app/auth/callback",
+  "https://cricos08.vercel.app/sign-in",
+  "http://localhost:5173/auth/callback"
+]
+
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 enable_signup = true
@@ -30,13 +15,11 @@ enable_signup = true
 enable_signup = true
 enable_confirmations = false
 
-# Google OAuth is the primary provider (see PRD F2). Secrets come from the
-# environment; never commit real client credentials.
 [auth.external.google]
 enabled = true
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
-redirect_uri = "http://localhost:54321/auth/v1/callback"
+redirect_uri = "https://jslilwvtribrszzzqcez.supabase.co/auth/v1/callback"
 
 [storage]
 enabled = true
