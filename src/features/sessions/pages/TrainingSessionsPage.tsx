@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { Link } from 'react-router-dom';
 
 import {
@@ -23,19 +25,23 @@ import { useBatches } from '@/features/batches';
 import { useCreateTrainingSession, useTrainingSessions } from '../hooks/useSessions';
 import { formatDate, formatTime } from '@/lib/utils/date';
 
-type FormValues = Omit<CreateTrainingSessionInput, 'academyId'>;
+type FormValues = Omit<CreateTrainingSessionInput, 'academyId' | 'startAt' | 'endAt'>;
 
 const DEFAULT_FORM_VALUES: FormValues = {
   batchId: '',
   title: '',
   focusArea: null,
   sessionDate: '',
-  startAt: '',
-  endAt: '',
   coachId: '',
   status: 'scheduled',
   notes: null,
 };
+
+function toIsoTimestamp(sessionDate: string, time: Date): string {
+  const date = new Date(`${sessionDate}T00:00:00`);
+  date.setHours(time.getHours(), time.getMinutes(), 0, 0);
+  return date.toISOString();
+}
 
 export default function TrainingSessionsPage() {
   const { academyId } = useActiveAcademy();
@@ -46,6 +52,8 @@ export default function TrainingSessionsPage() {
   const createSession = useCreateTrainingSession(academyId as UUID);
   const pushToast = useUiStore((state) => state.pushToast);
   const [showForm, setShowForm] = useState(false);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [endTime, setEndTime] = useState<Date | null>(null);
 
   const coaches = useMemo(
     () => membersQuery.data?.filter((member) => member.role === 'coach') ?? [],
@@ -61,21 +69,37 @@ export default function TrainingSessionsPage() {
 
   const handleCreate = handleSubmit(async (values) => {
     if (!academyId) return;
-    await createSession.mutateAsync({
-      academyId,
-      batchId: values.batchId,
-      title: values.title,
-      focusArea: values.focusArea,
-      sessionDate: values.sessionDate,
-      startAt: values.startAt,
-      endAt: values.endAt,
-      coachId: values.coachId,
-      status: values.status,
-      notes: values.notes,
-    });
-    pushToast({ title: 'Session created', variant: 'success' });
-    reset(DEFAULT_FORM_VALUES);
-    setShowForm(false);
+
+    if (!startTime || !endTime) {
+      pushToast({
+        title: 'Select training time',
+        variant: 'error',
+      });
+      return;
+    }
+
+    try {
+      await createSession.mutateAsync({
+        academyId,
+        batchId: values.batchId,
+        title: values.title,
+        focusArea: values.focusArea,
+        sessionDate: values.sessionDate,
+        startAt: toIsoTimestamp(values.sessionDate, startTime),
+        endAt: toIsoTimestamp(values.sessionDate, endTime),
+        coachId: values.coachId,
+        status: values.status,
+        notes: values.notes,
+      });
+      pushToast({ title: 'Session created', variant: 'success' });
+      reset(DEFAULT_FORM_VALUES);
+      setStartTime(null);
+      setEndTime(null);
+      setShowForm(false);
+    } catch (error) {
+      console.error('Create session failed:', error);
+      pushToast({ title: 'Failed to create session', variant: 'error' });
+    }
   });
 
   if (!academyId) return null;
@@ -172,25 +196,29 @@ export default function TrainingSessionsPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-fg block text-sm font-medium">Start time</label>
-                    <Input
-                      {...register('startAt', { required: 'Start time is required' })}
-                      type="datetime-local"
-                      hasError={Boolean(errors.startAt)}
+                    <DatePicker
+                      selected={startTime}
+                      onChange={(date: Date | null) => setStartTime(date)}
+                      showTimeSelect
+                      showTimeSelectOnly
+                      timeIntervals={30}
+                      dateFormat="h:mm aa"
+                      placeholderText="Start Time"
+                      className="w-full rounded-lg border px-3 py-2"
                     />
-                    {errors.startAt ? (
-                      <p className="text-danger text-xs">{errors.startAt.message}</p>
-                    ) : null}
                   </div>
                   <div>
                     <label className="text-fg block text-sm font-medium">End time</label>
-                    <Input
-                      {...register('endAt', { required: 'End time is required' })}
-                      type="datetime-local"
-                      hasError={Boolean(errors.endAt)}
+                    <DatePicker
+                      selected={endTime}
+                      onChange={(date: Date | null) => setEndTime(date)}
+                      showTimeSelect
+                      showTimeSelectOnly
+                      timeIntervals={30}
+                      dateFormat="h:mm aa"
+                      placeholderText="End Time"
+                      className="w-full rounded-lg border px-3 py-2"
                     />
-                    {errors.endAt ? (
-                      <p className="text-danger text-xs">{errors.endAt.message}</p>
-                    ) : null}
                   </div>
                 </div>
               </div>

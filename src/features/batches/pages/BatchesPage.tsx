@@ -83,7 +83,7 @@ export default function BatchesPage() {
           name: value.name,
           ageGroup: value.ageGroup,
           description: value.description || null,
-          trainingDays: selectedDays,
+          trainingDays: selectedDays.join(', '),
           trainingTime: `${startTime.toLocaleTimeString([], {
             hour: 'numeric',
             minute: '2-digit',
@@ -275,7 +275,7 @@ export default function BatchesPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="bg-surface-muted text-fg-muted rounded-full px-3 py-1 text-xs font-medium">
-                        {batch.playerCount} players
+                        {batch.playerCount ?? 0} players
                       </span>
                       <span className="bg-surface-muted text-fg-muted rounded-full px-3 py-1 text-xs font-medium">
                         Coach: {batch.coach.fullName ?? batch.coach.email}

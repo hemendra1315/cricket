@@ -6,7 +6,7 @@ export type Batch = {
   name: string;
   ageGroup: string;
   description: string | null;
-  trainingDays: string[];
+  trainingDays: string;
   trainingTime: string;
   coachId: UUID;
   coach: {
@@ -37,7 +37,7 @@ export type CreateBatchInput = {
   name: string;
   ageGroup: string;
   description: string | null;
-  trainingDays: string[];
+  trainingDays: string;
   trainingTime: string;
   coachId: UUID;
   startTime?: string;
