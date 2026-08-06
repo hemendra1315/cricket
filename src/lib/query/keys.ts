@@ -43,6 +43,24 @@ export const queryKeys = {
     drillAssignments: (academyId: string) => ['academies', academyId, 'drill-assignments'] as const,
     playerDrillAssignments: (academyId: string, playerId: string) =>
       ['academies', academyId, 'players', playerId, 'drill-assignments'] as const,
+    matches: (academyId: string) => ['academies', academyId, 'matches'] as const,
+    match: (academyId: string, matchId: string) =>
+      ['academies', academyId, 'matches', matchId] as const,
+    matchLineups: (matchId: string) => ['matches', matchId, 'lineups'] as const,
+    matchBatting: (matchId: string) => ['matches', matchId, 'batting'] as const,
+    matchBowling: (matchId: string) => ['matches', matchId, 'bowling'] as const,
+    matchFielding: (matchId: string) => ['matches', matchId, 'fielding'] as const,
+    matchPartnerships: (matchId: string) => ['matches', matchId, 'partnerships'] as const,
+    matchAwards: (matchId: string) => ['matches', matchId, 'awards'] as const,
+    matchCoachNotes: (matchId: string) => ['matches', matchId, 'coach-notes'] as const,
+    playerStatistics: (academyId: string) =>
+      ['academies', academyId, 'player-statistics'] as const,
+    playerStatisticsById: (academyId: string, playerId: string) =>
+      ['academies', academyId, 'player-statistics', playerId] as const,
+    playerMilestones: (academyId: string) =>
+      ['academies', academyId, 'player-milestones'] as const,
+    academyRecords: (academyId: string) =>
+      ['academies', academyId, 'academy-records'] as const,
   },
 
   // Reserved for later phases; kept here so key shapes stay consistent.

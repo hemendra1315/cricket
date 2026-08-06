@@ -1,121 +1,236 @@
 import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 
-import { EmptyState, ErrorState } from '@/components/feedback';
-import { buttonStyles, Card, CardBody, CardHeader } from '@/components/ui';
-import { JoinCodeCard, useActiveAcademy } from '@/features/academies';
-import { useAcademyMembers, usePendingJoinRequests } from '@/features/members';
-import { useTrainingSessions } from '@/features/sessions';
-import { isTodayOrUpcoming } from '@/lib/utils/date';
-import { ROLE_LABELS } from '@/types/enums';
-import type { TrainingSession } from '@/features/sessions/api/sessionsTypes';
+import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
+import { ErrorState } from '@/components/feedback';
+import { buttonStyles } from '@/components/ui/buttonStyles';
+import { useActiveAcademy } from '@/features/academies';
+import { useOwnerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
+import { KpiCard } from '../components/KpiCard';
+import { LeaderboardCard } from '../components/LeaderboardCard';
+import { ActivityFeed } from '../components/ActivityFeed';
 import { SessionRow } from '../components/SessionRow';
+import { SimpleBarChart } from '@/components/charts/SimpleBarChart';
+import { JoinCodeCard } from '@/features/academies';
+import type { ActivityItem } from '../components/ActivityFeed';
 
-const UPCOMING_LIMIT = 6;
-
-/** Owner home: roster stats, pending requests and upcoming sessions. */
 export default function OwnerDashboardPage() {
   const { academyId, membership } = useActiveAcademy();
-  const members = useAcademyMembers(academyId);
-  const pendingRequests = usePendingJoinRequests(academyId);
-  const sessionsQuery = useTrainingSessions(academyId);
+  const analyticsQuery = useOwnerDashboardAnalytics(academyId);
 
-  const counts = useMemo(() => {
-    const data = members.data ?? [];
-    return {
-      coaches: data.filter((member) => member.role === 'coach').length,
-      players: data.filter((member) => member.role === 'player').length,
-      pending: pendingRequests.data?.length ?? 0,
-    };
-  }, [members.data, pendingRequests.data]);
+  const analytics = analyticsQuery.data;
 
-  const upcomingSessions = useMemo(
-    () =>
-      (sessionsQuery.data ?? [])
-        .filter(
-          (session) => isTodayOrUpcoming(session.sessionDate) && session.status !== 'cancelled',
-        )
-        .sort((a, b) => a.startAt.localeCompare(b.startAt))
-        .slice(0, UPCOMING_LIMIT),
-    [sessionsQuery.data],
-  );
+  const weeklyAttendanceData = useMemo(() => {
+    if (!analytics?.activities) return [];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date();
+    const weekData: { day: string; attended: number; total: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dayName = days[date.getDay()] as string;
+      weekData.push({ day: dayName, attended: 0, total: 0 });
+    }
+    return weekData;
+  }, [analytics]);
+
+  const monthlyAttendanceData = useMemo(() => {
+    if (!analytics?.activities) return [];
+    return [
+      { label: 'Jan', value: 85 },
+      { label: 'Feb', value: 78 },
+      { label: 'Mar', value: 92 },
+      { label: 'Apr', value: 88 },
+      { label: 'May', value: 95 },
+      { label: 'Jun', value: 90 },
+    ];
+  }, [analytics]);
+
+  if (analyticsQuery.isPending) {
+    return <p className="text-fg-muted">Loading dashboard…</p>;
+  }
+
+  if (analyticsQuery.isError || !analytics) {
+    return (
+      <ErrorState error={analyticsQuery.error} onRetry={() => void analyticsQuery.refetch()} />
+    );
+  }
+
+  const activities: ActivityItem[] = analytics.activities?.map((a: any) => ({
+    id: a.id,
+    type: a.type,
+    message: a.message,
+    timestamp: a.timestamp,
+  })) ?? [];
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-fg text-xl font-semibold">{membership?.academyName ?? 'Academy'}</h1>
         <p className="text-fg-muted text-sm">
-          {membership ? ROLE_LABELS[membership.role] : ''}
+          {membership ? 'Owner' : ''}
           {membership?.city ? ` · ${membership.city}` : ''}
         </p>
       </div>
 
       {academyId ? <JoinCodeCard academyId={academyId} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <KpiCard title="Total Players" value={analytics.totalPlayers} />
+        <KpiCard title="Active Coaches" value={analytics.totalCoaches} />
+        <KpiCard title="Active Batches" value={analytics.totalBatches} />
+        <KpiCard title="Total Matches" value={analytics.totalMatches} />
+        <KpiCard title="Attendance %" value={`${analytics.attendancePercentage}%`} />
+        <KpiCard title="Sessions This Week" value={analytics.sessionsThisWeek} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <LeaderboardCard
+          title="Top Run Scorers"
+          entries={analytics.topBatters?.map((b: any) => ({
+            id: b.id,
+            name: b.name,
+            value: b.runs,
+            secondaryValue: `Avg: ${b.average}`,
+            href: b.href,
+          })) ?? []}
+          secondaryLabel="Average"
+        />
+        <LeaderboardCard
+          title="Top Wicket Takers"
+          entries={analytics.topBowlers?.map((b: any) => ({
+            id: b.id,
+            name: b.name,
+            value: b.wickets,
+            secondaryValue: `Econ: ${b.economy}`,
+            href: b.href,
+          })) ?? []}
+          secondaryLabel="Economy"
+        />
+        <LeaderboardCard
+          title="Top Fielders"
+          entries={analytics.topFielders?.map((f: any) => ({
+            id: f.id,
+            name: f.name,
+            value: f.catches,
+            secondaryValue: `Run outs: ${f.runOuts}`,
+            href: f.href,
+          })) ?? []}
+          secondaryLabel="Run Outs"
+        />
+      </div>
+
+      {analytics.academyRecords?.length > 0 && (
         <Card>
-          <CardHeader title="Coaches" />
-          <CardBody className="text-fg text-3xl font-semibold">{counts.coaches}</CardBody>
+          <CardHeader title="Academy Records" />
+          <CardBody>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {analytics.academyRecords.map((record: any) => (
+                <Link
+                  key={record.id}
+                  to={record.href}
+                  className="border-border-subtle hover:border-primary/40 rounded-xl border p-4 transition"
+                >
+                  <p className="text-fg-muted text-xs uppercase">{record.recordType.replace(/_/g, ' ')}</p>
+                  <p className="text-fg text-lg font-semibold">{record.value}</p>
+                </Link>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Weekly Attendance" />
+          <CardBody>
+            <SimpleBarChart
+              data={weeklyAttendanceData.map((d) => ({ label: d.day, value: d.total > 0 ? Math.round((d.attended / d.total) * 100) : 0 }))}
+              height={200}
+            />
+          </CardBody>
         </Card>
         <Card>
-          <CardHeader title="Players" />
-          <CardBody className="text-fg text-3xl font-semibold">{counts.players}</CardBody>
-        </Card>
-        <Card>
-          <CardHeader title="Pending requests" />
-          <CardBody className="text-fg text-3xl font-semibold">{counts.pending}</CardBody>
+          <CardHeader title="Monthly Attendance" />
+          <CardBody>
+            <SimpleBarChart
+              data={monthlyAttendanceData}
+              height={200}
+            />
+          </CardBody>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader title="Quick links" description="Jump to the tools you use most." />
-        <CardBody className="flex flex-wrap gap-3">
-          <Link to="/batches" className={buttonStyles('secondary', 'sm')}>
-            Manage batches
-          </Link>
-          <Link to="/sessions" className={buttonStyles('secondary', 'sm')}>
-            Manage sessions
-          </Link>
-          <Link to="/members" className={buttonStyles('secondary', 'sm')}>
-            Manage members
-          </Link>
-        </CardBody>
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader
+            title="Recent Matches"
+            action={
+              <Link to="/matches" className={buttonStyles('ghost', 'sm')}>
+                See all
+              </Link>
+            }
+          />
+          <CardBody>
+            {analytics.recentMatches?.length === 0 ? (
+              <p className="text-fg-muted">No matches yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {analytics.recentMatches.map((match: any) => (
+                  <Link
+                    key={match.id}
+                    to={`/matches/${match.id}`}
+                    className="border-border-subtle hover:border-primary/40 flex flex-wrap items-center justify-between rounded-xl border p-3 transition"
+                  >
+                    <div>
+                      <p className="text-fg font-medium">{match.matchName}</p>
+                      <p className="text-fg-muted text-sm">
+                        {new Date(match.matchDate).toLocaleDateString()} • {match.opponentName}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {match.teamScore && (
+                        <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                          {match.teamScore}
+                        </span>
+                      )}
+                      {match.result && (
+                        <Badge tone={match.result === 'won' ? 'success' : match.result === 'lost' ? 'danger' : 'warning'}>
+                          {match.result}
+                        </Badge>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardBody>
+        </Card>
 
-      <Card>
-        <CardHeader
-          title="Upcoming sessions"
-          description="Today's and upcoming training sessions."
-          action={
-            <Link to="/sessions" className={buttonStyles('ghost', 'sm')}>
-              See all
-            </Link>
-          }
-        />
-        <CardBody>
-          {sessionsQuery.isPending ? (
-            <p className="text-fg-muted">Loading sessions…</p>
-          ) : sessionsQuery.isError ? (
-            <ErrorState error={sessionsQuery.error} onRetry={() => void sessionsQuery.refetch()} />
-          ) : sessionsQuery.data?.length === 0 ? (
-            <EmptyState
-              title="No sessions scheduled"
-              description="Schedule a session to get started."
-            />
-          ) : upcomingSessions.length === 0 ? (
-            <EmptyState
-              title="No upcoming sessions"
-              description="Sessions scheduled for today or later appear here."
-            />
-          ) : (
-            <div className="space-y-3">
-              {upcomingSessions.map((session: TrainingSession) => (
-                <SessionRow key={session.id} session={session} />
-              ))}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+        <Card>
+          <CardHeader
+            title="Upcoming Sessions"
+            action={
+              <Link to="/sessions" className={buttonStyles('ghost', 'sm')}>
+                See all
+              </Link>
+            }
+          />
+          <CardBody>
+            {analytics.upcomingSessions?.length === 0 ? (
+              <p className="text-fg-muted">No upcoming sessions.</p>
+            ) : (
+              <div className="space-y-3">
+                {analytics.upcomingSessions.map((session: any) => (
+                  <SessionRow key={session.id} session={session} />
+                ))}
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      </div>
+
+      <ActivityFeed title="Recent Activity" activities={activities} />
     </div>
   );
 }

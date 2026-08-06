@@ -49,3 +49,114 @@ export const ROLE_HOME: Record<AppRole, string> = {
   coach: '/coach',
   player: '/me',
 };
+
+/** === MATCH MODULE ENUMS === */
+
+export const MATCH_FORMATS = ['t20', 'odi', 'test', 't10', 'custom'] as const;
+export type MatchFormat = (typeof MATCH_FORMATS)[number];
+
+export const MATCH_FORMAT_LABELS: Record<MatchFormat, string> = {
+  t20: 'T20',
+  odi: 'ODI',
+  test: 'Test',
+  t10: 'T10',
+  custom: 'Custom',
+};
+
+export const MATCH_TYPES = ['practice', 'friendly', 'league', 'tournament'] as const;
+export type MatchType = (typeof MATCH_TYPES)[number];
+
+export const MATCH_TYPE_LABELS: Record<MatchType, string> = {
+  practice: 'Practice',
+  friendly: 'Friendly',
+  league: 'League',
+  tournament: 'Tournament',
+};
+
+export const MATCH_RESULTS = ['won', 'lost', 'tie', 'no_result'] as const;
+export type MatchResult = (typeof MATCH_RESULTS)[number];
+
+export const MATCH_RESULT_LABELS: Record<MatchResult, string> = {
+  won: 'Won',
+  lost: 'Lost',
+  tie: 'Tie',
+  no_result: 'No Result',
+};
+
+export const MATCH_STATUSES = ['created', 'in_progress', 'completed', 'cancelled'] as const;
+export type MatchStatus = (typeof MATCH_STATUSES)[number];
+
+export const MATCH_STATUS_LABELS: Record<MatchStatus, string> = {
+  created: 'Draft',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+export const MILESTONE_TYPES = [
+  'debut_match',
+  'first_fifty',
+  'first_century',
+  'first_five_wicket_haul',
+  'runs_100',
+  'runs_500',
+  'runs_1000',
+  'wickets_50',
+  'wickets_100',
+  'catches_25',
+] as const;
+export type MilestoneType = (typeof MILESTONE_TYPES)[number];
+
+export const MILESTONE_LABELS: Record<MilestoneType, string> = {
+  debut_match: 'Debut Match',
+  first_fifty: 'First Fifty',
+  first_century: 'First Century',
+  first_five_wicket_haul: 'First Five-Wicket Haul',
+  runs_100: '100 Career Runs',
+  runs_500: '500 Career Runs',
+  runs_1000: '1000 Career Runs',
+  wickets_50: '50 Career Wickets',
+  wickets_100: '100 Career Wickets',
+  catches_25: '25 Career Catches',
+};
+
+export const RECORD_TYPES = [
+  'highest_team_score',
+  'lowest_team_score',
+  'biggest_victory',
+  'highest_successful_chase',
+  'highest_partnership',
+  'most_runs_one_match',
+  'most_wickets_one_match',
+  'most_sixes',
+  'most_fours',
+] as const;
+export type RecordType = (typeof RECORD_TYPES)[number];
+
+export const RECORD_LABELS: Record<RecordType, string> = {
+  highest_team_score: 'Highest Team Score',
+  lowest_team_score: 'Lowest Team Score',
+  biggest_victory: 'Biggest Victory',
+  highest_successful_chase: 'Highest Successful Chase',
+  highest_partnership: 'Highest Partnership',
+  most_runs_one_match: 'Most Runs in One Match',
+  most_wickets_one_match: 'Most Wickets in One Match',
+  most_sixes: 'Most Sixes',
+  most_fours: 'Most Fours',
+};
+
+export const AWARD_TYPES = [
+  'player_of_match',
+  'best_batter',
+  'best_bowler',
+  'best_fielder',
+] as const;
+export type AwardType = (typeof AWARD_TYPES)[number];
+
+export const AWARD_LABELS: Record<AwardType, string> = {
+  player_of_match: 'Player of the Match',
+  best_batter: 'Best Batter',
+  best_bowler: 'Best Bowler',
+  best_fielder: 'Best Fielder',
+};
+

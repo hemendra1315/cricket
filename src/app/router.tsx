@@ -14,9 +14,11 @@ const JoinAcademyPage = lazy(() => import('@/features/onboarding/pages/JoinAcade
 const PendingApprovalPage = lazy(() => import('@/features/onboarding/pages/PendingApprovalPage'));
 const SelectAcademyPage = lazy(() => import('@/features/onboarding/pages/SelectAcademyPage'));
 const MembersPage = lazy(() => import('@/features/members/pages/MembersPage'));
-const MemberProfilePage = lazy(() => import('@/features/members/pages/MemberProfilePage'));
+const PlayerProfilePage = lazy(() => import('@/features/players/pages/PlayerProfilePage'));
 const BatchesPage = lazy(() => import('@/features/batches/pages/BatchesPage'));
 const BatchDetailPage = lazy(() => import('@/features/batches/pages/BatchDetailPage'));
+const MatchesPage = lazy(() => import('@/features/matches/pages/MatchesPage'));
+const MatchDetailPage = lazy(() => import('@/features/matches/pages/MatchDetailPage'));
 const TrainingSessionsPage = lazy(() => import('@/features/sessions/pages/TrainingSessionsPage'));
 const TrainingSessionDetailPage = lazy(
   () => import('@/features/sessions/pages/TrainingSessionDetailPage'),
@@ -95,20 +97,22 @@ export const router = createBrowserRouter([
                   { path: '/drills/:drillId', element: <DrillDetailPage /> },
                 ],
               },
-              {
-                element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
-                children: [
-                  { path: '/members', element: <MembersPage /> },
-                  { path: '/members/:memberId', element: <MemberProfilePage /> },
-                  { path: '/members/:memberId/attendance', element: <PlayerAttendancePage /> },
-                  { path: '/batches', element: <BatchesPage /> },
-                  { path: '/batches/:batchId', element: <BatchDetailPage /> },
-                  { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
-                  { path: '/sessions', element: <TrainingSessionsPage /> },
-                  { path: '/sessions/:sessionId', element: <TrainingSessionDetailPage /> },
-                  { path: '/sessions/:sessionId/attendance', element: <AttendanceSessionPage /> },
-                ],
-              },
+                {
+                  element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
+                  children: [
+                    { path: '/members', element: <MembersPage /> },
+                    { path: '/members/:memberId', element: <PlayerProfilePage /> },
+                    { path: '/members/:memberId/attendance', element: <PlayerAttendancePage /> },
+                    { path: '/batches', element: <BatchesPage /> },
+                    { path: '/batches/:batchId', element: <BatchDetailPage /> },
+                    { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
+                    { path: '/matches', element: <MatchesPage /> },
+                    { path: '/matches/:matchId', element: <MatchDetailPage /> },
+                    { path: '/sessions', element: <TrainingSessionsPage /> },
+                    { path: '/sessions/:sessionId', element: <TrainingSessionDetailPage /> },
+                    { path: '/sessions/:sessionId/attendance', element: <AttendanceSessionPage /> },
+                  ],
+                },
             ],
           },
         ],

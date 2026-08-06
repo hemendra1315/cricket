@@ -1,54 +1,31 @@
 import { Link } from 'react-router-dom';
-import { useMemo } from 'react';
 
+import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
 import { EmptyState, ErrorState } from '@/components/feedback';
-import { buttonStyles, Card, CardBody, CardHeader } from '@/components/ui';
+import { buttonStyles } from '@/components/ui/buttonStyles';
 import { useActiveAcademy } from '@/features/academies';
-import { useBatches } from '@/features/batches';
-import { useTrainingSessions } from '@/features/sessions';
-import { isToday, isTodayOrUpcoming } from '@/lib/utils/date';
-import { SessionRow } from '../components/SessionRow';
+import { useCoachDashboardAnalytics } from '../hooks/useDashboardAnalytics';
+import { ActivityFeed } from '../components/ActivityFeed';
+import type { ActivityItem } from '../components/ActivityFeed';
 
-const UPCOMING_LIMIT = 6;
-
-/** Coach home: the batches you're coaching and the sessions you're running. */
 export default function CoachDashboardPage() {
   const { academyId, membership } = useActiveAcademy();
   const coachId = membership?.id ?? null;
-  const batchesQuery = useBatches(academyId);
-  const sessionsQuery = useTrainingSessions(academyId);
+  const analyticsQuery = useCoachDashboardAnalytics(academyId, coachId);
 
-  const assignedBatches = useMemo(
-    () => batchesQuery.data?.filter((batch) => batch.coachId === coachId) ?? [],
-    [batchesQuery.data, coachId],
-  );
+  const analytics = analyticsQuery.data;
 
-  const upcomingSessions = useMemo(
-    () =>
-      (sessionsQuery.data ?? [])
-        .filter(
-          (session) =>
-            session.coachId === coachId &&
-            isTodayOrUpcoming(session.sessionDate) &&
-            session.status !== 'cancelled',
-        )
-        .sort((a, b) => a.startAt.localeCompare(b.startAt))
-        .slice(0, UPCOMING_LIMIT),
-    [sessionsQuery.data, coachId],
-  );
+  if (analyticsQuery.isPending) {
+    return <p className="text-fg-muted">Loading dashboard…</p>;
+  }
 
-  const todaySession = useMemo(
-    () =>
-      (sessionsQuery.data ?? [])
-        .filter(
-          (session) =>
-            session.coachId === coachId &&
-            isToday(session.sessionDate) &&
-            session.status !== 'cancelled',
-        )
-        .sort((a, b) => a.startAt.localeCompare(b.startAt))[0] ?? null,
-    [sessionsQuery.data, coachId],
-  );
+  if (analyticsQuery.isError || !analytics) {
+    return (
+      <ErrorState error={analyticsQuery.error} onRetry={() => void analyticsQuery.refetch()} />
+    );
+  }
+
+  const activities: ActivityItem[] = [];
 
   return (
     <div className="space-y-4">
@@ -63,25 +40,115 @@ export default function CoachDashboardPage() {
           <Link to="/batches" className={buttonStyles('secondary', 'sm')}>
             My batches
           </Link>
-          {todaySession ? (
+          {analytics.todaySession ? (
             <Link
-              to={`/sessions/${todaySession.id}/attendance`}
+              to={`/sessions/${analytics.todaySession.id}/attendance`}
               className={buttonStyles('primary', 'sm')}
             >
-              Mark attendance: {todaySession.title}
+              Mark attendance: {analytics.todaySession.title}
             </Link>
           ) : (
             <Link to="/sessions" className={buttonStyles('primary', 'sm')}>
               Mark attendance
             </Link>
           )}
+          <Link to="/matches" className={buttonStyles('secondary', 'sm')}>
+            Add Match
+          </Link>
+          <Link to="/drills" className={buttonStyles('secondary', 'sm')}>
+            Assign Drill
+          </Link>
         </CardBody>
       </Card>
 
+      {analytics.todaySession && (
+        <Card>
+          <CardHeader title="Today's Session" description="Session scheduled for today" />
+          <CardBody>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-fg text-lg font-semibold">{analytics.todaySession.title}</p>
+                <p className="text-fg-muted text-sm">
+                  {analytics.todaySession.startAt} - {analytics.todaySession.endAt}
+                </p>
+                {analytics.todaySession.batchName && (
+                  <p className="text-fg-muted text-sm">Batch: {analytics.todaySession.batchName}</p>
+                )}
+              </div>
+              <Link
+                to={`/sessions/${analytics.todaySession.id}/attendance`}
+                className={buttonStyles('primary', 'sm')}
+              >
+                Mark Attendance
+              </Link>
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader title="Team Performance" description="Last 5 matches summary" />
+        <CardBody>
+          <div className="grid gap-4 sm:grid-cols-4">
+            <div>
+              <p className="text-fg-muted text-xs uppercase">Matches</p>
+              <p className="text-fg text-2xl font-semibold">{analytics.recentMatches?.length ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-fg-muted text-xs uppercase">Wins</p>
+              <p className="text-success text-2xl font-semibold">{analytics.wins}</p>
+            </div>
+            <div>
+              <p className="text-fg-muted text-xs uppercase">Losses</p>
+              <p className="text-danger text-2xl font-semibold">{analytics.losses}</p>
+            </div>
+            <div>
+              <p className="text-fg-muted text-xs uppercase">Win Rate</p>
+              <p className="text-fg text-2xl font-semibold">
+                {analytics.recentMatches?.length > 0
+                  ? Math.round((analytics.wins / analytics.recentMatches.length) * 100)
+                  : 0}%
+              </p>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      {analytics.playersNeedingAttention?.length > 0 && (
+        <Card>
+          <CardHeader title="Players Needing Attention" description="Low attendance, pending drills, or no recent feedback" />
+          <CardBody>
+            <div className="space-y-3">
+              {analytics.playersNeedingAttention.map((player: any) => (
+                <Link
+                  key={player.id}
+                  to={`/members/${player.id}`}
+                  className="border-border-subtle hover:border-primary/40 flex flex-wrap items-center justify-between rounded-xl border p-3 transition"
+                >
+                  <div>
+                    <p className="text-fg font-medium">{player.name}</p>
+                    <p className="text-fg-muted text-sm">
+                      Attendance: {player.attendanceRate}%
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {player.issues.map((issue: string, idx: number) => (
+                      <Badge key={idx} tone="warning">
+                        {issue}
+                      </Badge>
+                    ))}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
       <Card>
         <CardHeader
-          title="Assigned batches"
-          description="Training groups you are coaching."
+          title="Assigned Batches"
+          description="Training groups you are coaching"
           action={
             <Link to="/batches" className={buttonStyles('ghost', 'sm')}>
               See all
@@ -89,18 +156,11 @@ export default function CoachDashboardPage() {
           }
         />
         <CardBody>
-          {batchesQuery.isPending ? (
-            <p className="text-fg-muted">Loading batches…</p>
-          ) : batchesQuery.isError ? (
-            <ErrorState error={batchesQuery.error} onRetry={() => void batchesQuery.refetch()} />
-          ) : assignedBatches.length === 0 ? (
-            <EmptyState
-              title="No batches assigned"
-              description="You are not coaching any batches yet."
-            />
+          {analytics.assignedBatches?.length === 0 ? (
+            <EmptyState title="No batches assigned" description="You are not coaching any batches yet." />
           ) : (
             <div className="space-y-3">
-              {assignedBatches.map((batch) => (
+              {analytics.assignedBatches.map((batch: any) => (
                 <Link
                   key={batch.id}
                   to={`/batches/${batch.id}`}
@@ -125,30 +185,50 @@ export default function CoachDashboardPage() {
 
       <Card>
         <CardHeader
-          title="Upcoming sessions"
-          description="Sessions you are coaching today or later."
+          title="Recent Matches"
           action={
-            <Link to="/sessions" className={buttonStyles('ghost', 'sm')}>
+            <Link to="/matches" className={buttonStyles('ghost', 'sm')}>
               See all
             </Link>
           }
         />
         <CardBody>
-          {sessionsQuery.isPending ? (
-            <p className="text-fg-muted">Loading sessions…</p>
-          ) : sessionsQuery.isError ? (
-            <ErrorState error={sessionsQuery.error} onRetry={() => void sessionsQuery.refetch()} />
-          ) : upcomingSessions.length === 0 ? (
-            <EmptyState title="No upcoming sessions" description="Nothing scheduled yet." />
+          {analytics.recentMatches?.length === 0 ? (
+            <p className="text-fg-muted">No matches yet.</p>
           ) : (
             <div className="space-y-3">
-              {upcomingSessions.map((session) => (
-                <SessionRow key={session.id} session={session} />
+              {analytics.recentMatches.map((match: any) => (
+                <Link
+                  key={match.id}
+                  to={`/matches/${match.id}`}
+                  className="border-border-subtle hover:border-primary/40 flex flex-wrap items-center justify-between rounded-xl border p-3 transition"
+                >
+                  <div>
+                    <p className="text-fg font-medium">{match.matchName}</p>
+                    <p className="text-fg-muted text-sm">
+                      {new Date(match.matchDate).toLocaleDateString()} • {match.opponentName}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {match.teamScore && (
+                      <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                        {match.teamScore}
+                      </span>
+                    )}
+                    {match.result && (
+                      <Badge tone={match.result === 'won' ? 'success' : match.result === 'lost' ? 'danger' : 'warning'}>
+                        {match.result}
+                      </Badge>
+                    )}
+                  </div>
+                </Link>
               ))}
             </div>
           )}
         </CardBody>
       </Card>
+
+      <ActivityFeed title="Recent Activity" activities={activities} />
     </div>
   );
 }

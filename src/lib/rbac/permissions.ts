@@ -16,6 +16,8 @@ export const CAPABILITIES = [
   'coaches:manage',
   'batches:read',
   'batches:manage',
+  'matches:read',
+  'matches:manage',
   'sessions:read',
   'sessions:manage',
   'attendance:read',
@@ -37,6 +39,7 @@ export const CAPABILITIES = [
 export type Capability = (typeof CAPABILITIES)[number];
 
 const PLAYER: Capability[] = [
+  'players:read',
   'sessions:read',
   'attendance:read',
   'drills:read',
@@ -51,6 +54,7 @@ const COACH: Capability[] = [
   'players:read',
   'coaches:read',
   'batches:read',
+  'matches:read',
   'sessions:read',
   'sessions:manage',
   'attendance:read',
@@ -76,6 +80,8 @@ const OWNER: Capability[] = [
   'coaches:manage',
   'batches:read',
   'batches:manage',
+  'matches:read',
+  'matches:manage',
   'sessions:read',
   'sessions:manage',
   'attendance:read',
