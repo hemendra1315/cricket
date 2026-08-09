@@ -2,6 +2,15 @@
 import { unwrap } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { UUID } from '@/types';
+import {
+  fetchPlayerStatistics,
+  fetchPlayerMatches,
+  fetchPlayerAwards,
+  fetchPlayerMilestones,
+  fetchPlayerChartData,
+  fetchPlayerAttendanceSummary,
+  fetchPlayerDrillSummary,
+} from '@/features/players/api/playersApi';
 
 // ============================================================
 // OWNER DASHBOARD ANALYTICS
@@ -387,79 +396,22 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
 
 export async function fetchPlayerDashboardAnalytics(academyId: UUID, playerId: UUID) {
   const [
-    statsResult,
-    battingRows,
-    bowlingRows,
-    awardsRowsForRecent,
+    statistics,
+    matches,
+    awards,
+    milestones,
+    chartData,
+    attendance,
+    drillSummary,
     upcomingSessionsResult,
-    assignmentsResult,
-    awardsResult,
-    highlightsResult,
-    chartDataResult,
   ] = await Promise.all([
-    // Player statistics
-    unwrap<any>(
-      (supabase as any)
-        .from('player_statistics')
-        .select('*')
-        .eq('academy_id', academyId)
-        .eq('player_id', playerId)
-        .maybeSingle(),
-    ),
-    // Recent matches – batting
-    unwrap<any[]>(
-      (supabase as any)
-        .from('match_batting')
-        .select(
-          `
-          match_id,
-          runs, balls, fours, sixes, is_out,
-          matches!inner(id, match_name, match_date, opponent_name, result)
-        `,
-        )
-        .eq('academy_member_id', playerId)
-        .eq('matches.academy_id', academyId)
-        .eq('matches.status', 'completed')
-        .order('matches.match_date', { ascending: false })
-        .limit(5),
-    ),
-    // Bowling (joined in app)
-    unwrap<any[]>(
-      (supabase as any)
-        .from('match_bowling')
-        .select(
-          `
-          match_id,
-          overs, maidens, runs_conceded, wickets, wides, no_balls,
-          matches!inner(id, match_name, match_date)
-        `,
-        )
-        .eq('academy_member_id', playerId)
-        .eq('matches.academy_id', academyId)
-        .eq('matches.status', 'completed')
-        .order('matches.match_date', { ascending: false })
-        .limit(5),
-    ),
-    // Awards (joined in app)
-    unwrap<any[]>(
-      (supabase as any)
-        .from('match_awards')
-        .select(
-          `
-          match_id,
-          player_of_match_id, best_batter_id, best_bowler_id, best_fielder_id,
-          matches!inner(id, match_name, match_date)
-        `,
-        )
-        .eq('matches.academy_id', academyId)
-        .eq('matches.status', 'completed')
-        .or(
-          `player_of_match_id.eq.${playerId},best_batter_id.eq.${playerId},best_bowler_id.eq.${playerId},best_fielder_id.eq.${playerId}`,
-        )
-        .order('matches.match_date', { ascending: false })
-        .limit(5),
-    ),
-    // Upcoming sessions
+    fetchPlayerStatistics(academyId, playerId),
+    fetchPlayerMatches(academyId, playerId),
+    fetchPlayerAwards(academyId, playerId),
+    fetchPlayerMilestones(academyId, playerId),
+    fetchPlayerChartData(academyId, playerId),
+    fetchPlayerAttendanceSummary(academyId, playerId),
+    fetchPlayerDrillSummary(academyId, playerId),
     unwrap<any[]>(
       (supabase as any)
         .from('training_sessions')
@@ -475,157 +427,46 @@ export async function fetchPlayerDashboardAnalytics(academyId: UUID, playerId: U
         .order('session_date', { ascending: true })
         .limit(3),
     ),
-    // Drill assignments
-    unwrap<any[]>(
-      (supabase as any)
-        .from('drill_assignments')
-        .select(
-          `
-          id, status, assigned_at, due_date,
-          drills!inner(name, category)
-        `,
-        )
-        .eq('academy_id', academyId)
-        .eq('player_id', playerId)
-        .order('assigned_at', { ascending: false })
-        .limit(10),
-    ),
-    // Awards
-    unwrap<any[]>(
-      (supabase as any)
-        .from('match_awards')
-        .select(
-          `
-          id, match_id,
-          matches!inner(match_name, match_date)
-        `,
-        )
-        .eq('matches.status', 'completed')
-        .or(
-          `player_of_match_id.eq.${playerId},best_batter_id.eq.${playerId},best_bowler_id.eq.${playerId},best_fielder_id.eq.${playerId}`,
-        )
-        .order('matches.match_date', { ascending: false })
-        .limit(5),
-    ),
-    // Career highlights
-    unwrap<any[]>(
-      (supabase as any)
-        .from('player_milestones')
-        .select('milestone_type, achieved_at, match_id')
-        .eq('academy_id', academyId)
-        .eq('player_id', playerId)
-        .order('achieved_at', { ascending: false })
-        .limit(10),
-    ),
-    // Chart data
-    unwrap<any[]>(
-      (supabase as any)
-        .from('match_batting')
-        .select(
-          `
-          runs, balls,
-          matches!inner(match_date)
-        `,
-        )
-        .eq('academy_member_id', playerId)
-        .order('matches.match_date', { ascending: true })
-        .limit(10),
-    ),
   ]);
 
-  const stats = statsResult
+  const stats = statistics
     ? {
-        matchesPlayed: statsResult.matches_played,
-        battingRuns: statsResult.batting_runs,
-        bowlingWickets: statsResult.bowling_wickets,
+        matchesPlayed: statistics.matchesPlayed,
+        battingRuns: statistics.battingRuns,
+        bowlingWickets: statistics.bowlingWickets,
         battingAverage:
-          statsResult.batting_innings > 0
-            ? (statsResult.batting_runs / statsResult.batting_innings).toFixed(2)
+          statistics.battingInnings > 0
+            ? (statistics.battingRuns / statistics.battingInnings).toFixed(2)
             : '0.00',
         strikeRate:
-          (statsResult.balls_faced_sum ?? 0) > 0
-            ? ((statsResult.batting_runs / statsResult.balls_faced_sum) * 100).toFixed(2)
+          (statistics as any).balls_faced_sum > 0
+            ? ((statistics.battingRuns / (statistics as any).balls_faced_sum) * 100).toFixed(2)
             : '0.00',
         economy:
-          statsResult.bowling_overs > 0
-            ? (statsResult.bowling_runs_conceded / statsResult.bowling_overs).toFixed(2)
+          statistics.bowlingOvers > 0
+            ? (statistics.bowlingRunsConceded / statistics.bowlingOvers).toFixed(2)
             : '0.00',
-        attendancePercentage: 0,
+        attendancePercentage: attendance.attendancePercentage,
       }
     : null;
 
-  const battingByMatch = new Map<string, any>();
-  for (const row of battingRows) {
-    const match = row.matches;
-    battingByMatch.set(match.id, {
-      id: match.id,
-      matchName: match.match_name,
-      matchDate: match.match_date,
-      opponentName: match.opponent_name,
-      result: match.result,
-      batting: { runs: row.runs, balls: row.balls },
-      bowling: null,
-      awards: {
-        playerOfMatch: false,
-        bestBatter: false,
-        bestBowler: false,
-        bestFielder: false,
-      },
-    });
-  }
-
-  for (const row of bowlingRows) {
-    const match = row.matches;
-    const existing = battingByMatch.get(match.id) ?? {
-      id: match.id,
-      matchName: match.match_name,
-      matchDate: match.match_date,
-      opponentName: match.opponent_name,
-      result: match.result,
-      batting: null,
-      awards: {
-        playerOfMatch: false,
-        bestBatter: false,
-        bestBowler: false,
-        bestFielder: false,
-      },
-    };
-    existing.bowling = {
-      wickets: row.wickets,
-      runsConceded: row.runs_conceded,
-    };
-    battingByMatch.set(match.id, existing);
-  }
-
-  for (const row of awardsRowsForRecent) {
-    const match = row.matches;
-    const existing = battingByMatch.get(match.id) ?? {
-      id: match.id,
-      matchName: match.match_name,
-      matchDate: match.match_date,
-      opponentName: match.opponent_name,
-      result: match.result,
-      batting: null,
-      bowling: null,
-      awards: {
-        playerOfMatch: false,
-        bestBatter: false,
-        bestBowler: false,
-        bestFielder: false,
-      },
-    };
-    existing.awards = {
-      playerOfMatch: row.player_of_match_id === playerId,
-      bestBatter: row.best_batter_id === playerId,
-      bestBowler: row.best_bowler_id === playerId,
-      bestFielder: row.best_fielder_id === playerId,
-    };
-    battingByMatch.set(match.id, existing);
-  }
-
-  const recentMatches = Array.from(battingByMatch.values())
-    .sort((a, b) => b.matchDate.localeCompare(a.matchDate))
-    .slice(0, 5);
+  const recentMatches = matches.slice(0, 5).map((m: any) => ({
+    id: m.id,
+    matchName: m.matchName,
+    matchDate: m.matchDate,
+    opponentName: m.opponentName,
+    result: m.result,
+    batting: m.batting ? { runs: m.batting.runs, balls: m.batting.balls } : null,
+    bowling: m.bowling
+      ? { wickets: m.bowling.wickets, runsConceded: m.bowling.runsConceded }
+      : null,
+    awards: {
+      playerOfMatch: m.awards.playerOfMatch,
+      bestBatter: m.awards.bestBatter,
+      bestBowler: m.awards.bestBowler,
+      bestFielder: m.awards.bestFielder,
+    },
+  }));
 
   const upcomingSessions = (upcomingSessionsResult ?? []).map((session: any) => ({
     id: session.id,
@@ -640,30 +481,38 @@ export async function fetchPlayerDashboardAnalytics(academyId: UUID, playerId: U
     },
   }));
 
-  const pendingAssignments = (assignmentsResult ?? []).filter((a: any) => a.status === 'assigned');
-  const completedAssignments = (assignmentsResult ?? []).filter(
-    (a: any) => a.status === 'completed',
-  );
+  const pendingAssignments = drillSummary.recentAssignments
+    .filter((a: any) => a.status === 'assigned')
+    .map((a: any) => ({
+      ...a,
+      drill: { name: a.drillName, category: a.category },
+    }));
 
-  const recentAwards = (awardsResult ?? []).map((award: any) => ({
+  const completedAssignments = drillSummary.recentAssignments
+    .filter((a: any) => a.status === 'completed')
+    .map((a: any) => ({
+      ...a,
+      drill: { name: a.drillName, category: a.category },
+    }));
+
+  const recentAwards = awards.slice(0, 5).map((award: any) => ({
     id: award.id,
-    matchId: award.match_id,
-    matchName: award.matches?.match_name ?? 'Unknown',
-    matchDate: award.matches?.match_date ?? null,
+    matchId: award.matchId,
+    matchName: award.matchName,
+    matchDate: award.matchDate,
   }));
 
-  const careerHighlights = (highlightsResult ?? []).map((milestone: any) => ({
-    type: milestone.milestone_type,
-    label: milestone.milestone_type.replace(/_/g, ' '),
+  const careerHighlights = milestones.slice(0, 10).map((milestone: any) => ({
+    type: milestone.milestoneType,
+    label: milestone.milestoneType.replace(/_/g, ' '),
     value: null,
-    matchId: milestone.match_id,
+    matchId: milestone.matchId,
     matchName: null,
   }));
 
-  // Calculate runs trend
-  const runsTrend = (chartDataResult ?? []).map((row: any) => ({
-    matchName: '',
-    matchDate: row.matches?.match_date ?? '',
+  const runsTrend = chartData.runsByMatch.slice(0, 10).map((row: any) => ({
+    matchName: row.matchName,
+    matchDate: row.matchDate,
     runs: row.runs,
   }));
 
