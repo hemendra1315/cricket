@@ -84,6 +84,10 @@ create table academy_records (
 );
 create index academy_records_academy_idx on academy_records (academy_id);
 
+-- A helper table so strike_rate can be computed accurately (sum of balls faced)
+-- NOTE: must be created BEFORE the ranking views below (they reference it).
+-- This column is populated by refresh_player_statistics() when matches complete.
+alter table player_statistics add column if not exists balls_faced_sum integer not null default 0;
 -- ============================================================
 -- RANKING VIEWS (derived from player_statistics — always current)
 -- ============================================================
@@ -165,6 +169,4 @@ create or replace view v_overall_rankings as
   join profiles p on p.id = am.user_id
   order by (ps.batting_runs + ps.bowling_wickets * 20 + ps.fielding_catches * 10) desc nulls last;
 
--- A helper table so strike_rate can be computed accurately (sum of balls faced)
--- We add the balls_faced column if it doesn't exist; this is populated by the RPC
-alter table player_statistics add column if not exists balls_faced_sum integer not null default 0;
+

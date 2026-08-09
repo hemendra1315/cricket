@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
@@ -168,11 +169,11 @@ export function usePlayerUpcomingSessions(playerId: UUID | null, academyId: UUID
     enabled: Boolean(academyId) && Boolean(playerId),
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from('sessions')
+        .from('training_sessions')
         .select(
           `
-          id, title, session_date, start_at, end_at, ground,
-          session_coaches!left(coach_id, academy_members!inner(profiles!inner(full_name)))
+          id, title, session_date, start_at, end_at,
+          academy_members!training_sessions_coach_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name))
         `,
         )
         .eq('academy_id', academyId)
@@ -189,8 +190,8 @@ export function usePlayerUpcomingSessions(playerId: UUID | null, academyId: UUID
         sessionDate: row.session_date,
         startAt: row.start_at,
         endAt: row.end_at,
-        ground: row.ground,
-        coachName: row.session_coaches?.academy_members?.profiles?.full_name ?? null,
+        ground: null,
+        coachName: row.academy_members?.profiles?.full_name ?? null,
       }));
     },
   });

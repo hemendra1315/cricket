@@ -1,3 +1,45 @@
+-- ============================================================
+-- FUNCTION: my_player_id
+-- Returns the academy_members.id for the current auth user
+-- within the supplied academy.
+-- ============================================================
+create or replace function my_player_id(p_academy uuid)
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select id
+  from academy_members
+  where academy_id = p_academy
+    and user_id = auth.uid()
+    and status = 'active'
+  limit 1;
+$$;
+
+grant execute on function my_player_id(uuid) to authenticated;
+-- ============================================================
+-- FUNCTION: my_player_id
+-- Returns the academy_members.id for the current auth user
+-- within the supplied academy.
+-- ============================================================
+create or replace function my_player_id(p_academy uuid)
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select id
+  from academy_members
+  where academy_id = p_academy
+    and user_id = auth.uid()
+    and status = 'active'
+  limit 1;
+$$;
+
+grant execute on function my_player_id(uuid) to authenticated;
 -- Match Management Module: RLS policies + save_match_result RPC
 
 -- ============================================================
@@ -20,30 +62,30 @@ alter table academy_records enable row level security;
 create policy matches_select on matches for select using (is_member(academy_id));
 create policy matches_write on matches for all using (is_staff(academy_id)) with check (is_staff(academy_id));
 
--- Sub-tables: staff read/write; players read own where applicable
-create policy match_lineups_select on match_lineups for select using (is_staff(academy_id));
-create policy match_lineups_write on match_lineups for all using (is_staff(academy_id)) with check (is_staff(academy_id));
+-- Sub-tables only have match_id (no academy_id). Resolve the academy via matches (see 0017) so policies never reference a nonexistent academy_id column.
+create policy match_lineups_select on match_lineups for select using (exists (select 1 from matches m where m.id = match_lineups.match_id and is_member(m.academy_id)));
+create policy match_lineups_write on match_lineups for all using (exists (select 1 from matches m where m.id = match_lineups.match_id and is_staff(m.academy_id))) with check (exists (select 1 from matches m where m.id = match_lineups.match_id and is_staff(m.academy_id)));
 
-create policy match_batting_select on match_batting for select using (is_staff(academy_id) or academy_member_id = my_player_id(academy_id));
-create policy match_batting_write on match_batting for all using (is_staff(academy_id)) with check (is_staff(academy_id));
+create policy match_batting_select on match_batting for select using (exists (select 1 from matches m where m.id = match_batting.match_id and (is_member(m.academy_id) or match_batting.academy_member_id = my_player_id(m.academy_id))));
+create policy match_batting_write on match_batting for all using (exists (select 1 from matches m where m.id = match_batting.match_id and is_staff(m.academy_id))) with check (exists (select 1 from matches m where m.id = match_batting.match_id and is_staff(m.academy_id)));
 
-create policy match_bowling_select on match_bowling for select using (is_staff(academy_id) or academy_member_id = my_player_id(academy_id));
-create policy match_bowling_write on match_bowling for all using (is_staff(academy_id)) with check (is_staff(academy_id));
+create policy match_bowling_select on match_bowling for select using (exists (select 1 from matches m where m.id = match_bowling.match_id and (is_member(m.academy_id) or match_bowling.academy_member_id = my_player_id(m.academy_id))));
+create policy match_bowling_write on match_bowling for all using (exists (select 1 from matches m where m.id = match_bowling.match_id and is_staff(m.academy_id))) with check (exists (select 1 from matches m where m.id = match_bowling.match_id and is_staff(m.academy_id)));
 
-create policy match_bowling_spells_select on match_bowling_spells for select using (is_staff(academy_id));
-create policy match_bowling_spells_write on match_bowling_spells for all using (is_staff(academy_id)) with check (is_staff(academy_id));
+create policy match_bowling_spells_select on match_bowling_spells for select using (exists (select 1 from matches m where m.id = match_bowling_spells.match_id and is_member(m.academy_id)));
+create policy match_bowling_spells_write on match_bowling_spells for all using (exists (select 1 from matches m where m.id = match_bowling_spells.match_id and is_staff(m.academy_id))) with check (exists (select 1 from matches m where m.id = match_bowling_spells.match_id and is_staff(m.academy_id)));
 
-create policy match_fielding_select on match_fielding for select using (is_staff(academy_id) or academy_member_id = my_player_id(academy_id));
-create policy match_fielding_write on match_fielding for all using (is_staff(academy_id)) with check (is_staff(academy_id));
+create policy match_fielding_select on match_fielding for select using (exists (select 1 from matches m where m.id = match_fielding.match_id and (is_member(m.academy_id) or match_fielding.academy_member_id = my_player_id(m.academy_id))));
+create policy match_fielding_write on match_fielding for all using (exists (select 1 from matches m where m.id = match_fielding.match_id and is_staff(m.academy_id))) with check (exists (select 1 from matches m where m.id = match_fielding.match_id and is_staff(m.academy_id)));
 
-create policy match_partnerships_select on match_partnerships for select using (is_staff(academy_id));
-create policy match_partnerships_write on match_partnerships for all using (is_staff(academy_id)) with check (is_staff(academy_id));
+create policy match_partnerships_select on match_partnerships for select using (exists (select 1 from matches m where m.id = match_partnerships.match_id and is_member(m.academy_id)));
+create policy match_partnerships_write on match_partnerships for all using (exists (select 1 from matches m where m.id = match_partnerships.match_id and is_staff(m.academy_id))) with check (exists (select 1 from matches m where m.id = match_partnerships.match_id and is_staff(m.academy_id)));
 
-create policy match_awards_select on match_awards for select using (is_staff(academy_id));
-create policy match_awards_write on match_awards for all using (is_staff(academy_id)) with check (is_staff(academy_id));
+create policy match_awards_select on match_awards for select using (exists (select 1 from matches m where m.id = match_awards.match_id and is_member(m.academy_id)));
+create policy match_awards_write on match_awards for all using (exists (select 1 from matches m where m.id = match_awards.match_id and is_staff(m.academy_id))) with check (exists (select 1 from matches m where m.id = match_awards.match_id and is_staff(m.academy_id)));
 
-create policy match_coach_notes_select on match_coach_notes for select using (is_staff(academy_id));
-create policy match_coach_notes_write on match_coach_notes for all using (is_staff(academy_id)) with check (is_staff(academy_id));
+create policy match_coach_notes_select on match_coach_notes for select using (exists (select 1 from matches m where m.id = match_coach_notes.match_id and is_member(m.academy_id)));
+create policy match_coach_notes_write on match_coach_notes for all using (exists (select 1 from matches m where m.id = match_coach_notes.match_id and is_staff(m.academy_id))) with check (exists (select 1 from matches m where m.id = match_coach_notes.match_id and is_staff(m.academy_id)));
 
 create policy player_stats_select on player_statistics for select using (is_staff(academy_id) or player_id = my_player_id(academy_id));
 create policy player_stats_write on player_statistics for all using (is_owner(academy_id) or is_super_admin()) with check (true);
@@ -217,6 +259,28 @@ declare
   v_match_wickets integer;
   v_match_id uuid;
   v_best_bowling text;
+  -- 0016 fix: the *_dummy SELECT INTO targets used below were never declared,
+  -- which raised PL/pgSQL errors (this made the whole match RPC unusable).
+  v_batting_innings_dummy integer;
+  v_batting_highest_dummy integer;
+  v_batting_not_outs_dummy integer;
+  v_batting_fifties_dummy integer;
+  v_batting_centuries_dummy integer;
+  v_batting_fours_dummy integer;
+  v_batting_sixes_dummy integer;
+  v_balls_faced_dummy integer;
+  v_bowling_innings_dummy integer;
+  v_bowling_overs_dummy numeric(6,1);
+  v_bowling_maidens_dummy integer;
+  v_bowling_runs_dummy integer;
+  v_bowling_wickets_dummy integer;
+  v_fielding_catches_dummy integer;
+  v_fielding_run_outs_dummy integer;
+  v_fielding_stumpings_dummy integer;
+  v_awards_pom_dummy integer;
+  v_awards_best_batter_dummy integer;
+  v_awards_best_bowler_dummy integer;
+  v_awards_best_fielder_dummy integer;
 begin
   -- Aggregate batting stats from all completed matches where the player batted
   select

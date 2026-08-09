@@ -7,7 +7,7 @@ alter table drill_assignments
 create index drill_assignments_assigned_by_idx on drill_assignments (assigned_by);
 create index drill_assignments_assigned_date_idx on drill_assignments (assigned_date);
 
-alter policy drill_assignments_update on drill_assignments for update using (
+alter policy drill_assignments_update on drill_assignments using (
   is_staff(academy_id)
   or exists (
     select 1

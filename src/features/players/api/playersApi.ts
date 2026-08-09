@@ -62,7 +62,10 @@ export async function fetchPlayerProfile(academyId: UUID, playerId: UUID): Promi
 // PLAYER STATISTICS
 // ============================================================
 
-export async function fetchPlayerStatistics(academyId: UUID, playerId: UUID): Promise<PlayerStatistics | null> {
+export async function fetchPlayerStatistics(
+  academyId: UUID,
+  playerId: UUID,
+): Promise<PlayerStatistics | null> {
   const row = await unwrap<any>(
     (supabase as any)
       .from('player_statistics')
@@ -108,43 +111,80 @@ export async function fetchPlayerStatistics(academyId: UUID, playerId: UUID): Pr
 // ============================================================
 
 export async function fetchPlayerMatches(academyId: UUID, playerId: UUID): Promise<PlayerMatch[]> {
-  const rows = await unwrap<any[]>(
-    (supabase as any)
-      .from('match_lineups')
-      .select(
-        `
-        match_id,
-        matches!inner(
-          id, match_name, match_date, opponent_name, tournament, match_type, format, result, winning_margin, status
-        ),
-        match_batting!left(
-          runs, balls, fours, sixes, is_out, dismissal_type
-        ),
-        match_bowling!left(
-          overs, maidens, runs_conceded, wickets, wides, no_balls
-        ),
-        match_fielding!left(
-          catches, run_outs, stumpings
-        ),
-        match_awards!left(
-          player_of_match_id, best_batter_id, best_bowler_id, best_fielder_id
+  const matchSelect = `
+    id, match_name, match_date, opponent_name, tournament, match_type, format, result, winning_margin, status
+  `;
+
+  const [battingRows, bowlingRows, fieldingRows, awardsRows] = await Promise.all([
+    unwrap<any[]>(
+      (supabase as any)
+        .from('match_batting')
+        .select(
+          `
+          match_id,
+          runs, balls, fours, sixes, is_out, dismissal_type,
+          matches!inner(${matchSelect})
+        `,
         )
-      `,
-      )
-      .eq('academy_members.academy_id', academyId)
-      .eq('academy_member_id', playerId)
-      .eq('matches.status', 'completed')
-      .order('matches.match_date', { ascending: false }),
-  );
+        .eq('academy_member_id', playerId)
+        .eq('matches.academy_id', academyId)
+        .eq('matches.status', 'completed')
+        .order('matches.match_date', { ascending: false }),
+    ),
+    unwrap<any[]>(
+      (supabase as any)
+        .from('match_bowling')
+        .select(
+          `
+          match_id,
+          overs, maidens, runs_conceded, wickets, wides, no_balls,
+          matches!inner(${matchSelect})
+        `,
+        )
+        .eq('academy_member_id', playerId)
+        .eq('matches.academy_id', academyId)
+        .eq('matches.status', 'completed')
+        .order('matches.match_date', { ascending: false }),
+    ),
+    unwrap<any[]>(
+      (supabase as any)
+        .from('match_fielding')
+        .select(
+          `
+          match_id,
+          catches, run_outs, stumpings,
+          matches!inner(${matchSelect})
+        `,
+        )
+        .eq('academy_member_id', playerId)
+        .eq('matches.academy_id', academyId)
+        .eq('matches.status', 'completed')
+        .order('matches.match_date', { ascending: false }),
+    ),
+    unwrap<any[]>(
+      (supabase as any)
+        .from('match_awards')
+        .select(
+          `
+          match_id,
+          player_of_match_id, best_batter_id, best_bowler_id, best_fielder_id,
+          matches!inner(${matchSelect})
+        `,
+        )
+        .eq('matches.academy_id', academyId)
+        .eq('matches.status', 'completed')
+        .or(
+          `player_of_match_id.eq.${playerId},best_batter_id.eq.${playerId},best_bowler_id.eq.${playerId},best_fielder_id.eq.${playerId}`,
+        )
+        .order('matches.match_date', { ascending: false }),
+    ),
+  ]);
 
-  return rows.map((row: any) => {
+  const map = new Map<string, any>();
+
+  for (const row of battingRows) {
     const match = row.matches;
-    const batting = row.match_batting?.[0] ?? null;
-    const bowling = row.match_bowling?.[0] ?? null;
-    const fielding = row.match_fielding?.[0] ?? null;
-    const awards = row.match_awards?.[0] ?? null;
-
-    return {
+    map.set(match.id, {
       id: match.id,
       matchName: match.match_name,
       matchDate: match.match_date,
@@ -155,41 +195,121 @@ export async function fetchPlayerMatches(academyId: UUID, playerId: UUID): Promi
       result: match.result,
       winningMargin: match.winning_margin,
       status: match.status,
-      batting: batting
-        ? {
-            runs: batting.runs,
-            balls: batting.balls,
-            fours: batting.fours,
-            sixes: batting.sixes,
-            isOut: batting.is_out,
-            dismissalType: batting.dismissal_type,
-          }
-        : null,
-      bowling: bowling
-        ? {
-            overs: bowling.overs,
-            maidens: bowling.maidens,
-            runsConceded: bowling.runs_conceded,
-            wickets: bowling.wickets,
-            wides: bowling.wides,
-            noBalls: bowling.no_balls,
-          }
-        : null,
-      fielding: fielding
-        ? {
-            catches: fielding.catches,
-            runOuts: fielding.run_outs,
-            stumpings: fielding.stumpings,
-          }
-        : null,
+      batting: {
+        runs: row.runs,
+        balls: row.balls,
+        fours: row.fours,
+        sixes: row.sixes,
+        isOut: row.is_out,
+        dismissalType: row.dismissal_type,
+      },
+      bowling: null,
+      fielding: null,
       awards: {
-        playerOfMatch: awards?.player_of_match_id === playerId,
-        bestBatter: awards?.best_batter_id === playerId,
-        bestBowler: awards?.best_bowler_id === playerId,
-        bestFielder: awards?.best_fielder_id === playerId,
+        playerOfMatch: false,
+        bestBatter: false,
+        bestBowler: false,
+        bestFielder: false,
+      },
+    });
+  }
+
+  for (const row of bowlingRows) {
+    const match = row.matches;
+    const existing = map.get(match.id) ?? {
+      id: match.id,
+      matchName: match.match_name,
+      matchDate: match.match_date,
+      opponentName: match.opponent_name,
+      tournament: match.tournament,
+      matchType: match.match_type,
+      format: match.format,
+      result: match.result,
+      winningMargin: match.winning_margin,
+      status: match.status,
+      batting: null,
+      fielding: null,
+      awards: {
+        playerOfMatch: false,
+        bestBatter: false,
+        bestBowler: false,
+        bestFielder: false,
       },
     };
-  });
+    existing.bowling = {
+      overs: row.overs,
+      maidens: row.maidens,
+      runsConceded: row.runs_conceded,
+      wickets: row.wickets,
+      wides: row.wides,
+      noBalls: row.no_balls,
+    };
+    map.set(match.id, existing);
+  }
+
+  for (const row of fieldingRows) {
+    const match = row.matches;
+    const existing = map.get(match.id) ?? {
+      id: match.id,
+      matchName: match.match_name,
+      matchDate: match.match_date,
+      opponentName: match.opponent_name,
+      tournament: match.tournament,
+      matchType: match.match_type,
+      format: match.format,
+      result: match.result,
+      winningMargin: match.winning_margin,
+      status: match.status,
+      batting: null,
+      bowling: null,
+      awards: {
+        playerOfMatch: false,
+        bestBatter: false,
+        bestBowler: false,
+        bestFielder: false,
+      },
+    };
+    existing.fielding = {
+      catches: row.catches,
+      runOuts: row.run_outs,
+      stumpings: row.stumpings,
+    };
+    map.set(match.id, existing);
+  }
+
+  for (const row of awardsRows) {
+    const match = row.matches;
+    const existing = map.get(match.id) ?? {
+      id: match.id,
+      matchName: match.match_name,
+      matchDate: match.match_date,
+      opponentName: match.opponent_name,
+      tournament: match.tournament,
+      matchType: match.match_type,
+      format: match.format,
+      result: match.result,
+      winningMargin: match.winning_margin,
+      status: match.status,
+      batting: null,
+      bowling: null,
+      fielding: null,
+      awards: {
+        playerOfMatch: false,
+        bestBatter: false,
+        bestBowler: false,
+        bestFielder: false,
+      },
+    };
+    existing.awards = {
+      playerOfMatch: row.player_of_match_id === playerId,
+      bestBatter: row.best_batter_id === playerId,
+      bestBowler: row.best_bowler_id === playerId,
+      bestFielder: row.best_fielder_id === playerId,
+    };
+    map.set(match.id, existing);
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.matchDate.localeCompare(a.matchDate));
 }
 
 // ============================================================
@@ -209,7 +329,9 @@ export async function fetchPlayerAwards(academyId: UUID, playerId: UUID): Promis
       )
       .eq('matches.academy_id', academyId)
       .eq('matches.status', 'completed')
-      .or(`player_of_match_id.eq.${playerId},best_batter_id.eq.${playerId},best_bowler_id.eq.${playerId},best_fielder_id.eq.${playerId}`)
+      .or(
+        `player_of_match_id.eq.${playerId},best_batter_id.eq.${playerId},best_bowler_id.eq.${playerId},best_fielder_id.eq.${playerId}`,
+      )
       .order('matches.match_date', { ascending: false }),
   );
 
@@ -235,7 +357,10 @@ export async function fetchPlayerAwards(academyId: UUID, playerId: UUID): Promis
 // PLAYER MILESTONES
 // ============================================================
 
-export async function fetchPlayerMilestones(academyId: UUID, playerId: UUID): Promise<PlayerMilestone[]> {
+export async function fetchPlayerMilestones(
+  academyId: UUID,
+  playerId: UUID,
+): Promise<PlayerMilestone[]> {
   const rows = await unwrap<any[]>(
     (supabase as any)
       .from('player_milestones')
@@ -257,14 +382,17 @@ export async function fetchPlayerMilestones(academyId: UUID, playerId: UUID): Pr
 // PLAYER COACH NOTES
 // ============================================================
 
-export async function fetchPlayerCoachNotes(academyId: UUID, playerId: UUID): Promise<PlayerCoachNote[]> {
+export async function fetchPlayerCoachNotes(
+  academyId: UUID,
+  playerId: UUID,
+): Promise<PlayerCoachNote[]> {
   const rows = await unwrap<any[]>(
     (supabase as any)
       .from('match_coach_notes')
       .select(
         `
         id, match_id, notes, created_at, updated_at,
-        matches!inner(match_name, match_date),
+        matches!inner(match_name, match_date, academy_id),
         coach:coach_id(profiles!academy_members_user_id_fkey!inner(full_name))
       `,
       )
@@ -295,7 +423,7 @@ export async function fetchPlayerAttendanceSummary(
 ): Promise<PlayerAttendanceSummary> {
   const { data: records, error } = await (supabase as any)
     .from('attendance')
-    .select('status, session:sessions(session_date)')
+    .select('status, session:training_sessions(session_date)')
     .eq('academy_id', academyId)
     .eq('player_id', playerId);
 
@@ -494,10 +622,12 @@ export async function fetchPlayerChartData(
     }));
 
   const attendanceSummary = await fetchPlayerAttendanceSummary(academyId, playerId);
-  const attendanceTrend = attendanceSummary.monthlyData.map((md: { month: string; attended: number; total: number }) => ({
-    month: md.month,
-    percentage: Math.round((md.attended / md.total) * 100),
-  }));
+  const attendanceTrend = attendanceSummary.monthlyData.map(
+    (md: { month: string; attended: number; total: number }) => ({
+      month: md.month,
+      percentage: Math.round((md.attended / md.total) * 100),
+    }),
+  );
 
   return {
     runsByMatch,
