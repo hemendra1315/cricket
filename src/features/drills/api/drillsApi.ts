@@ -24,6 +24,12 @@ const DRILL_COLUMNS = `
   updated_at
 `;
 
+// `drill_assignments.player_id` references `academy_members(id)` via
+// `drill_assignments_player_id_fkey`. `drill_assignments` also reaches
+// `academy_members` indirectly through `batch_id → batches.coach_id`, so the
+// embed must use the explicit FK hint. Within `academy_members`, `profiles`
+// has two FKs (`user_id`, `invited_by`) so the `profiles` embed must use
+// `academy_members_user_id_fkey` explicitly.
 const ASSIGNMENT_COLUMNS = `
   id,
   academy_id,
@@ -31,14 +37,13 @@ const ASSIGNMENT_COLUMNS = `
   player_id,
   batch_id,
   status,
-  assigned_by,
-  assigned_date,
+  assigned_at,
   due_date,
   created_by,
   updated_at,
   drill:drills(id, name, category, description, duration_minutes, difficulty),
   batch:batches(id, name),
-  player:academy_members(id, user_id, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url))
+  player:academy_members!drill_assignments_player_id_fkey(id, user_id, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url))
 `;
 
 function toDrill(row: any): Drill {
@@ -74,8 +79,8 @@ function toDrillAssignment(row: any): DrillAssignment {
     batchId: row.batch_id,
     batchName: row.batch?.name ?? null,
     status: row.status,
-    assignedBy: row.assigned_by,
-    assignedAt: row.assigned_date,
+    assignedBy: row.created_by,
+    assignedAt: row.assigned_at,
     dueDate: row.due_date,
     createdBy: row.created_by,
     updatedAt: row.updated_at,
@@ -140,7 +145,7 @@ export async function fetchDrillAssignments(academyId: UUID): Promise<DrillAssig
       .from('drill_assignments')
       .select(ASSIGNMENT_COLUMNS)
       .eq('academy_id', academyId)
-      .order('assigned_date', { ascending: false }),
+      .order('assigned_at', { ascending: false }),
   );
   return rows.map(toDrillAssignment);
 }
@@ -155,7 +160,7 @@ export async function fetchPlayerDrillAssignments(
       .select(ASSIGNMENT_COLUMNS)
       .eq('academy_id', academyId)
       .eq('player_id', playerId)
-      .order('assigned_date', { ascending: false }),
+      .order('assigned_at', { ascending: false }),
   );
   return rows.map(toDrillAssignment);
 }
@@ -171,8 +176,7 @@ export async function assignDrill(input: CreateDrillAssignmentInput): Promise<Dr
         batch_id: input.batchId,
         due_date: input.dueDate,
         status: input.status ?? 'assigned',
-        assigned_by: null,
-        assigned_date: new Date().toISOString(),
+        assigned_at: new Date().toISOString(),
       })
       .select(ASSIGNMENT_COLUMNS)
       .single(),

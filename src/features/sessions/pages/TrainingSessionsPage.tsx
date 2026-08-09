@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Link } from 'react-router-dom';
 
+import { TimeRangePicker } from '@/components/form';
 import {
   Button,
   Card,
@@ -73,6 +73,14 @@ export default function TrainingSessionsPage() {
     if (!startTime || !endTime) {
       pushToast({
         title: 'Select training time',
+        variant: 'error',
+      });
+      return;
+    }
+
+    if (endTime.getTime() <= startTime.getTime()) {
+      pushToast({
+        title: 'End time must be after start time',
         variant: 'error',
       });
       return;
@@ -193,34 +201,13 @@ export default function TrainingSessionsPage() {
                     <p className="text-danger text-xs">{errors.sessionDate.message}</p>
                   ) : null}
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="text-fg block text-sm font-medium">Start time</label>
-                    <DatePicker
-                      selected={startTime}
-                      onChange={(date: Date | null) => setStartTime(date)}
-                      showTimeSelect
-                      showTimeSelectOnly
-                      timeIntervals={30}
-                      dateFormat="h:mm aa"
-                      placeholderText="Start Time"
-                      className="w-full rounded-lg border px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-fg block text-sm font-medium">End time</label>
-                    <DatePicker
-                      selected={endTime}
-                      onChange={(date: Date | null) => setEndTime(date)}
-                      showTimeSelect
-                      showTimeSelectOnly
-                      timeIntervals={30}
-                      dateFormat="h:mm aa"
-                      placeholderText="End Time"
-                      className="w-full rounded-lg border px-3 py-2"
-                    />
-                  </div>
-                </div>
+                <TimeRangePicker
+                  label="Session time"
+                  startTime={startTime}
+                  endTime={endTime}
+                  onStartTimeChange={setStartTime}
+                  onEndTimeChange={setEndTime}
+                />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">

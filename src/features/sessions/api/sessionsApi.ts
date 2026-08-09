@@ -8,7 +8,11 @@ import type {
   UpdateTrainingSessionInput,
 } from './sessionsTypes';
 
-const SESSION_COLUMNS = `id, academy_id, batch_id, title, focus_area, session_date, start_at, end_at, coach_id, status, notes, created_at, updated_at, batch:batches!inner(id, name), coach:academy_members!inner(id, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url))`;
+// `training_sessions.coach_id` references `academy_members(id)` via
+// `training_sessions_coach_id_fkey`. `academy_members` references `profiles`
+// twice (`user_id`, `invited_by`) so the inner `profiles` embed must use
+// `academy_members_user_id_fkey` explicitly.
+const SESSION_COLUMNS = `id, academy_id, batch_id, title, focus_area, session_date, start_at, end_at, coach_id, status, notes, created_at, updated_at, batch:batches!inner(id, name), coach:academy_members!training_sessions_coach_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url))`;
 
 function toTrainingSession(row: any): TrainingSession {
   return {
@@ -26,14 +30,14 @@ function toTrainingSession(row: any): TrainingSession {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     batch: {
-      id: row.batch.id,
-      name: row.batch.name,
+      id: row.batch?.id,
+      name: row.batch?.name ?? '',
     },
     coach: {
-      id: row.coach.id,
-      fullName: row.coach.profiles?.full_name ?? null,
-      email: row.coach.profiles?.email ?? '',
-      avatarUrl: row.coach.profiles?.avatar_url ?? null,
+      id: row.coach?.id,
+      fullName: row.coach?.profiles?.full_name ?? null,
+      email: row.coach?.profiles?.email ?? '',
+      avatarUrl: row.coach?.profiles?.avatar_url ?? null,
     },
   };
 }

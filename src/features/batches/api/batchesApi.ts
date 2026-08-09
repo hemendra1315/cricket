@@ -4,7 +4,10 @@ import { supabase } from '@/lib/supabase/client';
 import type { AcademyMember, UUID } from '@/types';
 import type { Batch, BatchPlayer, CreateBatchInput, UpdateBatchInput } from './batchesTypes';
 
-const BATCH_COLUMNS = `id, academy_id, name, age_group, description, training_days, training_time, coach_id, created_at, updated_at, coach:academy_members!inner(id, role, status, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url))`;
+// `batches.coach_id` references `academy_members(id)` via `batches_coach_id_fkey`.
+// `academy_members` references `profiles` twice (`user_id`, `invited_by`) so the
+// inner `profiles` embed must use `academy_members_user_id_fkey` explicitly.
+const BATCH_COLUMNS = `id, academy_id, name, age_group, description, training_days, training_time, coach_id, created_at, updated_at, coach:academy_members!batches_coach_id_fkey!inner(id, role, status, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url))`;
 
 function toBatch(row: any): Batch {
   return {
@@ -19,12 +22,12 @@ function toBatch(row: any): Batch {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     coach: {
-      id: row.coach.id,
-      fullName: row.coach.profiles?.full_name ?? null,
-      email: row.coach.profiles?.email ?? '',
-      avatarUrl: row.coach.profiles?.avatar_url ?? null,
+      id: row.coach?.id,
+      fullName: row.coach?.profiles?.full_name ?? null,
+      email: row.coach?.profiles?.email ?? '',
+      avatarUrl: row.coach?.profiles?.avatar_url ?? null,
     },
-    playerCount: row.player_count ?? 0,
+    playerCount: row.batch_members?.[0]?.count ?? 0,
   };
 }
 
@@ -46,7 +49,7 @@ export async function fetchAcademyBatches(academyId: UUID): Promise<Batch[]> {
   const rows = await unwrap<any[]>(
     (supabase as any)
       .from('batches')
-      .select(`${BATCH_COLUMNS}, player_count:batch_members!left(count)`)
+      .select(`${BATCH_COLUMNS}, batch_members(count)`)
       .eq('academy_id', academyId)
       .order('created_at', { ascending: false }),
   );
@@ -59,7 +62,7 @@ export async function fetchBatchPlayers(batchId: UUID): Promise<BatchPlayer[]> {
     (supabase as any)
       .from('batch_members')
       .select(
-        'id, batch_id, academy_member_id, joined_at, academy_members!batch_members_academy_member_id_fkey( id, role, status, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url) )',
+        'id, batch_id, academy_member_id, joined_at, academy_members!batch_members_academy_member_id_fkey(id, role, status, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url))',
       )
       .eq('batch_id', batchId)
       .order('joined_at', { ascending: true }),
