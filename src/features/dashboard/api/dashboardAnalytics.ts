@@ -167,7 +167,11 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
     startAt: session.start_at,
     endAt: session.end_at,
     batchName: session.batches?.name ?? null,
-    coachName: session.academy_members?.profiles?.full_name ?? null,
+    coach: {
+      fullName: session.academy_members?.profiles?.full_name ?? null,
+      email: '',
+      avatarUrl: null,
+    },
   }));
 
   const activities = (activityResult ?? []).map((activity: any) => ({
@@ -629,7 +633,11 @@ export async function fetchPlayerDashboardAnalytics(academyId: UUID, playerId: U
     sessionDate: session.session_date,
     startAt: session.start_at,
     endAt: session.end_at,
-    coachName: session.academy_members?.profiles?.full_name ?? null,
+    coach: {
+      fullName: session.academy_members?.profiles?.full_name ?? null,
+      email: '',
+      avatarUrl: null,
+    },
   }));
 
   const pendingAssignments = (assignmentsResult ?? []).filter((a: any) => a.status === 'assigned');
