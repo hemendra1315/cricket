@@ -39,3 +39,7 @@ supabase/.temp
 supabase/.branches
 .vercel
 .env*
+
+.git_disabled/
+
+.git_disabled/
