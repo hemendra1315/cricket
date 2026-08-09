@@ -8,18 +8,7 @@
 -- ============================================================================
 
 -- ------------------------------------------------------------- my_player_id --
--- Returns the academy_members.id for the current auth user within a given
--- academy, or NULL if the user is not an active member of that academy.
-create or replace function my_player_id(p_academy uuid) returns uuid
-language sql stable security definer set search_path = public as $$
-  select id
-  from academy_members
-  where academy_id = p_academy
-    and user_id = auth.uid()
-    and status = 'active'
-  limit 1;
-$$;
-
+-- my_player_id() is already defined in 0016. Keep only the grant here.
 grant execute on function my_player_id(uuid) to authenticated;
 
 -- ---------------------------------------------------------- activity_log -----

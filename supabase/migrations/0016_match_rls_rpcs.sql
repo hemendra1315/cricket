@@ -297,7 +297,7 @@ begin
        v_batting_fifties_dummy, v_batting_centuries_dummy
   from match_batting mb
   join matches m on m.id = mb.match_id
-  where mb.academy_member_id = p_player and m.status = 'completed';
+  where mb.academy_member_id = p_player and m.academy_id = p_academy and m.status = 'completed';
   v_batting_runs := coalesce(v_batting_runs, 0);
 
   -- Aggregate bowling stats (convert cricket overs notation to decimal for economy)
