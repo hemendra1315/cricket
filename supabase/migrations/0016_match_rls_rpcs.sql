@@ -242,7 +242,6 @@ $$;
 
 -- ============================================================
 -- FUNCTION: refresh_player_statistics
--- FUNCTION: refresh_player_statistics
 -- Recomputes career statistics for a single player from all
 -- completed matches. Also triggers milestone detection.
 -- ============================================================

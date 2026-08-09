@@ -687,6 +687,23 @@ begin
     end if;
   end if;
 end $$;
+-- ============================================================
+-- FUNCTION: cricket_overs_to_decimal
+-- Converts cricket overs notation (e.g. 4.2 = 4 overs + 2 balls)
+-- to true decimal overs so economy and related stats are accurate.
+-- ============================================================
+create or replace function cricket_overs_to_decimal(p_overs numeric)
+returns numeric
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case
+    when p_overs is null then null
+    else floor(p_overs) + ((p_overs - floor(p_overs)) * 10.0 / 6.0)
+  end;
+$$;
 
 create or replace function refresh_player_statistics(p_academy uuid, p_player uuid)
 returns jsonb
@@ -695,7 +712,6 @@ declare
   v_stats jsonb;
   v_matches_played integer;
   v_batting_runs integer;
-  v_bowling_wickets integer;
   v_fielding_catches integer;
   v_match_runs integer;
   v_match_wickets integer;
@@ -740,13 +756,13 @@ begin
        v_batting_fifties_dummy, v_batting_centuries_dummy
   from match_batting mb
   join matches m on m.id = mb.match_id
-  where mb.academy_member_id = p_player and m.status = 'completed';
+  where mb.academy_member_id = p_player and m.academy_id = p_academy and m.status = 'completed';
   v_batting_runs := coalesce(v_batting_runs, 0);
 
-  -- Aggregate bowling stats
+  -- Aggregate bowling stats (convert cricket overs notation to decimal for economy)
   select
     count(*),
-    round(coalesce(sum(b.overs), 0)::numeric, 1),
+    round(coalesce(sum(cricket_overs_to_decimal(b.overs)), 0)::numeric, 1),
     coalesce(sum(b.maidens), 0),
     coalesce(sum(b.runs_conceded), 0),
     coalesce(sum(b.wickets), 0)
@@ -754,14 +770,14 @@ begin
        v_bowling_runs_dummy, v_bowling_wickets_dummy
   from match_bowling b
   join matches m on m.id = b.match_id
-  where b.academy_member_id = p_player and m.status = 'completed';
+  where b.academy_member_id = p_player and m.academy_id = p_academy and m.status = 'completed';
 
   -- Best bowling: most wickets, tie-break by fewer runs
   select b.wickets || '/' || b.runs_conceded
   into v_best_bowling
   from match_bowling b
   join matches m on m.id = b.match_id
-  where b.academy_member_id = p_player and m.status = 'completed' and b.wickets > 0
+  where b.academy_member_id = p_player and m.academy_id = p_academy and m.status = 'completed' and b.wickets > 0
   order by b.wickets desc, b.runs_conceded asc
   limit 1;
 
@@ -773,23 +789,23 @@ begin
   into v_fielding_catches_dummy, v_fielding_run_outs_dummy, v_fielding_stumpings_dummy
   from match_fielding f
   join matches m on m.id = f.match_id
-  where f.academy_member_id = p_player and m.status = 'completed';
+  where f.academy_member_id = p_player and m.academy_id = p_academy and m.status = 'completed';
 
   -- Matches played (distinct completed matches where player was in lineup or had stats)
   select count(distinct m.id)
   into v_matches_played
   from (
     select m.id from match_lineups ml join matches m on m.id = ml.match_id
-     where ml.academy_member_id = p_player and m.status = 'completed'
+     where ml.academy_member_id = p_player and m.academy_id = p_academy and m.status = 'completed'
     union
     select m.id from match_batting mb join matches m on m.id = mb.match_id
-     where mb.academy_member_id = p_player and m.status = 'completed'
+     where mb.academy_member_id = p_player and m.academy_id = p_academy and m.status = 'completed'
     union
     select m.id from match_fielding mf join matches m on m.id = mf.match_id
-     where mf.academy_member_id = p_player and m.status = 'completed'
+     where mf.academy_member_id = p_player and m.academy_id = p_academy and m.status = 'completed'
   ) m;
 
-  -- Awards counts
+  -- Awards counts (restricted to p_academy — awards from other academies must not leak)
   select
     coalesce(sum(case when ma.player_of_match_id = p_player then 1 else 0 end), 0),
     coalesce(sum(case when ma.best_batter_id = p_player then 1 else 0 end), 0),
@@ -798,7 +814,7 @@ begin
   into v_awards_pom_dummy, v_awards_best_batter_dummy, v_awards_best_bowler_dummy, v_awards_best_fielder_dummy
   from match_awards ma
   join matches m on m.id = ma.match_id
-  where m.status = 'completed';
+  where m.academy_id = p_academy and m.status = 'completed';
 
   -- Upsert player_statistics
   insert into player_statistics (
@@ -911,10 +927,10 @@ begin
       tournament = v_match->>'tournament',
       match_type = v_match->>'match_type',
       format = v_match->>'format',
-      overs = (v_match->>'overs')::numeric(4,1),
+      overs = cricket_overs_to_decimal((v_match->>'overs')::numeric(4,1)),
       team_score = v_match->>'team_score',
       wickets_lost = (v_match->>'wickets_lost')::integer,
-      overs_played = (v_match->>'overs_played')::numeric(4,1),
+      overs_played = cricket_overs_to_decimal((v_match->>'overs_played')::numeric(4,1)),
       result = v_match->>'result',
       winning_margin = v_match->>'winning_margin',
       batch_id = nullif(v_match->>'batch_id', '')::uuid,
@@ -929,9 +945,9 @@ begin
     ) values (
       v_academy_id, v_match->>'match_name', (v_match->>'match_date')::date,
       v_match->>'venue', v_match->>'opponent_name', v_match->>'tournament',
-      v_match->>'match_type', v_match->>'format', (v_match->>'overs')::numeric(4,1),
+      v_match->>'match_type', v_match->>'format', cricket_overs_to_decimal((v_match->>'overs')::numeric(4,1)),
       v_match->>'team_score', (v_match->>'wickets_lost')::integer,
-      (v_match->>'overs_played')::numeric(4,1), v_match->>'result',
+      cricket_overs_to_decimal((v_match->>'overs_played')::numeric(4,1)), v_match->>'result',
       v_match->>'winning_margin', nullif(v_match->>'batch_id', '')::uuid,
       'completed', auth.uid()
     ) returning id into v_match_id;
@@ -1041,7 +1057,7 @@ begin
   if v_match->>'team_score' is not null and v_match->>'team_score' != '' then
     perform record_academy_record(
       v_academy_id, 'most_runs_one_match',
-      (select player_id from match_batting where match_id = v_match_id order by runs desc limit 1),
+      (select academy_member_id from match_batting where match_id = v_match_id order by runs desc limit 1),
       v_match_id,
       (select max(runs) from match_batting where match_id = v_match_id),
       null

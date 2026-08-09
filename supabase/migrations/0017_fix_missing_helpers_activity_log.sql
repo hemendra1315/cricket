@@ -1,7 +1,6 @@
 -- ============================================================================
 -- Fix missing helpers, activity log, and broken RLS policies
--- 1. Define my_player_id() which is referenced by RLS policies in 0016 but
---    was never created.
+-- 1. my_player_id() is now defined in 0016; only the grant is repeated here.
 -- 2. Create activity_log table (referenced by the dashboard but missing).
 -- 3. Fix match sub-table RLS policies that reference a non-existent
 --    academy_id column on tables that only have match_id.
