@@ -59,6 +59,8 @@ function toMatchLineup(row: any): MatchLineup {
     isCaptain: row.is_captain,
     isViceCaptain: row.is_vice_captain,
     isWicketkeeper: row.is_wicketkeeper,
+    isGuest: row.is_guest ?? false,
+    guestName: row.guest_name ?? null,
     player: row.academy_members?.profiles
       ? {
           id: row.academy_members.id,
@@ -66,7 +68,12 @@ function toMatchLineup(row: any): MatchLineup {
           email: row.academy_members.profiles.email,
           avatarUrl: row.academy_members.profiles.avatar_url,
         }
-      : { id: '', fullName: null, email: '', avatarUrl: null },
+      : {
+          id: '',
+          fullName: row.guest_name ? `${row.guest_name} (Guest)` : null,
+          email: '',
+          avatarUrl: null,
+        },
   };
 }
 
@@ -82,6 +89,8 @@ function toMatchBatting(row: any): MatchBatting {
     isOut: row.is_out,
     dismissalType: row.dismissal_type,
     battingOrder: row.batting_order,
+    isGuest: row.is_guest ?? false,
+    guestName: row.guest_name ?? null,
     player: row.academy_members?.profiles
       ? {
           id: row.academy_members.id,
@@ -89,7 +98,12 @@ function toMatchBatting(row: any): MatchBatting {
           email: row.academy_members.profiles.email,
           avatarUrl: row.academy_members.profiles.avatar_url,
         }
-      : { id: '', fullName: null, email: '', avatarUrl: null },
+      : {
+          id: '',
+          fullName: row.guest_name ? `${row.guest_name} (Guest)` : null,
+          email: '',
+          avatarUrl: null,
+        },
   };
 }
 
@@ -104,6 +118,8 @@ function toMatchBowling(row: any): MatchBowling {
     wickets: row.wickets,
     wides: row.wides,
     noBalls: row.no_balls,
+    isGuest: row.is_guest ?? false,
+    guestName: row.guest_name ?? null,
     player: row.academy_members?.profiles
       ? {
           id: row.academy_members.id,
@@ -111,7 +127,12 @@ function toMatchBowling(row: any): MatchBowling {
           email: row.academy_members.profiles.email,
           avatarUrl: row.academy_members.profiles.avatar_url,
         }
-      : { id: '', fullName: null, email: '', avatarUrl: null },
+      : {
+          id: '',
+          fullName: row.guest_name ? `${row.guest_name} (Guest)` : null,
+          email: '',
+          avatarUrl: null,
+        },
   };
 }
 
@@ -123,6 +144,8 @@ function toMatchFielding(row: any): MatchFielding {
     catches: row.catches,
     runOuts: row.run_outs,
     stumpings: row.stumpings,
+    isGuest: row.is_guest ?? false,
+    guestName: row.guest_name ?? null,
     player: row.academy_members?.profiles
       ? {
           id: row.academy_members.id,
@@ -130,7 +153,12 @@ function toMatchFielding(row: any): MatchFielding {
           email: row.academy_members.profiles.email,
           avatarUrl: row.academy_members.profiles.avatar_url,
         }
-      : { id: '', fullName: null, email: '', avatarUrl: null },
+      : {
+          id: '',
+          fullName: row.guest_name ? `${row.guest_name} (Guest)` : null,
+          email: '',
+          avatarUrl: null,
+        },
   };
 }
 
@@ -382,10 +410,10 @@ export async function fetchMatchLineups(matchId: UUID): Promise<MatchLineup[]> {
       .from('match_lineups')
       .select(
         `
-        id, match_id, academy_member_id, batting_order, is_captain, is_vice_captain, is_wicketkeeper,
-        academy_members!inner(
+        id, match_id, academy_member_id, batting_order, is_captain, is_vice_captain, is_wicketkeeper, is_guest, guest_name,
+        academy_members(
           id,
-          profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url)
+          profiles!academy_members_user_id_fkey(full_name, email, avatar_url)
         )
       `,
       )
@@ -406,10 +434,10 @@ export async function fetchMatchBatting(matchId: UUID): Promise<MatchBatting[]> 
       .from('match_batting')
       .select(
         `
-        id, match_id, academy_member_id, runs, balls, fours, sixes, is_out, dismissal_type, batting_order,
-        academy_members!inner(
+        id, match_id, academy_member_id, runs, balls, fours, sixes, is_out, dismissal_type, batting_order, is_guest, guest_name,
+        academy_members(
           id,
-          profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url)
+          profiles!academy_members_user_id_fkey(full_name, email, avatar_url)
         )
       `,
       )
@@ -430,10 +458,10 @@ export async function fetchMatchBowling(matchId: UUID): Promise<MatchBowling[]> 
       .from('match_bowling')
       .select(
         `
-        id, match_id, academy_member_id, overs, maidens, runs_conceded, wickets, wides, no_balls,
-        academy_members!inner(
+        id, match_id, academy_member_id, overs, maidens, runs_conceded, wickets, wides, no_balls, is_guest, guest_name,
+        academy_members(
           id,
-          profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url)
+          profiles!academy_members_user_id_fkey(full_name, email, avatar_url)
         )
       `,
       )
@@ -454,10 +482,10 @@ export async function fetchMatchFielding(matchId: UUID): Promise<MatchFielding[]
       .from('match_fielding')
       .select(
         `
-        id, match_id, academy_member_id, catches, run_outs, stumpings,
-        academy_members!inner(
+        id, match_id, academy_member_id, catches, run_outs, stumpings, is_guest, guest_name,
+        academy_members(
           id,
-          profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url)
+          profiles!academy_members_user_id_fkey(full_name, email, avatar_url)
         )
       `,
       )

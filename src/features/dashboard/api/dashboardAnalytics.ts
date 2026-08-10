@@ -114,7 +114,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
       (supabase as any)
         .from('player_statistics')
         .select(
-          'player_id, batting_runs, batting_innings, academy_members!player_statistics_player_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name))',
+          'player_id, batting_runs, batting_innings, batting_not_outs, academy_members!player_statistics_player_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name))',
         )
         .eq('academy_id', academyId)
         .order('batting_runs', { ascending: false })
@@ -232,16 +232,22 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
     timestamp: activity.created_at,
   }));
 
-  const topBatters = (topBattersResult ?? []).map((player: any) => ({
-    id: player.player_id,
-    name: player.academy_members?.profiles?.full_name ?? 'Unknown',
-    runs: player.batting_runs,
-    average:
+  const topBatters = (topBattersResult ?? []).map((player: any) => {
+    const dismissals = player.batting_innings - (player.batting_not_outs ?? 0);
+    const average =
       player.batting_innings > 0
-        ? (player.batting_runs / player.batting_innings).toFixed(2)
-        : '0.00',
-    href: `/members/${player.player_id}`,
-  }));
+        ? dismissals > 0
+          ? (player.batting_runs / dismissals).toFixed(2)
+          : player.batting_runs.toFixed(2)
+        : '0.00';
+    return {
+      id: player.player_id,
+      name: player.academy_members?.profiles?.full_name ?? 'Unknown',
+      runs: player.batting_runs,
+      average,
+      href: `/members/${player.player_id}`,
+    };
+  });
 
   const topBowlers = (topBowlersResult ?? []).map((player: any) => ({
     id: player.player_id,
@@ -472,6 +478,8 @@ export async function fetchPlayerDashboardAnalytics(academyId: UUID, playerId: U
     ),
   ]);
 
+  const dismissals = statistics ? statistics.battingInnings - statistics.battingNotOuts : 0;
+
   const stats = statistics
     ? {
         matchesPlayed: statistics.matchesPlayed,
@@ -479,11 +487,13 @@ export async function fetchPlayerDashboardAnalytics(academyId: UUID, playerId: U
         bowlingWickets: statistics.bowlingWickets,
         battingAverage:
           statistics.battingInnings > 0
-            ? (statistics.battingRuns / statistics.battingInnings).toFixed(2)
+            ? dismissals > 0
+              ? (statistics.battingRuns / dismissals).toFixed(2)
+              : statistics.battingRuns.toFixed(2)
             : '0.00',
         strikeRate:
-          (statistics as any).balls_faced_sum > 0
-            ? ((statistics.battingRuns / (statistics as any).balls_faced_sum) * 100).toFixed(2)
+          statistics.ballsFacedSum > 0
+            ? ((statistics.battingRuns / statistics.ballsFacedSum) * 100).toFixed(2)
             : '0.00',
         economy:
           statistics.bowlingOvers > 0

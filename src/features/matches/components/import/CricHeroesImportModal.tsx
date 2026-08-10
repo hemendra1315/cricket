@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button, Card, CardBody } from '@/components/ui';
 import { useAcademyMembers } from '@/features/members';
 import { useAcademyMatches } from '../../hooks/useMatches';
@@ -7,6 +8,10 @@ import type { ExtractedMatchData, MappedPlayer } from '../../import/cricheroesPd
 import { parseCricHeroesText } from '../../import/cricheroesPdfParser';
 import { matchPlayers } from '../../import/playerNameMatcher';
 import { checkDuplicateMatch } from '../../import/duplicateMatchChecker';
+import {
+  fetchCricHeroesPlayerMappings,
+  saveCricHeroesPlayerMappings,
+} from '../../api/cricheroesMappingsApi';
 import { PdfUploadStep } from './PdfUploadStep';
 import { TeamSelectStep } from './TeamSelectStep';
 import { PlayerMappingStep } from './PlayerMappingStep';
@@ -31,8 +36,15 @@ export function CricHeroesImportModal({
   const membersQuery = useAcademyMembers(academyId, { status: 'active' });
   const academyMatchesQuery = useAcademyMatches(academyId);
 
+  const mappingsQuery = useQuery({
+    queryKey: ['cricheroes-mappings', academyId],
+    queryFn: () => fetchCricHeroesPlayerMappings(academyId),
+    enabled: Boolean(academyId),
+  });
+
   const members = membersQuery.data ?? [];
   const existingMatches = academyMatchesQuery.data ?? [];
+  const savedMappings = mappingsQuery.data ?? [];
 
   function handleFileLoaded(text: string) {
     const parsed = parseCricHeroesText(text);
@@ -51,7 +63,7 @@ export function CricHeroesImportModal({
       email: m.email,
     }));
 
-    const matched = matchPlayers(allNames, candidates);
+    const matched = matchPlayers(allNames, candidates, savedMappings);
     setMappedPlayers(matched);
 
     // Check duplicate
@@ -76,8 +88,25 @@ export function CricHeroesImportModal({
     }
   }
 
-  function handleFinalizeImport() {
+  async function handleFinalizeImport() {
     if (!extracted) return;
+
+    // Save mapping decisions to database for future imports
+    const mappingsToSave = mappedPlayers
+      .filter((p) => !p.isIgnored)
+      .map((p) => ({
+        cricheroesPlayerId: p.cricheroesPlayerId ?? null,
+        cricheroesName: p.cricheroesName,
+        academyMemberId: p.isGuest ? null : p.academyMemberId,
+        isGuest: p.isGuest,
+        confidenceScore: p.confidenceScore,
+      }));
+
+    try {
+      await saveCricHeroesPlayerMappings(academyId, mappingsToSave);
+    } catch {
+      // Non-blocking: continue import even if mapping save encounters a network glitch
+    }
 
     // Filter relevant innings for academy team
     const academyInnings =

@@ -80,14 +80,20 @@ export default function PlayerProfilePage() {
     (activeTab === 'attendance' && attendanceQuery.isPending) ||
     (activeTab === 'drills' && drillsQuery.isPending);
 
+  const dismissals = statsQuery.data
+    ? statsQuery.data.battingInnings - statsQuery.data.battingNotOuts
+    : 0;
+
   const battingAverage =
     statsQuery.data && statsQuery.data.battingInnings > 0
-      ? (statsQuery.data.battingRuns / statsQuery.data.battingInnings).toFixed(2)
+      ? dismissals > 0
+        ? (statsQuery.data.battingRuns / dismissals).toFixed(2)
+        : statsQuery.data.battingRuns.toFixed(2)
       : '0.00';
 
   const strikeRate =
-    statsQuery.data && statsQuery.data.battingInnings > 0
-      ? ((statsQuery.data.battingRuns / statsQuery.data.battingInnings) * 100).toFixed(2)
+    statsQuery.data && statsQuery.data.ballsFacedSum > 0
+      ? ((statsQuery.data.battingRuns / statsQuery.data.ballsFacedSum) * 100).toFixed(2)
       : '0.00';
 
   const economy =
@@ -377,8 +383,13 @@ function StatisticsTab({
     return <p className="text-fg-muted">No statistics available.</p>;
   }
 
+  const dismissals = stats.battingInnings - stats.battingNotOuts;
   const battingAverage =
-    stats.battingInnings > 0 ? (stats.battingRuns / stats.battingInnings).toFixed(2) : '0.00';
+    stats.battingInnings > 0
+      ? dismissals > 0
+        ? (stats.battingRuns / dismissals).toFixed(2)
+        : stats.battingRuns.toFixed(2)
+      : '0.00';
   const strikeRate =
     stats.ballsFacedSum > 0 ? ((stats.battingRuns / stats.ballsFacedSum) * 100).toFixed(2) : '0.00';
   const bowlingAverage =

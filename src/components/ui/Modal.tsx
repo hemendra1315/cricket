@@ -42,19 +42,21 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : undefined}
         className={cn(
-          'bg-surface border-border-subtle relative w-full rounded-xl border shadow-lg',
+          'bg-surface border-border-subtle relative flex max-h-[90vh] w-full flex-col rounded-xl border shadow-lg',
           SIZES[size],
         )}
       >
-        <div className="border-border-subtle flex items-center justify-between border-b p-4">
+        <div className="border-border-subtle flex shrink-0 items-center justify-between border-b p-4">
           <h2 className="text-fg text-base font-semibold">{title}</h2>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close dialog">
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="p-4">{children}</div>
+        <div className="overflow-y-auto p-4">{children}</div>
         {footer ? (
-          <div className="border-border-subtle flex justify-end gap-2 border-t p-4">{footer}</div>
+          <div className="border-border-subtle flex shrink-0 justify-end gap-2 border-t p-4">
+            {footer}
+          </div>
         ) : null}
       </div>
     </div>,

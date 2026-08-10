@@ -65,6 +65,12 @@ BEGIN
   v_awards     := p_payload->'awards';
   v_notes      := p_payload->'notes';
 
+  -- Authorization check: caller must be a staff member (owner or coach) of p_academy
+  IF NOT is_staff(v_academy_id) THEN
+    RAISE EXCEPTION 'E_FORBIDDEN: User is not authorized to save match results for this academy'
+      USING errcode = '42501';
+  END IF;
+
   -- 1. Create or update the match record
   IF v_match ? 'id' AND v_match->>'id' IS NOT NULL THEN
     v_match_id := (v_match->>'id')::uuid;

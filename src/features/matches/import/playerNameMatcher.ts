@@ -78,14 +78,68 @@ export function calculateSimilarity(name1: string, name2: string): number {
   return score;
 }
 
-/** Automatically match a list of extracted CricHeroes player names against active academy roster */
+export type SavedMappingCandidate = {
+  cricheroesPlayerId?: string | null;
+  cricheroesName: string;
+  academyMemberId: UUID | null;
+  isGuest: boolean;
+};
+
+/** Automatically match a list of extracted CricHeroes player names against active academy roster & saved mappings */
 export function matchPlayers(
   extractedNames: string[],
   academyPlayers: AcademyPlayerCandidate[],
+  savedMappings?: SavedMappingCandidate[],
 ): MappedPlayer[] {
   const uniqueNames = Array.from(new Set(extractedNames.map((n) => n.trim()))).filter(Boolean);
 
+  const savedMap = new Map<string, SavedMappingCandidate>();
+  if (savedMappings) {
+    for (const sm of savedMappings) {
+      if (sm.cricheroesPlayerId) {
+        savedMap.set(sm.cricheroesPlayerId.toLowerCase(), sm);
+      }
+      savedMap.set(sm.cricheroesName.toLowerCase(), sm);
+    }
+  }
+
+  const academyMap = new Map(academyPlayers.map((p) => [p.id, p]));
+
   return uniqueNames.map((chName) => {
+    // 1. Check persistent saved mapping first
+    const saved = savedMap.get(chName.toLowerCase());
+    if (saved) {
+      if (saved.isGuest || !saved.academyMemberId) {
+        return {
+          cricheroesName: chName,
+          cricheroesPlayerId: saved.cricheroesPlayerId,
+          academyMemberId: null,
+          academyMemberName: null,
+          confidenceScore: 100,
+          status: 'guest_player',
+          isGuest: true,
+          isIgnored: false,
+          savedMapping: true,
+        };
+      }
+
+      const member = academyMap.get(saved.academyMemberId);
+      if (member) {
+        return {
+          cricheroesName: chName,
+          cricheroesPlayerId: saved.cricheroesPlayerId,
+          academyMemberId: member.id,
+          academyMemberName: member.fullName ?? member.email,
+          confidenceScore: 100,
+          status: 'exact_match',
+          isGuest: false,
+          isIgnored: false,
+          savedMapping: true,
+        };
+      }
+    }
+
+    // 2. Fallback to Levenshtein name similarity engine
     let bestMatch: AcademyPlayerCandidate | null = null;
     let highestScore = 0;
 
@@ -121,6 +175,7 @@ export function matchPlayers(
       status,
       isGuest,
       isIgnored: false,
+      savedMapping: false,
     };
   });
 }

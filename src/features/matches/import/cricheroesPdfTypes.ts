@@ -70,12 +70,14 @@ export type PlayerMappingStatus =
 
 export type MappedPlayer = {
   cricheroesName: string;
+  cricheroesPlayerId?: string | null;
   academyMemberId: UUID | null; // null if guest or ignored
   academyMemberName: string | null;
   confidenceScore: number; // 0-100
   status: PlayerMappingStatus;
   isGuest: boolean;
   isIgnored: boolean;
+  savedMapping?: boolean;
   initialRole?: 'batter' | 'bowler' | 'allrounder';
 };
 

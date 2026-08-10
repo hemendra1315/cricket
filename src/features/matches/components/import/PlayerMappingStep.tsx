@@ -85,6 +85,8 @@ export function PlayerMappingStep({
                 <td className="px-4 py-3">
                   {player.isIgnored ? (
                     <Badge tone="neutral">Ignored</Badge>
+                  ) : player.savedMapping ? (
+                    <Badge tone="success">Saved Mapping ✓</Badge>
                   ) : player.isGuest ? (
                     <Badge tone="warning">Guest Player</Badge>
                   ) : player.status === 'exact_match' ? (

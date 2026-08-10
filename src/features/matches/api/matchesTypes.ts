@@ -27,11 +27,13 @@ export type Match = {
 export type MatchLineup = {
   id: UUID;
   matchId: UUID;
-  academyMemberId: UUID;
+  academyMemberId: UUID | null;
   battingOrder: number | null;
   isCaptain: boolean;
   isViceCaptain: boolean;
   isWicketkeeper: boolean;
+  isGuest?: boolean;
+  guestName?: string | null;
   player: {
     id: UUID;
     fullName: string | null;
@@ -43,7 +45,7 @@ export type MatchLineup = {
 export type MatchBatting = {
   id: UUID;
   matchId: UUID;
-  academyMemberId: UUID;
+  academyMemberId: UUID | null;
   runs: number;
   balls: number;
   fours: number;
@@ -51,6 +53,8 @@ export type MatchBatting = {
   isOut: boolean;
   dismissalType: string | null;
   battingOrder: number | null;
+  isGuest?: boolean;
+  guestName?: string | null;
   player: {
     id: UUID;
     fullName: string | null;
@@ -62,13 +66,15 @@ export type MatchBatting = {
 export type MatchBowling = {
   id: UUID;
   matchId: UUID;
-  academyMemberId: UUID;
+  academyMemberId: UUID | null;
   overs: number;
   maidens: number;
   runsConceded: number;
   wickets: number;
   wides: number;
   noBalls: number;
+  isGuest?: boolean;
+  guestName?: string | null;
   player: {
     id: UUID;
     fullName: string | null;
@@ -80,10 +86,12 @@ export type MatchBowling = {
 export type MatchFielding = {
   id: UUID;
   matchId: UUID;
-  academyMemberId: UUID;
+  academyMemberId: UUID | null;
   catches: number;
   runOuts: number;
   stumpings: number;
+  isGuest?: boolean;
+  guestName?: string | null;
   player: {
     id: UUID;
     fullName: string | null;
