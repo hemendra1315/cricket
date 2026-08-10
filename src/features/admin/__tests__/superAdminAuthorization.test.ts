@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { hasCapability } from '@/lib/rbac/permissions';
 import type { AppRole } from '@/types/enums';
+import { createPlatformAcademy, deletePlatformAcademy } from '../api/adminApi';
 
-describe('Phase 12 Super Admin Role & Capability Authorization', () => {
+describe('Phase 12 & 13 Super Admin Role & Academy Management Authorization', () => {
   it('grants super_admin platform administration permissions while keeping academy roles distinct', () => {
     const superAdminRoles: AppRole[] = ['super_admin'];
     const ownerRoles: AppRole[] = ['academy_owner'];
@@ -20,5 +21,10 @@ describe('Phase 12 Super Admin Role & Capability Authorization', () => {
     expect(hasCapability(coachRoles, 'attendance:mark')).toBe(true);
     expect(hasCapability(playerRoles, 'stats:read_own')).toBe(true);
     expect(hasCapability(playerRoles, 'members:manage')).toBe(false);
+  });
+
+  it('exposes createPlatformAcademy and deletePlatformAcademy API contracts', () => {
+    expect(typeof createPlatformAcademy).toBe('function');
+    expect(typeof deletePlatformAcademy).toBe('function');
   });
 });

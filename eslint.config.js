@@ -30,7 +30,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['vite.config.ts', 'playwright.config.ts', 'e2e/**/*.ts'],
+    files: ['vite.config.ts', 'playwright.config.ts', 'e2e/**/*.ts', 'scripts/**/*.ts'],
     languageOptions: { globals: globals.node },
     rules: { 'no-console': 'off' },
   },
