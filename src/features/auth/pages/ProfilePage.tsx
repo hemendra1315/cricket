@@ -13,6 +13,7 @@ import {
   Input,
 } from '@/components/ui';
 import { useMemberships } from '@/features/academies';
+import { InstallAppButton, ShareAppButton } from '@/features/pwa';
 import { errorMessage } from '@/lib/api';
 import { profileFormSchema, type ProfileFormValues } from '@/lib/validators';
 import { useUiStore } from '@/stores';
@@ -137,6 +138,17 @@ export default function ProfilePage() {
               </Badge>
             </div>
           ))}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="App"
+          description="Install Cricket Academy Manager on this device or share it with someone."
+        />
+        <CardBody className="flex flex-wrap items-center gap-3">
+          <InstallAppButton />
+          <ShareAppButton />
         </CardBody>
       </Card>
     </div>

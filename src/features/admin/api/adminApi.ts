@@ -115,3 +115,32 @@ export async function fetchPlatformAcademyDetails(
   if (error) throw error;
   return data as unknown as PlatformAcademyDetails;
 }
+
+export interface CreatePlatformAcademyPayload {
+  name: string;
+  ownerUserId: UUID;
+  city?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export async function createPlatformAcademy(
+  payload: CreatePlatformAcademyPayload,
+): Promise<{ id: UUID; name: string }> {
+  const { data, error } = await (supabase.rpc as unknown as RpcCaller)('create_platform_academy', {
+    p_name: payload.name,
+    p_owner_user_id: payload.ownerUserId,
+    p_city: payload.city ?? null,
+    p_contact_email: payload.contactEmail ?? null,
+    p_contact_phone: payload.contactPhone ?? null,
+  });
+  if (error) throw error;
+  return data as unknown as { id: UUID; name: string };
+}
+
+export async function deletePlatformAcademy(academyId: UUID): Promise<void> {
+  const { error } = await (supabase.rpc as unknown as RpcCaller)('delete_platform_academy', {
+    p_academy_id: academyId,
+  });
+  if (error) throw error;
+}

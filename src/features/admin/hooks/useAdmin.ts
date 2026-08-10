@@ -1,10 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UUID } from '@/types';
 import {
   fetchPlatformAnalytics,
   fetchPlatformAcademies,
   fetchPlatformUsers,
   fetchPlatformAcademyDetails,
+  createPlatformAcademy,
+  deletePlatformAcademy,
+  type CreatePlatformAcademyPayload,
 } from '../api/adminApi';
 
 export function usePlatformAnalytics() {
@@ -36,5 +39,33 @@ export function usePlatformAcademyDetails(academyId: UUID | null) {
         ? fetchPlatformAcademyDetails(academyId)
         : Promise.reject(new Error('No academy ID')),
     enabled: Boolean(academyId),
+  });
+}
+
+export function useCreatePlatformAcademy() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreatePlatformAcademyPayload) => createPlatformAcademy(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-analytics'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-users'] });
+      void queryClient.invalidateQueries({ queryKey: ['academies-mine'] });
+    },
+  });
+}
+
+export function useDeletePlatformAcademy() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (academyId: UUID) => deletePlatformAcademy(academyId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-analytics'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-users'] });
+      void queryClient.invalidateQueries({ queryKey: ['academies-mine'] });
+    },
   });
 }

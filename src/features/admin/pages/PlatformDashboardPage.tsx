@@ -1,30 +1,100 @@
 import { useState } from 'react';
-import { Building2, Calendar, ShieldCheck, Trophy, Users } from 'lucide-react';
-import { Card, CardBody, CardHeader, Button, Input, Modal } from '@/components/ui';
-import { ErrorState } from '@/components/feedback';
+import { Building2, Calendar, Plus, ShieldCheck, Trash2, Trophy, Users } from 'lucide-react';
+import { Card, CardBody, CardHeader, Button, Input, Modal, Select } from '@/components/ui';
+import { ConfirmDialog, EmptyState, ErrorState } from '@/components/feedback';
 import { formatDate } from '@/lib/utils/date';
+import { useUiStore } from '@/stores';
 import {
   usePlatformAnalytics,
   usePlatformAcademies,
   usePlatformUsers,
   usePlatformAcademyDetails,
+  useCreatePlatformAcademy,
+  useDeletePlatformAcademy,
 } from '../hooks/useAdmin';
+import type { PlatformAcademy } from '../api/adminApi';
 import type { UUID } from '@/types';
 
 export default function PlatformDashboardPage() {
+  const pushToast = useUiStore((state) => state.pushToast);
   const [activeTab, setActiveTab] = useState<'overview' | 'academies' | 'users'>('overview');
   const [academySearch, setAcademySearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
   const [selectedAcademyId, setSelectedAcademyId] = useState<UUID | null>(null);
+
+  // Create Academy Modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createName, setCreateName] = useState('');
+  const [createOwnerId, setCreateOwnerId] = useState<UUID | ''>('');
+  const [createCity, setCreateCity] = useState('');
+  const [createEmail, setCreateEmail] = useState('');
+  const [createPhone, setCreatePhone] = useState('');
+
+  // Delete Academy Modal state
+  const [academyToDelete, setAcademyToDelete] = useState<PlatformAcademy | null>(null);
 
   const analyticsQuery = usePlatformAnalytics();
   const academiesQuery = usePlatformAcademies();
   const usersQuery = usePlatformUsers();
   const academyDetailsQuery = usePlatformAcademyDetails(selectedAcademyId);
 
+  const createAcademyMutation = useCreatePlatformAcademy();
+  const deleteAcademyMutation = useDeletePlatformAcademy();
+
   const analytics = analyticsQuery.data;
   const academies = academiesQuery.data ?? [];
   const users = usersQuery.data ?? [];
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createName.trim()) {
+      pushToast({ title: 'Academy name is required', variant: 'error' });
+      return;
+    }
+    if (!createOwnerId) {
+      pushToast({ title: 'Please select an owner for the academy', variant: 'error' });
+      return;
+    }
+
+    try {
+      await createAcademyMutation.mutateAsync({
+        name: createName.trim(),
+        ownerUserId: createOwnerId as UUID,
+        city: createCity.trim() || undefined,
+        contactEmail: createEmail.trim() || undefined,
+        contactPhone: createPhone.trim() || undefined,
+      });
+
+      pushToast({ title: 'Academy created successfully', variant: 'success' });
+      setIsCreateModalOpen(false);
+      setCreateName('');
+      setCreateOwnerId('');
+      setCreateCity('');
+      setCreateEmail('');
+      setCreatePhone('');
+    } catch (err) {
+      pushToast({
+        title: 'Failed to create academy',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'error',
+      });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!academyToDelete) return;
+    try {
+      await deleteAcademyMutation.mutateAsync(academyToDelete.id);
+      pushToast({ title: `Deleted academy "${academyToDelete.name}"`, variant: 'success' });
+      setAcademyToDelete(null);
+    } catch (err) {
+      pushToast({
+        title: 'Failed to delete academy',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'error',
+      });
+    }
+  };
 
   const filteredAcademies = academies.filter(
     (a) =>
@@ -51,29 +121,39 @@ export default function PlatformDashboardPage() {
           </p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="bg-surface-subtle border-border-subtle flex rounded-xl border p-1">
+        {/* Tab Navigation & Action */}
+        <div className="flex flex-wrap items-center gap-3">
           <Button
-            variant={activeTab === 'overview' ? 'primary' : 'ghost'}
             size="sm"
-            onClick={() => setActiveTab('overview')}
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2"
           >
-            Overview
+            <Plus className="h-4 w-4" /> Create Academy
           </Button>
-          <Button
-            variant={activeTab === 'academies' ? 'primary' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('academies')}
-          >
-            Academies ({academies.length})
-          </Button>
-          <Button
-            variant={activeTab === 'users' ? 'primary' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('users')}
-          >
-            Users ({users.length})
-          </Button>
+
+          <div className="bg-surface-subtle border-border-subtle flex rounded-xl border p-1">
+            <Button
+              variant={activeTab === 'overview' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('overview')}
+            >
+              Overview
+            </Button>
+            <Button
+              variant={activeTab === 'academies' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('academies')}
+            >
+              Academies ({academies.length})
+            </Button>
+            <Button
+              variant={activeTab === 'users' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('users')}
+            >
+              Users ({users.length})
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -166,7 +246,15 @@ export default function PlatformDashboardPage() {
               {academiesQuery.isPending ? (
                 <p className="text-fg-muted text-sm">Loading academies…</p>
               ) : academies.length === 0 ? (
-                <p className="text-fg-muted text-sm">No academies created yet.</p>
+                <EmptyState
+                  title="No academies created yet"
+                  description="Click below to register the first academy on the platform."
+                  action={
+                    <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
+                      + Create Academy
+                    </Button>
+                  }
+                />
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
@@ -196,7 +284,7 @@ export default function PlatformDashboardPage() {
                           <td className="text-fg py-3">{acad.memberCount}</td>
                           <td className="text-fg py-3">{acad.matchCount}</td>
                           <td className="text-fg-muted py-3">{formatDate(acad.createdAt)}</td>
-                          <td className="py-3 text-right">
+                          <td className="flex items-center justify-end gap-2 py-3 text-right">
                             <Button
                               size="sm"
                               variant="secondary"
@@ -205,6 +293,15 @@ export default function PlatformDashboardPage() {
                               }}
                             >
                               View Details
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-600"
+                              onClick={() => setAcademyToDelete(acad)}
+                              aria-label={`Delete ${acad.name}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </td>
                         </tr>
@@ -225,12 +322,17 @@ export default function PlatformDashboardPage() {
             title="Academy Management"
             description="Manage all registered cricket academies on the platform."
             action={
-              <div className="w-64">
-                <Input
-                  placeholder="Search academy, owner, city..."
-                  value={academySearch}
-                  onChange={(e) => setAcademySearch(e.target.value)}
-                />
+              <div className="flex items-center gap-3">
+                <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
+                  + Create Academy
+                </Button>
+                <div className="w-64">
+                  <Input
+                    placeholder="Search academy, owner, city..."
+                    value={academySearch}
+                    onChange={(e) => setAcademySearch(e.target.value)}
+                  />
+                </div>
               </div>
             }
           />
@@ -487,6 +589,104 @@ export default function PlatformDashboardPage() {
           </div>
         )}
       </Modal>
+
+      {/* CREATE ACADEMY MODAL */}
+      <Modal
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Create Academy"
+        size="md"
+      >
+        <form onSubmit={handleCreateSubmit} noValidate className="space-y-4">
+          <div>
+            <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-name">
+              Academy name *
+            </label>
+            <Input
+              id="create-name"
+              value={createName}
+              onChange={(e) => setCreateName(e.target.value)}
+              placeholder="e.g. Rising Stars Cricket Academy"
+            />
+          </div>
+
+          <div>
+            <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-owner">
+              Owner *
+            </label>
+            <Select
+              id="create-owner"
+              value={createOwnerId}
+              onChange={(e) => setCreateOwnerId(e.target.value as UUID | '')}
+            >
+              <option value="">Select owner</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.fullName ?? user.email}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-city">
+              City
+            </label>
+            <Input
+              id="create-city"
+              value={createCity}
+              onChange={(e) => setCreateCity(e.target.value)}
+              placeholder="City"
+            />
+          </div>
+
+          <div>
+            <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-email">
+              Contact email
+            </label>
+            <Input
+              id="create-email"
+              type="email"
+              value={createEmail}
+              onChange={(e) => setCreateEmail(e.target.value)}
+              placeholder="admin@academy.com"
+            />
+          </div>
+
+          <div>
+            <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-phone">
+              Contact phone
+            </label>
+            <Input
+              id="create-phone"
+              value={createPhone}
+              onChange={(e) => setCreatePhone(e.target.value)}
+              placeholder="9876543210"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setIsCreateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={createAcademyMutation.isPending}>
+              Create Academy
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* DELETE ACADEMY CONFIRMATION */}
+      <ConfirmDialog
+        open={academyToDelete !== null}
+        title={`Delete ${academyToDelete?.name ?? 'academy'}?`}
+        message="This permanently removes the academy from the platform. This action cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        isLoading={deleteAcademyMutation.isPending}
+        onConfirm={() => void handleDeleteConfirm()}
+        onCancel={() => setAcademyToDelete(null)}
+      />
     </div>
   );
 }
