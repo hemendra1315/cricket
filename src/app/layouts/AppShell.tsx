@@ -227,54 +227,142 @@ export function AppShell() {
       <Modal
         open={isMoreMenuOpen}
         onClose={() => setIsMoreMenuOpen(false)}
-        title="Menu & Account"
+        title="More & Account"
         size="sm"
       >
-        <div className="space-y-4 py-2">
-          {/* Navigation Links */}
+        <div className="space-y-5 py-2">
+          {/* Academy Group */}
           <div className="space-y-1">
-            <p className="text-fg-muted mb-2 px-2 text-xs font-semibold tracking-wider uppercase">
-              Navigation
+            <p className="text-fg-muted mb-1 px-2 text-xs font-bold tracking-wider uppercase">
+              Academy
             </p>
-            {allowedNavItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={() => setIsMoreMenuOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-fg-muted hover:bg-surface-muted',
-                  )
-                }
-              >
-                {item.icon}
-                {item.label}
-              </NavLink>
-            ))}
+            <NavLink
+              to="/batches"
+              onClick={() => setIsMoreMenuOpen(false)}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
+                )
+              }
+            >
+              <Menu className="h-5 w-5" />
+              <span>Batches</span>
+            </NavLink>
+            <NavLink
+              to="/sessions"
+              onClick={() => setIsMoreMenuOpen(false)}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
+                )
+              }
+            >
+              <CalendarDays className="h-5 w-5" />
+              <span>Sessions</span>
+            </NavLink>
           </div>
 
-          {/* Quick Actions & PWA Controls */}
-          <div className="border-border-subtle space-y-2 border-t pt-3">
-            <p className="text-fg-muted mb-2 px-2 text-xs font-semibold tracking-wider uppercase">
-              App Controls
+          {/* Management Group */}
+          <div className="border-border-subtle space-y-1 border-t pt-3">
+            <p className="text-fg-muted mb-1 px-2 text-xs font-bold tracking-wider uppercase">
+              Management
             </p>
-            <div className="px-2">
+            <NavLink
+              to="/members"
+              onClick={() => setIsMoreMenuOpen(false)}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
+                )
+              }
+            >
+              <Users className="h-5 w-5" />
+              <span>Members & Roster</span>
+            </NavLink>
+            <NavLink
+              to="/matches"
+              onClick={() => setIsMoreMenuOpen(false)}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
+                )
+              }
+            >
+              <Trophy className="h-5 w-5" />
+              <span>Matches</span>
+            </NavLink>
+          </div>
+
+          {/* Account Group */}
+          <div className="border-border-subtle space-y-1 border-t pt-3">
+            <p className="text-fg-muted mb-1 px-2 text-xs font-bold tracking-wider uppercase">
+              Account
+            </p>
+            <NavLink
+              to="/profile"
+              onClick={() => setIsMoreMenuOpen(false)}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
+                )
+              }
+            >
+              <User className="h-5 w-5" />
+              <span>My Profile</span>
+            </NavLink>
+            <div className="px-2 pt-1">
               <InstallAppButton />
             </div>
             <Button
               variant="secondary"
-              className="min-h-[44px] w-full justify-start gap-3 text-red-500 hover:text-red-600"
+              className="min-h-[48px] w-full justify-start gap-3 text-red-500 hover:text-red-600"
               onClick={() => {
                 setIsMoreMenuOpen(false);
                 void logout();
               }}
             >
-              <LogOut className="h-4 w-4" /> Sign out
+              <LogOut className="h-5 w-5" /> Sign out
             </Button>
           </div>
+
+          {/* Platform / Super Admin Group */}
+          {isSuperAdmin ? (
+            <div className="border-border-subtle space-y-1 border-t pt-3">
+              <p className="mb-1 px-2 text-xs font-bold tracking-wider text-amber-500 uppercase">
+                Platform
+              </p>
+              <NavLink
+                to="/admin"
+                onClick={() => setIsMoreMenuOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                    isActive
+                      ? 'bg-amber-500/10 font-semibold text-amber-500'
+                      : 'text-amber-500/80 hover:bg-amber-500/10 hover:text-amber-500',
+                  )
+                }
+              >
+                <ShieldCheck className="h-5 w-5" />
+                <span>Super Admin Panel</span>
+              </NavLink>
+            </div>
+          ) : null}
         </div>
       </Modal>
     </div>
