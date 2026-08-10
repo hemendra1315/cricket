@@ -13,6 +13,7 @@ import { ActivityFeed } from '../components/ActivityFeed';
 import { SessionRow } from '../components/SessionRow';
 import { SimpleBarChart } from '@/components/charts/SimpleBarChart';
 import { JoinCodeCard } from '@/features/academies';
+import { SuperAdminAcademyActions } from '@/features/admin';
 import type { ActivityItem } from '../components/ActivityFeed';
 
 export default function OwnerDashboardPage() {
@@ -69,6 +70,8 @@ export default function OwnerDashboardPage() {
           </p>
         </div>
       </div>
+
+      <SuperAdminAcademyActions />
 
       {academyId ? <JoinCodeCard academyId={academyId} /> : null}
 

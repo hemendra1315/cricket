@@ -144,3 +144,52 @@ export async function deletePlatformAcademy(academyId: UUID): Promise<void> {
   });
   if (error) throw error;
 }
+
+export interface SuperAdminAddMemberPayload {
+  academyId: UUID;
+  fullName: string;
+  role: 'player' | 'coach';
+  email?: string;
+  phone?: string;
+  batchId?: string;
+}
+
+export async function superAdminAddMember(
+  payload: SuperAdminAddMemberPayload,
+): Promise<{
+  id: UUID;
+  academyId: UUID;
+  userId: UUID;
+  role: string;
+  fullName: string;
+  email: string;
+}> {
+  const { data, error } = await (supabase.rpc as unknown as RpcCaller)('super_admin_add_member', {
+    p_academy_id: payload.academyId,
+    p_full_name: payload.fullName,
+    p_role: payload.role,
+    p_email: payload.email ?? null,
+    p_phone: payload.phone ?? null,
+    p_batch_id: payload.batchId ?? null,
+  });
+  if (error) throw error;
+  return data as unknown as {
+    id: UUID;
+    academyId: UUID;
+    userId: UUID;
+    role: string;
+    fullName: string;
+    email: string;
+  };
+}
+
+export async function superAdminSeedAcademyDemoData(academyId: UUID): Promise<unknown> {
+  const { data, error } = await (supabase.rpc as unknown as RpcCaller)(
+    'super_admin_seed_academy_demo_data',
+    {
+      p_academy_id: academyId,
+    },
+  );
+  if (error) throw error;
+  return data;
+}

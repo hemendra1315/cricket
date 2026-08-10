@@ -7,7 +7,10 @@ import {
   fetchPlatformAcademyDetails,
   createPlatformAcademy,
   deletePlatformAcademy,
+  superAdminAddMember,
+  superAdminSeedAcademyDemoData,
   type CreatePlatformAcademyPayload,
+  type SuperAdminAddMemberPayload,
 } from '../api/adminApi';
 
 export function usePlatformAnalytics() {
@@ -66,6 +69,41 @@ export function useDeletePlatformAcademy() {
       void queryClient.invalidateQueries({ queryKey: ['admin-platform-analytics'] });
       void queryClient.invalidateQueries({ queryKey: ['admin-platform-users'] });
       void queryClient.invalidateQueries({ queryKey: ['academies-mine'] });
+    },
+  });
+}
+
+export function useSuperAdminAddMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SuperAdminAddMemberPayload) => superAdminAddMember(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['academy-members'] });
+      void queryClient.invalidateQueries({ queryKey: ['members'] });
+      void queryClient.invalidateQueries({ queryKey: ['batches'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-analytics'] });
+    },
+  });
+}
+
+export function useSuperAdminSeedDemoData() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (academyId: UUID) => superAdminSeedAcademyDemoData(academyId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['academy-members'] });
+      void queryClient.invalidateQueries({ queryKey: ['members'] });
+      void queryClient.invalidateQueries({ queryKey: ['batches'] });
+      void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      void queryClient.invalidateQueries({ queryKey: ['matches'] });
+      void queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-analytics'] });
     },
   });
 }
