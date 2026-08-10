@@ -6,6 +6,8 @@ import { formatDate } from '@/lib/utils/date';
 import { buttonStyles } from '@/components/ui/buttonStyles';
 import { useActiveAcademy } from '@/features/academies';
 import { useCoachDashboardAnalytics } from '../hooks/useDashboardAnalytics';
+import { SuperAdminAcademyActions } from '@/features/admin';
+import { DashboardQuickActions } from '../components/DashboardQuickActions';
 import { ActivityFeed } from '../components/ActivityFeed';
 import type { ActivityItem } from '../components/ActivityFeed';
 
@@ -37,32 +39,8 @@ export default function CoachDashboardPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader title="Quick links" description="Actions that need your attention." />
-        <CardBody className="flex flex-wrap gap-3">
-          <Link to="/batches" className={buttonStyles('secondary', 'sm')}>
-            My batches
-          </Link>
-          {analytics.todaySession ? (
-            <Link
-              to={`/sessions/${analytics.todaySession.id}/attendance`}
-              className={buttonStyles('primary', 'sm')}
-            >
-              Mark attendance: {analytics.todaySession.title}
-            </Link>
-          ) : (
-            <Link to="/sessions" className={buttonStyles('primary', 'sm')}>
-              Mark attendance
-            </Link>
-          )}
-          <Link to="/matches" className={buttonStyles('secondary', 'sm')}>
-            Add Match
-          </Link>
-          <Link to="/drills" className={buttonStyles('secondary', 'sm')}>
-            Assign Drill
-          </Link>
-        </CardBody>
-      </Card>
+      <SuperAdminAcademyActions />
+      <DashboardQuickActions />
 
       {analytics.todaySession && (
         <Card>

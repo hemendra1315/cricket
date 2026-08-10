@@ -14,6 +14,7 @@ import { SessionRow } from '../components/SessionRow';
 import { SimpleBarChart } from '@/components/charts/SimpleBarChart';
 import { JoinCodeCard } from '@/features/academies';
 import { SuperAdminAcademyActions } from '@/features/admin';
+import { DashboardQuickActions } from '../components/DashboardQuickActions';
 import type { ActivityItem } from '../components/ActivityFeed';
 
 export default function OwnerDashboardPage() {
@@ -83,6 +84,8 @@ export default function OwnerDashboardPage() {
         <KpiCard title="Attendance %" value={`${analytics.attendancePercentage}%`} />
         <KpiCard title="Sessions Week" value={analytics.sessionsThisWeek} />
       </div>
+
+      <DashboardQuickActions />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <LeaderboardCard

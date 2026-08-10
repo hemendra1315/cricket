@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { EmptyState, ErrorState } from '@/components/feedback';
+import { ErrorState } from '@/components/feedback';
+import {
+  MobilePageHeader,
+  MobileSearch,
+  MobileFilterChips,
+  MobileEmptyState,
+} from '@/components/mobile';
 import {
   Avatar,
   Badge,
@@ -40,6 +46,8 @@ const STATUS_TONES: Record<MemberStatus, 'success' | 'warning' | 'danger' | 'neu
 export default function MembersPage() {
   const { academyId } = useActiveAcademy();
   const [roleFilter, setRoleFilter] = useState<'all' | JoinableRole | 'academy_owner'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'left'>('all');
   const canManage = useCan('members:manage');
   const canApproveRequests = useCan('players:approve');
   const requestsQuery = usePendingJoinRequests(academyId);
@@ -48,6 +56,20 @@ export default function MembersPage() {
     status: 'active',
     ...(roleFilter === 'all' ? {} : { role: roleFilter }),
   });
+
+  const filteredMembers = useMemo(() => {
+    if (!query.data) return [];
+    return query.data.filter((member) => {
+      const name = (member.fullName || '').toLowerCase();
+      const email = (member.email || '').toLowerCase();
+      const matchesSearch =
+        !searchQuery ||
+        name.includes(searchQuery.toLowerCase()) ||
+        email.includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [query.data, searchQuery, statusFilter]);
 
   const { approveRequest, rejectRequest } = useUpdateMember(academyId as string);
 
@@ -76,87 +98,79 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-fg text-xl font-semibold">Players</h1>
+    <div className="space-y-4 pb-24 md:pb-6">
+      {/* Mobile Page Header */}
+      <div className="md:hidden">
+        <MobilePageHeader
+          title="Players & Members"
+          count={query.data?.length}
+          subtitle="Academy roster & staff"
+        />
+        <div className="mb-3 space-y-3 px-4">
+          <MobileSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search players by name or email…"
+          />
+          <MobileFilterChips
+            options={[
+              { id: 'all', label: 'All', count: query.data?.length },
+              { id: 'active', label: 'Active' },
+              { id: 'left', label: 'Inactive' },
+            ]}
+            activeId={statusFilter}
+            onChange={setStatusFilter}
+          />
+        </div>
+      </div>
 
-      {canManage && academyId ? <JoinCodeCard academyId={academyId} /> : null}
+      <h1 className="text-fg hidden text-xl font-semibold md:block">Players</h1>
 
-      {canApproveRequests ? (
+      {academyId ? <JoinCodeCard academyId={academyId} /> : null}
+
+      {canApproveRequests && requestsQuery.data && requestsQuery.data.length > 0 ? (
         <Card>
           <CardHeader
-            title="Pending join requests"
-            description="Review every request before granting academy access."
+            title="Pending Join Requests"
+            description="Players requesting to join your academy."
           />
           <CardBody>
-            {requestsQuery.isPending ? (
-              <SkeletonText lines={4} />
-            ) : requestsQuery.isError ? (
-              <ErrorState
-                error={requestsQuery.error}
-                onRetry={() => void requestsQuery.refetch()}
-              />
-            ) : requestsQuery.data.length === 0 ? (
-              <EmptyState
-                title="No pending requests"
-                description="Players have not requested to join yet."
-              />
-            ) : (
-              <Table>
-                <THead>
-                  <TR>
-                    <TH>Player</TH>
-                    <TH>Requested role</TH>
-                    <TH>Message</TH>
-                    <TH>Requested</TH>
-                    <TH>Actions</TH>
-                  </TR>
-                </THead>
-                <TBody>
-                  {requestsQuery.data.map((request) => (
-                    <TR key={request.id}>
-                      <TD>
-                        <div className="flex items-center gap-2">
-                          <Avatar
-                            name={request.fullName ?? request.email}
-                            src={request.avatarUrl}
-                            size="sm"
-                          />
-                          <div className="min-w-0">
-                            <p className="text-fg truncate text-sm font-medium">
-                              {request.fullName ?? 'Unknown player'}
-                            </p>
-                            <p className="text-fg-muted truncate text-xs">{request.email}</p>
-                          </div>
-                        </div>
-                      </TD>
-                      <TD>{ROLE_LABELS[request.requestedRole]}</TD>
-                      <TD className="text-fg-muted max-w-xs truncate text-sm">
-                        {request.message || '—'}
-                      </TD>
-                      <TD className="text-fg-muted text-sm">{formatDate(request.createdAt)}</TD>
-                      <TD className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          isLoading={approveRequest.isPending}
-                          onClick={() => handleApprove(request.id)}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          isLoading={rejectRequest.isPending}
-                          onClick={() => handleReject(request.id)}
-                        >
-                          Reject
-                        </Button>
-                      </TD>
-                    </TR>
-                  ))}
-                </TBody>
-              </Table>
-            )}
+            <div className="space-y-3">
+              {requestsQuery.data.map((request) => (
+                <div
+                  key={request.id}
+                  className="bg-surface-muted/50 border-border-subtle flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5"
+                >
+                  <div>
+                    <p className="text-fg text-sm font-semibold">
+                      {request.fullName ?? request.email}
+                    </p>
+                    <p className="text-fg-muted text-xs">
+                      {request.email} • {ROLE_LABELS[request.requestedRole]}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      isLoading={approveRequest.isPending}
+                      onClick={() => handleApprove(request.id)}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="text-danger hover:bg-danger/10"
+                      isLoading={rejectRequest.isPending}
+                      onClick={() => handleReject(request.id)}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardBody>
         </Card>
       ) : null}
@@ -165,6 +179,7 @@ export default function MembersPage() {
         <CardHeader
           title="Roster"
           description="Everyone who belongs to this academy."
+          className="hidden md:block"
           action={
             <Select
               aria-label="Filter by role"
@@ -184,18 +199,26 @@ export default function MembersPage() {
             </Select>
           }
         />
-        <CardBody>
+        <CardBody className="p-4">
           {query.isPending ? (
             <SkeletonText lines={4} />
           ) : query.isError ? (
             <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-          ) : query.data.length === 0 ? (
-            <EmptyState
-              title="No players yet"
-              description="Share your join code so players can request access."
+          ) : filteredMembers.length === 0 ? (
+            <MobileEmptyState
+              title="No players found"
+              description={
+                searchQuery
+                  ? 'No members match your search query.'
+                  : 'Share your join code so players can request access.'
+              }
             />
           ) : (
-            <MemberTable members={query.data} academyId={academyId ?? ''} canManage={canManage} />
+            <MemberTable
+              members={filteredMembers}
+              academyId={academyId ?? ''}
+              canManage={canManage}
+            />
           )}
         </CardBody>
       </Card>

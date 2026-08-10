@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
 import { EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
+import { SuperAdminAcademyActions } from '@/features/admin';
 import { usePlayerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
 import { SimpleBarChart, SimpleLineChart } from '@/components/charts/SimpleBarChart';
 import { SessionRow } from '../components/SessionRow';
@@ -53,6 +54,8 @@ export default function PlayerDashboardPage() {
           {membership?.academyName ?? 'Academy'}
         </p>
       </div>
+
+      <SuperAdminAcademyActions />
 
       {stats && (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-7">

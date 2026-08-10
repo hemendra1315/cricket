@@ -20,6 +20,7 @@ const BatchDetailPage = lazy(() => import('@/features/batches/pages/BatchDetailP
 const MatchesPage = lazy(() => import('@/features/matches/pages/MatchesPage'));
 const AddMatchPage = lazy(() => import('@/features/matches/pages/AddMatchPage'));
 const MatchDetailPage = lazy(() => import('@/features/matches/pages/MatchDetailPage'));
+const MorePage = lazy(() => import('@/pages/MorePage').then((m) => ({ default: m.MorePage })));
 const TrainingSessionsPage = lazy(() => import('@/features/sessions/pages/TrainingSessionsPage'));
 const TrainingSessionDetailPage = lazy(
   () => import('@/features/sessions/pages/TrainingSessionDetailPage'),
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
                   <RequireRole allow={['player', 'coach', 'academy_owner', 'super_admin']} />
                 ),
                 children: [
+                  { path: '/more', element: <MorePage /> },
                   { path: '/drills', element: <DrillsPage /> },
                   { path: '/drills/:drillId', element: <DrillDetailPage /> },
                 ],

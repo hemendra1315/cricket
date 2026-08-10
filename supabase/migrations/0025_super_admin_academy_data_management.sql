@@ -263,29 +263,53 @@ BEGIN
 
   -- Create 4 Training Sessions
   INSERT INTO training_sessions (academy_id, batch_id, coach_id, title, session_date, start_at, end_at, status)
-  VALUES (p_academy_id, v_batch2_id, v_coach2_mem, 'Advanced Net Practice & Range Hitting', (current_date - interval '5 days')::date, '16:00', '18:30', 'completed')
+  VALUES (
+    p_academy_id, v_batch2_id, v_coach2_mem, 'Advanced Net Practice & Range Hitting',
+    (current_date - interval '5 days')::date,
+    ((current_date - interval '5 days')::date + time '16:00')::timestamptz,
+    ((current_date - interval '5 days')::date + time '18:30')::timestamptz,
+    'completed'
+  )
   RETURNING id INTO v_sess1_id;
 
   INSERT INTO training_sessions (academy_id, batch_id, coach_id, title, session_date, start_at, end_at, status)
-  VALUES (p_academy_id, v_batch3_id, v_coach3_mem, 'Match Simulation & Death Overs Bowling', (current_date - interval '2 days')::date, '07:00', '10:00', 'completed')
+  VALUES (
+    p_academy_id, v_batch3_id, v_coach3_mem, 'Match Simulation & Death Overs Bowling',
+    (current_date - interval '2 days')::date,
+    ((current_date - interval '2 days')::date + time '07:00')::timestamptz,
+    ((current_date - interval '2 days')::date + time '10:00')::timestamptz,
+    'completed'
+  )
   RETURNING id INTO v_sess2_id;
 
   INSERT INTO training_sessions (academy_id, batch_id, coach_id, title, session_date, start_at, end_at, status)
-  VALUES (p_academy_id, v_batch1_id, v_coach1_mem, 'Fielding Drills & Catching Technique', (current_date + interval '1 day')::date, '06:30', '08:30', 'scheduled')
+  VALUES (
+    p_academy_id, v_batch1_id, v_coach1_mem, 'Fielding Drills & Catching Technique',
+    (current_date + interval '1 day')::date,
+    ((current_date + interval '1 day')::date + time '06:30')::timestamptz,
+    ((current_date + interval '1 day')::date + time '08:30')::timestamptz,
+    'scheduled'
+  )
   RETURNING id INTO v_sess3_id;
 
   INSERT INTO training_sessions (academy_id, batch_id, coach_id, title, session_date, start_at, end_at, status)
-  VALUES (p_academy_id, v_batch2_id, v_coach2_mem, 'Spin Bowling vs Fast Bowling Tactics', (current_date + interval '3 days')::date, '16:00', '18:30', 'scheduled')
+  VALUES (
+    p_academy_id, v_batch2_id, v_coach2_mem, 'Spin Bowling vs Fast Bowling Tactics',
+    (current_date + interval '3 days')::date,
+    ((current_date + interval '3 days')::date + time '16:00')::timestamptz,
+    ((current_date + interval '3 days')::date + time '18:30')::timestamptz,
+    'scheduled'
+  )
   RETURNING id INTO v_sess4_id;
 
-  -- Insert Attendance Records
+  -- Insert Attendance Records (marked_by references profiles(id) so use the coach's profile/user id)
   FOR i IN 1..array_length(v_player_mems, 1) LOOP
     INSERT INTO attendance (session_id, player_id, status, marked_by)
     VALUES (
       v_sess1_id,
       v_player_mems[i],
-      CASE WHEN i % 5 = 0 THEN 'absent'::attendance_status WHEN i % 7 = 0 THEN 'late'::attendance_status ELSE 'present'::attendance_status END,
-      v_coach2_mem
+      CASE WHEN i % 5 = 0 THEN 'absent'::attendance_status ELSE 'present'::attendance_status END,
+      v_coach2_user
     );
 
     INSERT INTO attendance (session_id, player_id, status, marked_by)
@@ -293,7 +317,7 @@ BEGIN
       v_sess2_id,
       v_player_mems[i],
       CASE WHEN i % 4 = 0 THEN 'absent'::attendance_status ELSE 'present'::attendance_status END,
-      v_coach3_mem
+      v_coach3_user
     );
   END LOOP;
 
@@ -305,11 +329,11 @@ BEGIN
   ) RETURNING id INTO v_match1_id;
 
   FOR i IN 1..11 LOOP
-    INSERT INTO match_lineups (match_id, player_id, batting_order, is_captain, is_vice_captain, is_wicketkeeper)
+    INSERT INTO match_lineups (match_id, academy_member_id, batting_order, is_captain, is_vice_captain, is_wicketkeeper)
     VALUES (v_match1_id, v_player_mems[i], i, (i = 1), (i = 2), (i = 6));
   END LOOP;
 
-  INSERT INTO match_batting (match_id, player_id, batting_order, runs, balls, fours, sixes, is_out, dismissal_type)
+  INSERT INTO match_batting (match_id, academy_member_id, batting_order, runs, balls, fours, sixes, is_out, dismissal_type)
   VALUES
     (v_match1_id, v_player_mems[1], 1, 68, 42, 7, 3, true, 'Caught'),
     (v_match1_id, v_player_mems[2], 2, 45, 30, 5, 1, true, 'Bowled'),
@@ -317,23 +341,20 @@ BEGIN
     (v_match1_id, v_player_mems[4], 4, 18, 12, 2, 0, true, 'Run Out'),
     (v_match1_id, v_player_mems[5], 5, 12, 8, 1, 0, false, 'Not Out');
 
-  INSERT INTO match_bowling (match_id, player_id, bowling_order, overs, maidens, runs_conceded, wickets, wides, no_balls)
+  INSERT INTO match_bowling (match_id, academy_member_id, overs, maidens, runs_conceded, wickets, wides, no_balls)
   VALUES
-    (v_match1_id, v_player_mems[10], 1, 4.0, 1, 22, 3, 1, 0),
-    (v_match1_id, v_player_mems[11], 2, 4.0, 0, 28, 2, 0, 1),
-    (v_match1_id, v_player_mems[12], 3, 4.0, 0, 34, 1, 2, 0),
-    (v_match1_id, v_player_mems[13], 4, 4.0, 0, 30, 2, 1, 0);
+    (v_match1_id, v_player_mems[10], 4.0, 1, 22, 3, 1, 0),
+    (v_match1_id, v_player_mems[11], 4.0, 0, 28, 2, 0, 1),
+    (v_match1_id, v_player_mems[12], 4.0, 0, 34, 1, 2, 0),
+    (v_match1_id, v_player_mems[13], 4.0, 0, 30, 2, 1, 0);
 
-  INSERT INTO match_fielding (match_id, player_id, catches, run_outs, stumpings)
+  INSERT INTO match_fielding (match_id, academy_member_id, catches, run_outs, stumpings)
   VALUES
     (v_match1_id, v_player_mems[6], 2, 1, 1),
     (v_match1_id, v_player_mems[3], 2, 0, 0);
 
-  INSERT INTO match_awards (match_id, player_id, award_type)
-  VALUES
-    (v_match1_id, v_player_mems[1], 'player_of_match'),
-    (v_match1_id, v_player_mems[1], 'best_batter'),
-    (v_match1_id, v_player_mems[10], 'best_bowler');
+  INSERT INTO match_awards (match_id, player_of_match_id, best_batter_id, best_bowler_id)
+  VALUES (v_match1_id, v_player_mems[1], v_player_mems[1], v_player_mems[10]);
 
   INSERT INTO matches (
     academy_id, match_name, match_date, venue, opponent_name, match_type, format, overs, team_score, result, winning_margin, batch_id, status, created_by
@@ -342,31 +363,30 @@ BEGIN
   ) RETURNING id INTO v_match2_id;
 
   FOR i IN 7..17 LOOP
-    INSERT INTO match_lineups (match_id, player_id, batting_order, is_captain, is_vice_captain, is_wicketkeeper)
+    INSERT INTO match_lineups (match_id, academy_member_id, batting_order, is_captain, is_vice_captain, is_wicketkeeper)
     VALUES (v_match2_id, v_player_mems[i], (i - 6), (i = 7), (i = 8), (i = 12));
   END LOOP;
 
-  INSERT INTO match_batting (match_id, player_id, batting_order, runs, balls, fours, sixes, is_out, dismissal_type)
+  INSERT INTO match_batting (match_id, academy_member_id, batting_order, runs, balls, fours, sixes, is_out, dismissal_type)
   VALUES
     (v_match2_id, v_player_mems[7], 1, 84, 92, 9, 2, true, 'Caught'),
     (v_match2_id, v_player_mems[8], 2, 56, 64, 6, 1, true, 'LBW'),
     (v_match2_id, v_player_mems[9], 3, 41, 38, 4, 1, true, 'Bowled'),
     (v_match2_id, v_player_mems[15], 4, 30, 25, 3, 0, false, 'Not Out');
 
-  INSERT INTO match_bowling (match_id, player_id, bowling_order, overs, maidens, runs_conceded, wickets, wides, no_balls)
+  INSERT INTO match_bowling (match_id, academy_member_id, overs, maidens, runs_conceded, wickets, wides, no_balls)
   VALUES
-    (v_match2_id, v_player_mems[13], 1, 10.0, 2, 38, 4, 1, 0),
-    (v_match2_id, v_player_mems[14], 2, 10.0, 1, 44, 3, 0, 0),
-    (v_match2_id, v_player_mems[18], 3, 8.0, 0, 42, 2, 2, 0);
+    (v_match2_id, v_player_mems[13], 10.0, 2, 38, 4, 1, 0),
+    (v_match2_id, v_player_mems[14], 10.0, 1, 44, 3, 0, 0),
+    (v_match2_id, v_player_mems[18], 8.0, 0, 42, 2, 2, 0);
 
-  INSERT INTO match_awards (match_id, player_id, award_type)
-  VALUES
-    (v_match2_id, v_player_mems[7], 'player_of_match'),
-    (v_match2_id, v_player_mems[7], 'best_batter'),
-    (v_match2_id, v_player_mems[13], 'best_bowler');
+  INSERT INTO match_awards (match_id, player_of_match_id, best_batter_id, best_bowler_id)
+  VALUES (v_match2_id, v_player_mems[7], v_player_mems[7], v_player_mems[13]);
 
-  -- Refresh Player Statistics
-  PERFORM refresh_player_statistics(p_academy_id);
+  -- Refresh Player Statistics (refresh_player_statistics takes (p_academy uuid, p_player uuid))
+  FOR i IN 1..array_length(v_player_mems, 1) LOOP
+    PERFORM refresh_player_statistics(p_academy_id, v_player_mems[i]);
+  END LOOP;
 
   RETURN jsonb_build_object(
     'academyId', p_academy_id,
@@ -380,3 +400,10 @@ BEGIN
 END $$;
 
 GRANT EXECUTE ON FUNCTION super_admin_seed_academy_demo_data(uuid) TO authenticated;
+-- Restrict the internal helper so it can NOT be invoked directly by anon/authenticated users.
+-- It is SECURITY DEFINER and creates auth.users + profiles rows, so leaving the default PUBLIC
+-- EXECUTE grant would let any caller create accounts. super_admin_add_member and
+-- super_admin_seed_academy_demo_data invoke it as the function owner, so revoking PUBLIC
+-- execution here does not affect them.
+REVOKE EXECUTE ON FUNCTION super_admin_get_or_create_user(text, text, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION super_admin_get_or_create_user(text, text, text) FROM anon, authenticated;

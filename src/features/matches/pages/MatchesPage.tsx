@@ -1,17 +1,17 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 import { Button, Card, CardBody, CardFooter, CardHeader, Input, Select } from '@/components/ui';
-import { EmptyState, ErrorState } from '@/components/feedback';
+import { ErrorState } from '@/components/feedback';
+import { MobilePageHeader, MobileFilterChips, MobileEmptyState } from '@/components/mobile';
 import { useActiveAcademy } from '@/features/academies';
 import { useCan } from '@/lib/rbac';
 import { useUiStore } from '@/stores';
 import { useAcademyMatches, useCreateMatch, useDeleteMatch } from '../hooks/useMatches';
 import { useBatches } from '@/features/batches';
 import { formatDate } from '@/lib/utils/date';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { MatchFormat, MatchType } from '@/types/enums';
 
 type MatchFormValues = {
@@ -69,7 +69,7 @@ export default function MatchesPage() {
   const {
     register,
     handleSubmit,
-    formState: { isDirty },
+    formState: { errors, isDirty },
     reset,
   } = useForm<MatchFormValues>({
     defaultValues: DEFAULT_MATCH_FORM,
@@ -100,83 +100,117 @@ export default function MatchesPage() {
 
   const handleDelete = async (matchId: string) => {
     await deleteMatch.mutateAsync({ matchId });
-
-    pushToast({
-      title: 'Match deleted',
-      variant: 'success',
-    });
+    pushToast({ title: 'Match deleted', variant: 'success' });
   };
+
+  const [matchFilter, setMatchFilter] = useState<'all' | 'upcoming' | 'completed'>('all');
+
+  const filteredMatches = useMemo(() => {
+    if (!matchesQuery.data) return [];
+    if (matchFilter === 'upcoming') {
+      return matchesQuery.data.filter((m) => m.status === 'created' || m.status === 'in_progress');
+    }
+    if (matchFilter === 'completed') {
+      return matchesQuery.data.filter((m) => m.status === 'completed');
+    }
+    return matchesQuery.data;
+  }, [matchesQuery.data, matchFilter]);
 
   if (!academyId) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4 pb-24 md:pb-6">
+      {/* Mobile Header */}
+      <div className="md:hidden">
+        <MobilePageHeader
+          title="Matches"
+          count={matchesQuery.data?.length}
+          subtitle="Fixtures, results & scorecards"
+          primaryAction={
+            canManage
+              ? {
+                  label: 'Add',
+                  onClick: () => navigate('/matches/new'),
+                }
+              : undefined
+          }
+        />
+        <div className="mb-3 px-4">
+          <MobileFilterChips
+            options={[
+              { id: 'all', label: 'All', count: matchesQuery.data?.length },
+              { id: 'upcoming', label: 'Upcoming' },
+              { id: 'completed', label: 'Completed' },
+            ]}
+            activeId={matchFilter}
+            onChange={setMatchFilter}
+          />
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
         <div>
           <h1 className="text-fg text-xl font-semibold">Matches</h1>
-          <p className="text-fg-muted">Create and manage your academy matches.</p>
+          <p className="text-fg-muted">Create and manage match scorecards and fixtures.</p>
         </div>
 
         {canManage ? (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              id="import-cricheroes-btn"
-              onClick={() => navigate('/matches/new?import=cricheroes')}
-            >
-              📥 Import from CricHeroes PDF
-            </Button>
-            <Link to="/matches/new" id="add-match-btn">
-              <Button>+ Add Match</Button>
-            </Link>
-          </div>
+          <Button onClick={() => setShowForm((open) => !open)}>
+            {showForm ? 'Hide form' : 'New match'}
+          </Button>
         ) : null}
       </div>
 
       {showForm && canManage ? (
         <Card>
           <form onSubmit={handleCreate} noValidate>
-            <CardHeader title="Create match" description="Set up a new match with basic details." />
+            <CardHeader
+              title="Create match"
+              description="Add a new fixture or completed scorecard."
+            />
 
             <CardBody className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-fg block text-sm font-medium">Match name</label>
                   <Input
-                    {...register('matchName', {
-                      required: 'Match name is required',
-                    })}
+                    {...register('matchName', { required: 'Match name is required' })}
+                    hasError={Boolean(errors.matchName)}
                   />
+                  {errors.matchName ? (
+                    <p className="text-danger text-xs">{errors.matchName.message}</p>
+                  ) : null}
                 </div>
 
                 <div>
-                  <label className="text-fg block text-sm font-medium">Match date</label>
-                  <DatePicker
-                    selected={matchDate}
-                    onChange={(date: Date | null) => setMatchDate(date)}
-                    dateFormat="yyyy-MM-dd"
-                    placeholderText="Select date"
-                    className="w-full rounded-lg border px-3 py-2"
-                    required
-                  />
+                  <label className="text-fg block text-sm font-medium">Opponent name</label>
+                  <Input {...register('opponentName')} />
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-fg block text-sm font-medium">Opponent name</label>
-                  <Input {...register('opponentName')} />
+                  <label className="text-fg block text-sm font-medium">Match date</label>
+                  <Input
+                    type="date"
+                    {...register('matchDate', { required: 'Match date is required' })}
+                    hasError={Boolean(errors.matchDate)}
+                  />
+                  {errors.matchDate ? (
+                    <p className="text-danger text-xs">{errors.matchDate.message}</p>
+                  ) : null}
                 </div>
 
                 <div>
-                  <label className="text-fg block text-sm font-medium">Tournament</label>
+                  <label className="text-fg block text-sm font-medium">Tournament / Series</label>
                   <Input {...register('tournament')} />
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-fg block text-sm font-medium">Match type</label>
+                  <label className="text-fg block text-sm font-medium">Type</label>
                   <Select {...register('matchType')}>
                     {MATCH_TYPES.map((type) => (
                       <option key={type.value} value={type.value}>
@@ -228,48 +262,51 @@ export default function MatchesPage() {
       ) : null}
 
       <Card>
-        <CardHeader title="All matches" description="See every match in this academy." />
+        <CardHeader
+          title="All matches"
+          description="See every match in this academy."
+          className="hidden md:block"
+        />
 
-        <CardBody>
+        <CardBody className="p-4">
           {matchesQuery.isPending ? (
             <p className="text-fg-muted">Loading matches…</p>
           ) : matchesQuery.isError ? (
             <ErrorState error={matchesQuery.error} onRetry={() => void matchesQuery.refetch()} />
-          ) : matchesQuery.data?.length === 0 ? (
-            <EmptyState
-              title="No matches yet"
-              description="Create a match to start tracking results."
+          ) : filteredMatches.length === 0 ? (
+            <MobileEmptyState
+              title="No matches"
+              description="No matches found for your selected filter."
+              action={
+                canManage
+                  ? { label: 'Add Match', onClick: () => navigate('/matches/new') }
+                  : undefined
+              }
             />
           ) : (
             <div className="space-y-3">
-              {matchesQuery.data.map((match) => (
-                <Link
+              {filteredMatches.map((match) => (
+                <div
                   key={match.id}
-                  to={`/matches/${match.id}`}
-                  className="border-border-subtle hover:border-primary/40 block rounded-2xl border p-4 transition"
+                  onClick={() => navigate(`/matches/${match.id}`)}
+                  className="border-border-subtle hover:border-primary/40 bg-surface block cursor-pointer rounded-2xl border p-4 shadow-2xs transition active:scale-[0.99]"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="text-fg text-lg font-semibold hover:underline">
+                      <p className="text-fg text-base font-semibold hover:underline">
                         {match.matchName}
                       </p>
-
-                      <p className="text-fg-muted text-sm">
+                      <p className="text-fg-muted mt-0.5 text-xs">
                         {formatDate(match.matchDate)}
                         {match.opponentName ? ` · vs ${match.opponentName}` : ''}
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="bg-surface-muted text-fg-muted rounded-full px-3 py-1 text-xs font-medium">
-                        {match.matchType}
+                    <div className="flex items-center gap-1.5">
+                      <span className="bg-surface-muted text-fg-muted rounded-full px-2.5 py-0.5 text-xs font-medium uppercase">
+                        {match.format}
                       </span>
-
-                      <span className="bg-surface-muted text-fg-muted rounded-full px-3 py-1 text-xs font-medium">
-                        {match.format.toUpperCase()}
-                      </span>
-
-                      <span className="bg-surface-muted text-fg-muted rounded-full px-3 py-1 text-xs font-medium">
+                      <span className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase">
                         {match.status}
                       </span>
                     </div>
@@ -278,7 +315,7 @@ export default function MatchesPage() {
                   {canManage ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
-                        variant="danger"
+                        variant="secondary"
                         size="sm"
                         isLoading={deleteMatch.isPending}
                         onClick={(e) => {
@@ -286,12 +323,13 @@ export default function MatchesPage() {
                           e.stopPropagation();
                           void handleDelete(match.id);
                         }}
+                        className="text-danger hover:bg-danger/10"
                       >
                         Delete
                       </Button>
                     </div>
                   ) : null}
-                </Link>
+                </div>
               ))}
             </div>
           )}

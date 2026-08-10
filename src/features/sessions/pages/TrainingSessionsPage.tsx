@@ -14,7 +14,8 @@ import {
   Select,
   Textarea,
 } from '@/components/ui';
-import { EmptyState, ErrorState } from '@/components/feedback';
+import { ErrorState } from '@/components/feedback';
+import { MobilePageHeader, MobileFilterChips, MobileEmptyState } from '@/components/mobile';
 import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
 import { useCan } from '@/lib/rbac';
@@ -110,18 +111,67 @@ export default function TrainingSessionsPage() {
     }
   });
 
+  const [sessionFilter, setSessionFilter] = useState<'today' | 'upcoming' | 'completed' | 'all'>(
+    'all',
+  );
+
+  const filteredSessions = useMemo(() => {
+    if (!sessionsQuery.data) return [];
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (sessionFilter === 'today') {
+      return sessionsQuery.data.filter((s) => s.sessionDate === todayStr);
+    }
+    if (sessionFilter === 'upcoming') {
+      return sessionsQuery.data.filter((s) => s.status === 'scheduled');
+    }
+    if (sessionFilter === 'completed') {
+      return sessionsQuery.data.filter((s) => s.status === 'completed');
+    }
+    return sessionsQuery.data;
+  }, [sessionsQuery.data, sessionFilter]);
+
   if (!academyId) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4 pb-24 md:pb-6">
+      {/* Mobile Header */}
+      <div className="md:hidden">
+        <MobilePageHeader
+          title="Sessions"
+          count={sessionsQuery.data?.length}
+          subtitle="Training schedules & attendance"
+          primaryAction={
+            canManage
+              ? {
+                  label: showForm ? 'Hide' : 'New',
+                  onClick: () => setShowForm((prev) => !prev),
+                }
+              : undefined
+          }
+        />
+        <div className="mb-3 px-4">
+          <MobileFilterChips
+            options={[
+              { id: 'all', label: 'All', count: sessionsQuery.data?.length },
+              { id: 'today', label: 'Today' },
+              { id: 'upcoming', label: 'Upcoming' },
+              { id: 'completed', label: 'Completed' },
+            ]}
+            activeId={sessionFilter}
+            onChange={setSessionFilter}
+          />
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
         <div>
-          <h1 className="text-fg text-xl font-semibold">Training sessions</h1>
-          <p className="text-fg-muted">Schedule and manage sessions for your batches.</p>
+          <h1 className="text-fg text-xl font-semibold">Sessions</h1>
+          <p className="text-fg-muted">Schedule and log academy training sessions.</p>
         </div>
         {canManage ? (
           <Button onClick={() => setShowForm((open) => !open)}>
-            {showForm ? 'Cancel' : 'New session'}
+            {showForm ? 'Hide form' : 'New session'}
           </Button>
         ) : null}
       </div>
@@ -131,7 +181,7 @@ export default function TrainingSessionsPage() {
           <form onSubmit={handleCreate} noValidate>
             <CardHeader
               title="Create session"
-              description="Schedule a training session for a batch."
+              description="Schedule a practice or training session for a batch."
             />
             <CardBody className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -144,7 +194,7 @@ export default function TrainingSessionsPage() {
                     <option value="">Select batch</option>
                     {batchesQuery.data?.map((batch) => (
                       <option key={batch.id} value={batch.id}>
-                        {batch.name}
+                        {batch.name} ({batch.ageGroup})
                       </option>
                     ))}
                   </Select>
@@ -236,51 +286,59 @@ export default function TrainingSessionsPage() {
       ) : null}
 
       <Card>
-        <CardHeader title="All sessions" description="Upcoming and recently completed sessions." />
-        <CardBody>
+        <CardHeader
+          title="All sessions"
+          description="Upcoming and recently completed sessions."
+          className="hidden md:block"
+        />
+        <CardBody className="p-4">
           {sessionsQuery.isPending ? (
             <p className="text-fg-muted">Loading sessions…</p>
           ) : sessionsQuery.isError ? (
             <ErrorState error={sessionsQuery.error} onRetry={() => void sessionsQuery.refetch()} />
-          ) : sessionsQuery.data?.length === 0 ? (
-            <EmptyState
-              title="No sessions scheduled"
-              description="Create a session to get started."
+          ) : filteredSessions.length === 0 ? (
+            <MobileEmptyState
+              title="No sessions"
+              description="No training sessions match your selected filter."
+              action={
+                canManage
+                  ? { label: 'Create Session', onClick: () => setShowForm(true) }
+                  : undefined
+              }
             />
           ) : (
             <div className="space-y-3">
-              {sessionsQuery.data.map((session) => (
-                <Link
+              {filteredSessions.map((session) => (
+                <div
                   key={session.id}
-                  to={`/sessions/${session.id}`}
-                  className="border-border-subtle hover:border-primary/40 block rounded-2xl border p-4 transition"
+                  className="border-border-subtle bg-surface rounded-2xl border p-4 shadow-2xs"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-fg text-lg font-semibold">{session.title}</p>
-                      <p className="text-fg-muted text-sm">{session.batch.name}</p>
-                    </div>
-                    <span className="text-fg-muted text-sm">{session.status}</span>
-                  </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                    <div>
-                      <p className="text-fg-muted text-xs tracking-wide uppercase">Date</p>
-                      <p className="text-fg text-sm">{formatDate(session.sessionDate)}</p>
-                    </div>
-                    <div>
-                      <p className="text-fg-muted text-xs tracking-wide uppercase">Time</p>
-                      <p className="text-fg text-sm">
-                        {formatTime(session.startAt)} – {formatTime(session.endAt)}
+                      <Link
+                        to={`/sessions/${session.id}`}
+                        className="text-fg text-base font-semibold hover:underline"
+                      >
+                        {session.title}
+                      </Link>
+                      <p className="text-fg-muted mt-0.5 text-xs">
+                        {formatDate(session.sessionDate)} • {formatTime(session.startAt)} -{' '}
+                        {formatTime(session.endAt)}
                       </p>
+                      {session.batch?.name && (
+                        <p className="text-primary mt-1 text-xs font-medium">
+                          Batch: {session.batch.name}
+                        </p>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-fg-muted text-xs tracking-wide uppercase">Coach</p>
-                      <p className="text-fg text-sm">
-                        {session.coach.fullName ?? session.coach.email}
-                      </p>
-                    </div>
+                    <Link
+                      to={`/sessions/${session.id}/attendance`}
+                      className="bg-primary/10 text-primary hover:bg-primary/20 shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+                    >
+                      Attendance
+                    </Link>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}

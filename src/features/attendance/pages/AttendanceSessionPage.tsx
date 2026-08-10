@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Button, Card, CardBody, CardFooter, CardHeader } from '@/components/ui';
+import { Button, Card, CardBody, CardHeader } from '@/components/ui';
 import { ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { useCan } from '@/lib/rbac';
@@ -11,6 +11,7 @@ import { useSessionAttendance, useMarkAttendance, useMarkAllPresent } from '../h
 import { useTrainingSession } from '@/features/sessions';
 import type { AttendanceStatus } from '@/types/enums';
 import { formatDate, formatTime } from '@/lib/utils/date';
+import { MobilePageHeader } from '@/components/mobile';
 
 const ATTENDANCE_OPTIONS: Array<{ value: AttendanceStatus; label: string }> = [
   { value: 'present', label: 'Present' },
@@ -52,176 +53,142 @@ export default function AttendanceSessionPage() {
   const presentCount =
     attendanceQuery.data?.filter((record) => record.status === 'present').length ?? 0;
   const totalPlayers = batchPlayersQuery.data?.length ?? 0;
-  const playerNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    batchPlayersQuery.data?.forEach((player) => {
-      map.set(player.academyMemberId, player.fullName ?? player.email);
-    });
-    return map;
-  }, [batchPlayersQuery.data]);
 
   if (!academyId || !sessionId) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4 pb-24 md:pb-6">
+      {/* Mobile Header */}
+      <div className="md:hidden">
+        <MobilePageHeader
+          title={session?.title ?? 'Mark Attendance'}
+          subtitle={
+            session
+              ? `${formatDate(session.sessionDate)} • ${formatTime(session.startAt)}`
+              : 'Session Roster'
+          }
+          showBack
+        />
+      </div>
+
+      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
         <div>
-          <h1 className="text-fg text-xl font-semibold">Attendance</h1>
-          <p className="text-fg-muted">Mark attendance for this training session.</p>
+          <h1 className="text-fg text-xl font-semibold">
+            {session ? session.title : 'Mark attendance'}
+          </h1>
+          {session ? (
+            <p className="text-fg-muted">
+              {formatDate(session.sessionDate)} • {formatTime(session.startAt)} –{' '}
+              {formatTime(session.endAt)}
+              {session.batch?.name ? ` • Batch: ${session.batch?.name}` : ''}
+            </p>
+          ) : null}
         </div>
-        <Button variant="secondary" size="sm" onClick={() => void navigate('/sessions')}>
+        <Button variant="secondary" onClick={() => navigate('/sessions')}>
           Back to sessions
         </Button>
       </div>
 
-      {sessionQuery.isPending ? (
-        <p className="text-fg-muted">Loading session…</p>
-      ) : sessionQuery.isError ? (
-        <ErrorState error={sessionQuery.error} onRetry={() => void sessionQuery.refetch()} />
-      ) : !session ? (
-        <ErrorState error={new Error('Session not found')} />
-      ) : (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader
-              title={session.title}
-              description={`${formatDate(session.sessionDate)} · ${formatTime(session.startAt)} - ${formatTime(session.endAt)}`}
-            />
-            <CardBody className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-fg-muted text-xs tracking-wide uppercase">Batch</p>
-                <p className="text-fg text-base font-medium">{session.batch.name}</p>
-              </div>
-              <div>
-                <p className="text-fg-muted text-xs tracking-wide uppercase">Coach</p>
-                <p className="text-fg text-base font-medium">
-                  {session.coach.fullName ?? session.coach.email}
-                </p>
-              </div>
-            </CardBody>
-          </Card>
+      <Card>
+        <CardHeader
+          title="Roster Attendance"
+          description="Toggle player attendance for this session."
+          className="hidden md:block"
+        />
+        <CardBody className="space-y-4 p-4">
+          {totalPlayers > 0 ? (
+            <div className="bg-surface-muted/70 border-border-subtle text-fg-muted flex items-center justify-between rounded-xl border p-3 text-xs sm:text-sm">
+              <span>
+                Present: <strong className="text-primary font-bold">{presentCount}</strong> /{' '}
+                {totalPlayers} players
+              </span>
+              {canManage && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void handleMarkAllPresent()}
+                  isLoading={markAllPresent.isPending}
+                  className="min-h-[36px] text-xs font-semibold"
+                >
+                  Mark All Present
+                </Button>
+              )}
+            </div>
+          ) : null}
 
-          <Card>
-            <CardHeader
-              title="Players"
-              description="Mark each player present or absent."
-              action={
-                canManage && totalPlayers > 0 ? (
-                  <Button
-                    size="sm"
-                    isLoading={markAllPresent.isPending}
-                    onClick={() => void handleMarkAllPresent()}
+          {batchPlayersQuery.isPending || attendanceQuery.isPending ? (
+            <p className="text-fg-muted">Loading players…</p>
+          ) : batchPlayersQuery.isError ? (
+            <ErrorState
+              error={batchPlayersQuery.error}
+              onRetry={() => void batchPlayersQuery.refetch()}
+            />
+          ) : attendanceQuery.isError ? (
+            <ErrorState
+              error={attendanceQuery.error}
+              onRetry={() => void attendanceQuery.refetch()}
+            />
+          ) : !batchPlayersQuery.data?.length ? (
+            <p className="text-fg-muted">No players assigned to this batch.</p>
+          ) : (
+            <div className="space-y-3">
+              {batchPlayersQuery.data.map((player) => {
+                const currentStatus = attendanceByPlayer.get(player.academyMemberId) ?? 'absent';
+                const isPlayerSaving =
+                  markAttendance.isPending &&
+                  markAttendance.variables?.playerId === player.academyMemberId;
+
+                return (
+                  <div
+                    key={player.id}
+                    className="border-border-subtle bg-surface flex flex-col justify-between gap-3 rounded-2xl border p-4 shadow-2xs sm:flex-row sm:items-center"
                   >
-                    Mark all present
-                  </Button>
-                ) : null
-              }
-            />
-            <CardBody className="space-y-3">
-              {totalPlayers > 0 ? (
-                <div className="bg-surface-muted text-fg-muted rounded-lg px-4 py-2 text-sm">
-                  Present: <span className="text-fg font-semibold">{presentCount}</span> /{' '}
-                  {totalPlayers} players
-                </div>
-              ) : null}
-              {batchPlayersQuery.isPending || attendanceQuery.isPending ? (
-                <p className="text-fg-muted">Loading players…</p>
-              ) : batchPlayersQuery.isError ? (
-                <ErrorState
-                  error={batchPlayersQuery.error}
-                  onRetry={() => void batchPlayersQuery.refetch()}
-                />
-              ) : attendanceQuery.isError ? (
-                <ErrorState
-                  error={attendanceQuery.error}
-                  onRetry={() => void attendanceQuery.refetch()}
-                />
-              ) : !batchPlayersQuery.data?.length ? (
-                <p className="text-fg-muted">No players assigned to this batch.</p>
-              ) : (
-                <div className="space-y-3">
-                  {batchPlayersQuery.data.map((player) => {
-                    const currentStatus =
-                      attendanceByPlayer.get(player.academyMemberId) ?? 'absent';
-                    const isPlayerSaving =
-                      markAttendance.isPending &&
-                      markAttendance.variables?.playerId === player.academyMemberId;
-
-                    return (
-                      <div
-                        key={player.id}
-                        className="border-border-subtle grid gap-3 rounded-2xl border p-4 sm:grid-cols-[1fr_auto]"
-                      >
-                        <div>
-                          <p className="text-fg font-medium">{player.fullName ?? player.email}</p>
-                          <p className="text-fg-muted text-sm">{player.email}</p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {ATTENDANCE_OPTIONS.map((option) => {
-                            const isSelected = currentStatus === option.value;
-                            return (
-                              <Button
-                                key={option.value}
-                                size="sm"
-                                variant={isSelected ? 'primary' : 'secondary'}
-                                onClick={async () => {
-                                  if (isSelected || isPlayerSaving) return;
-                                  try {
-                                    await handleMark(player.academyMemberId, option.value);
-                                  } catch (err) {
-                                    pushToast({
-                                      title: 'Failed to update attendance',
-                                      description:
-                                        err instanceof Error ? err.message : 'Unknown error',
-                                      variant: 'error',
-                                    });
-                                  }
-                                }}
-                                isLoading={isPlayerSaving}
-                                disabled={
-                                  !canManage || (markAttendance.isPending && !isPlayerSaving)
-                                }
-                              >
-                                {option.label}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardHeader
-              title="Session attendance"
-              description="Recent attendance records for this session."
-            />
-            <CardBody>
-              {attendanceQuery.data?.length ? (
-                <div className="space-y-2">
-                  {attendanceQuery.data.map((record) => (
-                    <div key={record.id} className="border-border-subtle rounded-2xl border p-3">
-                      <p className="text-fg text-sm">
-                        {playerNameById.get(record.playerId) ?? record.playerId}
+                    <div>
+                      <p className="text-fg text-base font-semibold">
+                        {player.fullName ?? player.email}
                       </p>
-                      <p className="text-fg-muted text-xs">Status: {record.status}</p>
+                      <p className="text-fg-muted text-xs">{player.email}</p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-fg-muted">No attendance records yet.</p>
-              )}
-            </CardBody>
-            <CardFooter>
-              <p className="text-fg-muted text-sm">Only coaches and owners can mark attendance.</p>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
+                    <div className="flex items-center gap-2">
+                      {ATTENDANCE_OPTIONS.map((option) => {
+                        const isSelected = currentStatus === option.value;
+                        return (
+                          <Button
+                            key={option.value}
+                            variant={isSelected ? 'primary' : 'secondary'}
+                            onClick={async () => {
+                              if (isSelected || isPlayerSaving) return;
+                              try {
+                                await handleMark(player.academyMemberId, option.value);
+                              } catch (err) {
+                                pushToast({
+                                  title: 'Failed to update attendance',
+                                  description: err instanceof Error ? err.message : 'Unknown error',
+                                  variant: 'error',
+                                });
+                              }
+                            }}
+                            isLoading={isPlayerSaving}
+                            className={`min-h-[48px] flex-1 px-5 text-sm font-semibold sm:flex-initial ${
+                              isSelected
+                                ? option.value === 'present'
+                                  ? 'bg-success border-success hover:bg-success/90 text-white'
+                                  : 'bg-danger border-danger hover:bg-danger/90 text-white'
+                                : ''
+                            }`}
+                          >
+                            {option.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardBody>
+      </Card>
     </div>
   );
 }

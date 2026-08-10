@@ -14,7 +14,8 @@ import {
   Select,
   Textarea,
 } from '@/components/ui';
-import { EmptyState, ErrorState } from '@/components/feedback';
+import { ErrorState } from '@/components/feedback';
+import { MobilePageHeader, MobileFilterChips, MobileEmptyState } from '@/components/mobile';
 import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
 import { useCan } from '@/lib/rbac';
@@ -128,11 +129,78 @@ export default function BatchesPage() {
     pushToast({ title: 'Batch deleted', variant: 'success' });
   };
 
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening'>(
+    'all',
+  );
+
+  const filteredBatches = useMemo(() => {
+    if (!batchesQuery.data) return [];
+    if (selectedFilter === 'all') return batchesQuery.data;
+    return batchesQuery.data.filter((b) => {
+      const time = (b.trainingTime || '').toLowerCase();
+      if (selectedFilter === 'morning')
+        return (
+          time.includes('am') ||
+          time.includes('06:') ||
+          time.includes('07:') ||
+          time.includes('08:') ||
+          time.includes('09:')
+        );
+      if (selectedFilter === 'afternoon')
+        return (
+          time.includes('12:') ||
+          time.includes('13:') ||
+          time.includes('14:') ||
+          time.includes('15:') ||
+          time.includes('16:')
+        );
+      if (selectedFilter === 'evening')
+        return (
+          time.includes('17:') ||
+          time.includes('18:') ||
+          time.includes('19:') ||
+          time.includes('20:') ||
+          time.includes('pm')
+        );
+      return true;
+    });
+  }, [batchesQuery.data, selectedFilter]);
+
   if (!academyId) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4 pb-24 md:pb-6">
+      {/* Mobile Page Header */}
+      <div className="md:hidden">
+        <MobilePageHeader
+          title="Batches"
+          count={batchesQuery.data?.length}
+          subtitle="Training groups & squads"
+          primaryAction={
+            canManage
+              ? {
+                  label: showForm ? 'Hide' : 'New',
+                  onClick: () => setShowForm((prev) => !prev),
+                }
+              : undefined
+          }
+        />
+        <div className="mb-3 px-4">
+          <MobileFilterChips
+            options={[
+              { id: 'all', label: 'All', count: batchesQuery.data?.length },
+              { id: 'morning', label: 'Morning' },
+              { id: 'afternoon', label: 'Afternoon' },
+              { id: 'evening', label: 'Evening' },
+            ]}
+            activeId={selectedFilter}
+            onChange={setSelectedFilter}
+          />
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
         <div>
           <h1 className="text-fg text-xl font-semibold">Batches</h1>
           <p className="text-fg-muted">Create and manage your academy training groups.</p>
@@ -181,6 +249,7 @@ export default function BatchesPage() {
                         key={day}
                         type="button"
                         variant={selectedDays.includes(day) ? 'primary' : 'secondary'}
+                        size="sm"
                         onClick={() => toggleDay(day)}
                       >
                         {day}
@@ -188,6 +257,20 @@ export default function BatchesPage() {
                     ))}
                   </div>
                 </div>
+                <div>
+                  <label className="text-fg block text-sm font-medium">Assign coach</label>
+                  <Select {...register('coachId', { required: 'Coach is required' })}>
+                    <option value="">Select coach</option>
+                    {coaches.map((coach) => (
+                      <option key={coach.id} value={coach.id}>
+                        {coach.fullName ?? coach.email}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+
+              <div>
                 <TimeRangePicker
                   label="Training time"
                   startTime={startTime}
@@ -195,24 +278,6 @@ export default function BatchesPage() {
                   onStartTimeChange={setStartTime}
                   onEndTimeChange={setEndTime}
                 />
-              </div>
-
-              <div>
-                <label className="text-fg block text-sm font-medium">Assigned coach</label>
-                <Select
-                  {...register('coachId', { required: 'Coach is required' })}
-                  hasError={Boolean(errors.coachId)}
-                >
-                  <option value="">Select coach</option>
-                  {coaches.map((coach) => (
-                    <option key={coach.id} value={coach.id}>
-                      {coach.fullName ?? coach.email}
-                    </option>
-                  ))}
-                </Select>
-                {errors.coachId ? (
-                  <p className="text-danger text-xs">{errors.coachId.message}</p>
-                ) : null}
               </div>
 
               <div>
@@ -230,50 +295,63 @@ export default function BatchesPage() {
       ) : null}
 
       <Card>
-        <CardHeader title="All batches" description="See every training group in this academy." />
-        <CardBody>
+        <CardHeader
+          title="All batches"
+          description="See every training group in this academy."
+          className="hidden md:block"
+        />
+        <CardBody className="p-4">
           {batchesQuery.isPending ? (
             <p className="text-fg-muted">Loading batches…</p>
           ) : batchesQuery.isError ? (
             <ErrorState error={batchesQuery.error} onRetry={() => void batchesQuery.refetch()} />
-          ) : batchesQuery.data?.length === 0 ? (
-            <EmptyState
-              title="No batches yet"
-              description="Create a batch to start assigning players and coaches."
+          ) : filteredBatches.length === 0 ? (
+            <MobileEmptyState
+              title="No batches"
+              description="Create your first batch to start organizing training."
+              action={
+                canManage ? { label: 'Create Batch', onClick: () => setShowForm(true) } : undefined
+              }
             />
           ) : (
             <div className="space-y-3">
-              {batchesQuery.data.map((batch) => (
-                <div key={batch.id} className="border-border-subtle rounded-2xl border p-4">
+              {filteredBatches.map((batch) => (
+                <div
+                  key={batch.id}
+                  className="border-border-subtle bg-surface rounded-2xl border p-4 shadow-2xs"
+                >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <Link
                         to={`/batches/${batch.id}`}
-                        className="text-fg text-lg font-semibold hover:underline"
+                        className="text-fg text-base font-semibold hover:underline"
                       >
                         {batch.name}
                       </Link>
-                      <p className="text-fg-muted text-sm">{batch.ageGroup}</p>
+                      <p className="text-fg-muted mt-0.5 text-xs">{batch.ageGroup}</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="bg-surface-muted text-fg-muted rounded-full px-3 py-1 text-xs font-medium">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="bg-surface-muted text-fg-muted rounded-full px-2.5 py-0.5 text-xs font-medium">
                         {batch.playerCount ?? 0} players
                       </span>
-                      <span className="bg-surface-muted text-fg-muted rounded-full px-3 py-1 text-xs font-medium">
-                        Coach: {batch.coach.fullName ?? batch.coach.email}
-                      </span>
-                      <span className="bg-surface-muted text-fg-muted rounded-full px-3 py-1 text-xs font-medium">
-                        {batch.trainingDays} • {batch.trainingTime}
+                      <span className="bg-surface-muted text-fg-muted rounded-full px-2.5 py-0.5 text-xs font-medium">
+                        {batch.coach.fullName ?? batch.coach.email}
                       </span>
                     </div>
                   </div>
+                  {batch.trainingDays && (
+                    <p className="text-fg-muted mt-2 text-xs font-medium">
+                      {batch.trainingDays} • {batch.trainingTime}
+                    </p>
+                  )}
                   {canManage ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
-                        variant="danger"
+                        variant="secondary"
                         size="sm"
                         isLoading={deleteBatch.isPending}
                         onClick={() => void handleDelete(batch.id)}
+                        className="text-danger hover:bg-danger/10"
                       >
                         Delete
                       </Button>

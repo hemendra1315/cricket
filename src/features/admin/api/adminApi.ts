@@ -85,6 +85,35 @@ type RpcCaller = (
   args?: Record<string, unknown>,
 ) => Promise<{ data: unknown; error: unknown }>;
 
+/**
+ * Development/ops logging helper for Super Admin RPC failures.
+ *
+ * Logs the full Supabase error (message/details/hint/code) to the console so the
+ * actual database/RPC failure is never masked, while the error surfaced to the UI
+ * keeps a safe message. Verbose details/hint are carried on the Error object but
+ * are NOT rendered in production UI toasts/modals.
+ */
+type RpcErrorShape = {
+  message?: string | null;
+  details?: string | null;
+  hint?: string | null;
+  code?: string | null;
+};
+
+function throwRpcError(rpcName: string, error: unknown): never {
+  const e = (error ?? {}) as RpcErrorShape;
+  console.error(`[super-admin] ${rpcName} failed`, {
+    message: e.message,
+    details: e.details,
+    hint: e.hint,
+    code: e.code,
+    raw: error,
+  });
+  const err = new Error(e.message ?? 'Request failed');
+  Object.assign(err, { details: e.details, hint: e.hint, code: e.code, rpcName });
+  throw err;
+}
+
 export async function fetchPlatformAnalytics(): Promise<PlatformAnalytics> {
   const { data, error } = await (supabase.rpc as unknown as RpcCaller)('get_platform_analytics');
   if (error) throw error;
@@ -154,9 +183,7 @@ export interface SuperAdminAddMemberPayload {
   batchId?: string;
 }
 
-export async function superAdminAddMember(
-  payload: SuperAdminAddMemberPayload,
-): Promise<{
+export async function superAdminAddMember(payload: SuperAdminAddMemberPayload): Promise<{
   id: UUID;
   academyId: UUID;
   userId: UUID;
@@ -172,7 +199,7 @@ export async function superAdminAddMember(
     p_phone: payload.phone ?? null,
     p_batch_id: payload.batchId ?? null,
   });
-  if (error) throw error;
+  if (error) throwRpcError('super_admin_add_member', error);
   return data as unknown as {
     id: UUID;
     academyId: UUID;
@@ -190,6 +217,6 @@ export async function superAdminSeedAcademyDemoData(academyId: UUID): Promise<un
       p_academy_id: academyId,
     },
   );
-  if (error) throw error;
+  if (error) throwRpcError('super_admin_seed_academy_demo_data', error);
   return data;
 }

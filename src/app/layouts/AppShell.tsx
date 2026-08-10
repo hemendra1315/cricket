@@ -1,10 +1,8 @@
 import {
   CalendarDays,
-  Home,
   LayoutDashboard,
   LogOut,
   Menu,
-  MoreHorizontal,
   ShieldCheck,
   Trophy,
   User,
@@ -23,7 +21,7 @@ import { useOnlineStatus } from '@/hooks';
 import { hasCapability, useActiveRoles, type Capability } from '@/lib/rbac';
 import { useAcademyStore } from '@/stores';
 import { cn } from '@/lib/utils/cn';
-import { ROLE_HOME } from '@/types/enums';
+import { MobileBottomNav, MobileFab } from '@/components/mobile';
 
 interface NavItemDef {
   to: string;
@@ -109,26 +107,11 @@ export function AppShell() {
   const isSuperAdminMode =
     isSuperAdmin && Boolean(activeAcademyId) && location.pathname !== '/admin';
 
-  // Compute primary home route based on user role
-  const homePath = roles.includes('academy_owner')
-    ? ROLE_HOME.academy_owner
-    : roles.includes('coach')
-      ? ROLE_HOME.coach
-      : ROLE_HOME.player;
-
   // Filter allowed items for the user
   const allowedNavItems = SIDEBAR_ITEMS.filter((item) => {
     if (item.superAdminOnly) return isSuperAdmin;
     return item.requiresCapability === null || hasCapability(roles, item.requiresCapability);
   });
-
-  // Mobile Bottom Nav primary tabs
-  const mobilePrimaryTabs = [
-    { to: homePath, label: 'Home', icon: <Home className="h-5 w-5" /> },
-    { to: '/members', label: 'Players', icon: <Users className="h-5 w-5" /> },
-    { to: '/sessions', label: 'Sessions', icon: <CalendarDays className="h-5 w-5" /> },
-    { to: '/matches', label: 'Matches', icon: <Trophy className="h-5 w-5" /> },
-  ];
 
   return (
     <div className="bg-bg min-h-screen">
@@ -215,43 +198,9 @@ export function AppShell() {
         </main>
       </div>
 
-      {/* MOBILE FIXED BOTTOM NAVIGATION (< 768px / md) */}
-      <nav
-        className="border-border-subtle bg-surface/95 fixed right-0 bottom-0 left-0 z-40 flex h-16 items-center justify-around border-t backdrop-blur-md md:hidden"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-        aria-label="Mobile Navigation"
-      >
-        {mobilePrimaryTabs.map((tab) => {
-          const isActive = location.pathname.startsWith(tab.to);
-          return (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              className={cn(
-                'flex min-h-[48px] min-w-[56px] flex-col items-center justify-center rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
-                isActive ? 'text-primary font-semibold' : 'text-fg-muted hover:text-fg',
-              )}
-            >
-              <div className="mb-0.5">{tab.icon}</div>
-              <span>{tab.label}</span>
-            </NavLink>
-          );
-        })}
-
-        {/* MORE MENU TAB BUTTON */}
-        <button
-          type="button"
-          onClick={() => setIsMoreMenuOpen(true)}
-          className={cn(
-            'flex min-h-[48px] min-w-[56px] flex-col items-center justify-center rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
-            isMoreMenuOpen ? 'text-primary font-semibold' : 'text-fg-muted hover:text-fg',
-          )}
-          aria-label="More navigation items"
-        >
-          <MoreHorizontal className="mb-0.5 h-5 w-5" />
-          <span>More</span>
-        </button>
-      </nav>
+      {/* MOBILE FIXED BOTTOM NAVIGATION & FAB */}
+      <MobileFab />
+      <MobileBottomNav />
 
       {/* MORE MENU SHEET MODAL (< 768px / md) */}
       <Modal

@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/query/keys';
 import type { UUID } from '@/types';
 import {
   fetchPlatformAnalytics,
@@ -73,18 +74,43 @@ export function useDeletePlatformAcademy() {
   });
 }
 
+/**
+ * Invalidate academy-scoped + platform queries after a Super Admin writes to
+ * an academy (add member/coach, seed demo data) so lists/dashboards refresh.
+ *
+ * We keep the legacy literal keys alongside the real app keys: academy-scoped
+ * queries actually live under the `['academies', ...]` prefix (queryKeys.academy.*),
+ * and dashboard analytics under `['dashboard-*']`, so those are what make the UI
+ * refresh. The literal keys are retained for parity/safety.
+ */
+function invalidateAcademyQueries(queryClient: QueryClient, academyId: UUID | null) {
+  void queryClient.invalidateQueries({ queryKey: ['academy-members'] });
+  void queryClient.invalidateQueries({ queryKey: ['members'] });
+  void queryClient.invalidateQueries({ queryKey: ['batches'] });
+  void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+  void queryClient.invalidateQueries({ queryKey: ['matches'] });
+  void queryClient.invalidateQueries({ queryKey: ['attendance'] });
+  void queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
+
+  // Real app keys (prefix matches every academy-scoped query + analytics per academy).
+  if (academyId) {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.academy.detail(academyId) });
+  } else {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.academy.all });
+  }
+  void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+  void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
+  void queryClient.invalidateQueries({ queryKey: ['admin-platform-analytics'] });
+}
+
 export function useSuperAdminAddMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: SuperAdminAddMemberPayload) => superAdminAddMember(payload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['academy-members'] });
-      void queryClient.invalidateQueries({ queryKey: ['members'] });
-      void queryClient.invalidateQueries({ queryKey: ['batches'] });
-      void queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
-      void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
-      void queryClient.invalidateQueries({ queryKey: ['admin-platform-analytics'] });
+    onSuccess: (_data, variables) => {
+      invalidateAcademyQueries(queryClient, variables.academyId);
     },
   });
 }
@@ -94,16 +120,8 @@ export function useSuperAdminSeedDemoData() {
 
   return useMutation({
     mutationFn: (academyId: UUID) => superAdminSeedAcademyDemoData(academyId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['academy-members'] });
-      void queryClient.invalidateQueries({ queryKey: ['members'] });
-      void queryClient.invalidateQueries({ queryKey: ['batches'] });
-      void queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      void queryClient.invalidateQueries({ queryKey: ['matches'] });
-      void queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      void queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] });
-      void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
-      void queryClient.invalidateQueries({ queryKey: ['admin-platform-analytics'] });
+    onSuccess: (_data, academyId) => {
+      invalidateAcademyQueries(queryClient, academyId);
     },
   });
 }

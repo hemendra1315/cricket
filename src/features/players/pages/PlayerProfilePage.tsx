@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
 import { ErrorState } from '@/components/feedback';
+import { MobilePageHeader } from '@/components/mobile';
 import { useActiveAcademy } from '@/features/academies';
 import {
   usePlayerProfile,
@@ -143,8 +144,23 @@ export default function PlayerProfilePage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
+    <div className="space-y-4 pb-24 md:pb-6">
+      {/* Mobile Page Header */}
+      {profileQuery.data && (
+        <div className="md:hidden">
+          <MobilePageHeader
+            title={profileQuery.data.fullName ?? 'Player Profile'}
+            subtitle={
+              profileQuery.data.batchName
+                ? `Batch: ${profileQuery.data.batchName}`
+                : profileQuery.data.email
+            }
+            showBack
+          />
+        </div>
+      )}
+
+      <div className="hidden items-center gap-3 md:flex">
         <Link to="/members" className="text-fg-muted hover:text-fg text-sm">
           ← Back to roster
         </Link>
@@ -156,7 +172,7 @@ export default function PlayerProfilePage() {
         <ErrorState error={profileQuery.error} onRetry={() => void profileQuery.refetch()} />
       ) : (
         <>
-          <Card>
+          <Card className="hidden md:block">
             <CardBody>
               <div className="flex flex-wrap items-center gap-4">
                 <div className="bg-surface-muted flex h-16 w-16 items-center justify-center rounded-full">
@@ -196,16 +212,17 @@ export default function PlayerProfilePage() {
             </div>
           )}
 
-          <div className="border-border-subtle max-w-full overflow-x-auto rounded-lg border p-1">
+          {/* Contained Horizontal Scrolling Tab Bar */}
+          <div className="border-border-subtle bg-surface max-w-full overflow-x-auto rounded-xl border p-1 shadow-2xs">
             <div className="flex min-w-max gap-1">
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`min-h-[44px] shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`min-h-[44px] shrink-0 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-surface-muted text-fg font-semibold'
-                      : 'text-fg-muted hover:text-fg'
+                      ? 'bg-primary text-primary-fg shadow-2xs'
+                      : 'text-fg-muted hover:text-fg hover:bg-surface-muted'
                   }`}
                 >
                   {tab.label}
