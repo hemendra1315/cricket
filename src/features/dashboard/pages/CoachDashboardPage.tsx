@@ -29,10 +29,12 @@ export default function CoachDashboardPage() {
   const activities: ActivityItem[] = [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-fg text-xl font-semibold">Coach dashboard</h1>
-        <p className="text-fg-muted text-sm">{membership?.academyName ?? 'Academy'}</p>
+        <h1 className="text-fg text-2xl font-bold tracking-tight md:text-3xl">Coach Dashboard</h1>
+        <p className="text-fg-muted mt-1 text-xs font-medium md:text-sm">
+          {membership?.academyName ?? 'Academy'}
+        </p>
       </div>
 
       <Card>

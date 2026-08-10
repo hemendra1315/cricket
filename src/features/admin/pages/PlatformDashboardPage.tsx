@@ -191,7 +191,7 @@ export default function PlatformDashboardPage() {
               onRetry={() => void analyticsQuery.refetch()}
             />
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               <Card>
                 <CardBody className="flex items-center gap-4 p-4">
                   <div className="bg-primary/10 text-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">

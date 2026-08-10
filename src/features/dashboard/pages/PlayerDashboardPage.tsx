@@ -44,48 +44,74 @@ export default function PlayerDashboardPage() {
   const stats = analytics.stats;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-fg text-xl font-semibold">My dashboard</h1>
-        <p className="text-fg-muted text-sm">{membership?.academyName ?? 'Academy'}</p>
+        <h1 className="text-fg text-2xl font-bold tracking-tight md:text-3xl">
+          My Cricket Dashboard
+        </h1>
+        <p className="text-fg-muted mt-1 text-xs font-medium md:text-sm">
+          {membership?.academyName ?? 'Academy'}
+        </p>
       </div>
 
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-7">
           <Card>
-            <CardBody className="py-3">
-              <p className="text-fg-muted text-xs tracking-wide uppercase">Matches</p>
-              <p className="text-fg text-lg font-semibold">{stats.matchesPlayed}</p>
+            <CardBody className="p-3.5 md:p-4">
+              <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">
+                Matches
+              </p>
+              <p className="text-fg mt-1 text-xl font-bold tracking-tight md:text-2xl">
+                {stats.matchesPlayed}
+              </p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
-              <p className="text-fg-muted text-xs tracking-wide uppercase">Runs</p>
-              <p className="text-fg text-lg font-semibold">{stats.battingRuns}</p>
+            <CardBody className="p-3.5 md:p-4">
+              <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">Runs</p>
+              <p className="text-fg mt-1 text-xl font-bold tracking-tight md:text-2xl">
+                {stats.battingRuns}
+              </p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
-              <p className="text-fg-muted text-xs tracking-wide uppercase">Wickets</p>
-              <p className="text-fg text-lg font-semibold">{stats.bowlingWickets}</p>
+            <CardBody className="p-3.5 md:p-4">
+              <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">
+                Wickets
+              </p>
+              <p className="text-fg mt-1 text-xl font-bold tracking-tight md:text-2xl">
+                {stats.bowlingWickets}
+              </p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
-              <p className="text-fg-muted text-xs tracking-wide uppercase">Batting Avg</p>
-              <p className="text-fg text-lg font-semibold">{stats.battingAverage}</p>
+            <CardBody className="p-3.5 md:p-4">
+              <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">
+                Batting Avg
+              </p>
+              <p className="text-fg mt-1 text-xl font-bold tracking-tight md:text-2xl">
+                {stats.battingAverage}
+              </p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
-              <p className="text-fg-muted text-xs tracking-wide uppercase">Strike Rate</p>
-              <p className="text-fg text-lg font-semibold">{stats.strikeRate}</p>
+            <CardBody className="p-3.5 md:p-4">
+              <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">
+                Strike Rate
+              </p>
+              <p className="text-fg mt-1 text-xl font-bold tracking-tight md:text-2xl">
+                {stats.strikeRate}
+              </p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
-              <p className="text-fg-muted text-xs tracking-wide uppercase">Economy</p>
-              <p className="text-fg text-lg font-semibold">{stats.economy}</p>
+            <CardBody className="p-3.5 md:p-4">
+              <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">
+                Economy
+              </p>
+              <p className="text-fg mt-1 text-xl font-bold tracking-tight md:text-2xl">
+                {stats.economy}
+              </p>
             </CardBody>
           </Card>
           <Card>

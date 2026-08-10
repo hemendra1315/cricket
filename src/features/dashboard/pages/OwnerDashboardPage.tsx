@@ -58,24 +58,27 @@ export default function OwnerDashboardPage() {
     })) ?? [];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-fg text-xl font-semibold">{membership?.academyName ?? 'Academy'}</h1>
-        <p className="text-fg-muted text-sm">
-          {membership ? 'Owner' : ''}
-          {membership?.city ? ` · ${membership.city}` : ''}
-        </p>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-fg text-2xl font-bold tracking-tight md:text-3xl">
+            {membership?.academyName ?? 'Academy'}
+          </h1>
+          <p className="text-fg-muted mt-1 text-xs font-medium md:text-sm">
+            Owner Dashboard{membership?.city ? ` · ${membership.city}` : ''}
+          </p>
+        </div>
       </div>
 
       {academyId ? <JoinCodeCard academyId={academyId} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
         <KpiCard title="Total Players" value={analytics.totalPlayers} />
         <KpiCard title="Active Coaches" value={analytics.totalCoaches} />
         <KpiCard title="Active Batches" value={analytics.totalBatches} />
         <KpiCard title="Total Matches" value={analytics.totalMatches} />
         <KpiCard title="Attendance %" value={`${analytics.attendancePercentage}%`} />
-        <KpiCard title="Sessions This Week" value={analytics.sessionsThisWeek} />
+        <KpiCard title="Sessions Week" value={analytics.sessionsThisWeek} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
