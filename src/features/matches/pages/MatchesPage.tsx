@@ -11,7 +11,7 @@ import { useUiStore } from '@/stores';
 import { useAcademyMatches, useCreateMatch, useDeleteMatch } from '../hooks/useMatches';
 import { useBatches } from '@/features/batches';
 import { formatDate } from '@/lib/utils/date';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { MatchFormat, MatchType } from '@/types/enums';
 
 type MatchFormValues = {
@@ -54,6 +54,7 @@ const MATCH_TYPES = [
 export default function MatchesPage() {
   const { academyId } = useActiveAcademy();
   const canManage = useCan('matches:manage');
+  const navigate = useNavigate();
 
   const matchesQuery = useAcademyMatches(academyId);
   const batchesQuery = useBatches(academyId);
@@ -117,9 +118,18 @@ export default function MatchesPage() {
         </div>
 
         {canManage ? (
-          <Link to="/matches/new" id="add-match-btn">
-            <Button>+ Add Match</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              id="import-cricheroes-btn"
+              onClick={() => navigate('/matches/new?import=cricheroes')}
+            >
+              📥 Import from CricHeroes PDF
+            </Button>
+            <Link to="/matches/new" id="add-match-btn">
+              <Button>+ Add Match</Button>
+            </Link>
+          </div>
         ) : null}
       </div>
 

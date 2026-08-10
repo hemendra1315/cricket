@@ -260,14 +260,16 @@ export type SaveMatchResultPayload = {
     batchId?: UUID | null;
   };
   lineups?: Array<{
-    academyMemberId: UUID;
+    academyMemberId?: UUID | null;
     battingOrder?: number | null;
     isCaptain?: boolean;
     isViceCaptain?: boolean;
     isWicketkeeper?: boolean;
+    isGuest?: boolean;
+    guestName?: string | null;
   }>;
   batting?: Array<{
-    academyMemberId: UUID;
+    academyMemberId?: UUID | null;
     runs: number;
     balls: number;
     fours: number;
@@ -275,21 +277,27 @@ export type SaveMatchResultPayload = {
     isOut: boolean;
     dismissalType?: string | null;
     battingOrder?: number | null;
+    isGuest?: boolean;
+    guestName?: string | null;
   }>;
   bowling?: Array<{
-    academyMemberId: UUID;
+    academyMemberId?: UUID | null;
     overs: number;
     maidens: number;
     runsConceded: number;
     wickets: number;
     wides: number;
     noBalls: number;
+    isGuest?: boolean;
+    guestName?: string | null;
   }>;
   fielding?: Array<{
-    academyMemberId: UUID;
+    academyMemberId?: UUID | null;
     catches: number;
     runOuts: number;
     stumpings: number;
+    isGuest?: boolean;
+    guestName?: string | null;
   }>;
   partnerships?: Array<{
     batter1Id: UUID;

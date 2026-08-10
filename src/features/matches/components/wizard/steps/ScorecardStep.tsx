@@ -43,6 +43,8 @@ export function ScorecardStep({
           sixes: 0,
           isOut: true,
           dismissalType: 'bowled',
+          isGuest: l.isGuest,
+          guestName: l.guestName,
         }));
 
   const bowling = state.bowling.length > 0 ? state.bowling : [];

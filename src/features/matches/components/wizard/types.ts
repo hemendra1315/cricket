@@ -13,6 +13,8 @@ export type WizardLineupEntry = {
   isCaptain: boolean;
   isViceCaptain: boolean;
   isWicketkeeper: boolean;
+  isGuest?: boolean;
+  guestName?: string | null;
 };
 
 export type WizardBattingEntry = {
@@ -23,6 +25,8 @@ export type WizardBattingEntry = {
   sixes: number;
   isOut: boolean;
   dismissalType: string;
+  isGuest?: boolean;
+  guestName?: string | null;
 };
 
 export type WizardBowlingEntry = {
@@ -33,6 +37,8 @@ export type WizardBowlingEntry = {
   wickets: number;
   wides: number;
   noBalls: number;
+  isGuest?: boolean;
+  guestName?: string | null;
 };
 
 export type WizardFieldingEntry = {
@@ -40,6 +46,8 @@ export type WizardFieldingEntry = {
   catches: number;
   runOuts: number;
   stumpings: number;
+  isGuest?: boolean;
+  guestName?: string | null;
 };
 
 export type WizardAwards = {

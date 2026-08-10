@@ -110,9 +110,12 @@ export function ReviewStep({
               <tbody>
                 {state.batting.map((b) => {
                   const p = memberMap.get(b.memberId);
+                  const displayName = b.isGuest
+                    ? `${b.guestName || 'Guest Player'} (Guest)`
+                    : (p?.fullName ?? p?.email ?? 'Unknown Player');
                   return (
                     <tr key={b.memberId} className="border-b last:border-0">
-                      <td className="py-1.5 font-medium">{p?.fullName ?? p?.email}</td>
+                      <td className="py-1.5 font-medium">{displayName}</td>
                       <td className="py-1.5">{b.runs}</td>
                       <td className="py-1.5">{b.balls}</td>
                       <td className="py-1.5">{b.fours}</td>
@@ -147,9 +150,12 @@ export function ReviewStep({
               <tbody>
                 {state.bowling.map((b) => {
                   const p = memberMap.get(b.memberId);
+                  const displayName = b.isGuest
+                    ? `${b.guestName || 'Guest Player'} (Guest)`
+                    : (p?.fullName ?? p?.email ?? 'Unknown Player');
                   return (
                     <tr key={b.memberId} className="border-b last:border-0">
-                      <td className="py-1.5 font-medium">{p?.fullName ?? p?.email}</td>
+                      <td className="py-1.5 font-medium">{displayName}</td>
                       <td className="py-1.5">{b.overs}</td>
                       <td className="py-1.5">{b.maidens}</td>
                       <td className="py-1.5">{b.runsConceded}</td>

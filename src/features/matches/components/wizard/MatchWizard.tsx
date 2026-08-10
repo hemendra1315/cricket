@@ -13,13 +13,17 @@ import type { SaveMatchResultPayload } from '../../api/matchesTypes';
 
 export function MatchWizard({
   academyId,
+  initialState,
   onComplete,
 }: {
   academyId: UUID;
+  initialState?: WizardState;
   onComplete: (matchId: UUID) => void;
 }) {
-  const [currentStep, setCurrentStep] = useState<WizardStep>('details');
-  const [state, setState] = useState<WizardState>(INITIAL_WIZARD_STATE);
+  const [currentStep, setCurrentStep] = useState<WizardStep>(
+    initialState ? 'scorecard' : 'details',
+  );
+  const [state, setState] = useState<WizardState>(initialState ?? INITIAL_WIZARD_STATE);
 
   const saveMutation = useSaveMatchResult(academyId);
 
@@ -59,35 +63,43 @@ export function MatchWizard({
         tournament: state.tournament || null,
       },
       lineups: state.lineup.map((l) => ({
-        academyMemberId: l.memberId,
+        academyMemberId: l.isGuest ? null : l.memberId,
         battingOrder: l.battingOrder,
         isCaptain: l.isCaptain,
         isViceCaptain: l.isViceCaptain,
         isWicketkeeper: l.isWicketkeeper,
+        isGuest: l.isGuest ?? false,
+        guestName: l.isGuest ? l.guestName || l.fullName : null,
       })),
       batting: state.batting.map((b) => ({
-        academyMemberId: b.memberId,
+        academyMemberId: b.isGuest ? null : b.memberId,
         runs: b.runs,
         balls: b.balls,
         fours: b.fours,
         sixes: b.sixes,
         isOut: b.isOut,
         dismissalType: b.dismissalType || null,
+        isGuest: b.isGuest ?? false,
+        guestName: b.isGuest ? b.guestName || null : null,
       })),
       bowling: state.bowling.map((b) => ({
-        academyMemberId: b.memberId,
+        academyMemberId: b.isGuest ? null : b.memberId,
         overs: parseFloat(b.overs) || 0,
         maidens: b.maidens,
         runsConceded: b.runsConceded,
         wickets: b.wickets,
         wides: b.wides,
         noBalls: b.noBalls,
+        isGuest: b.isGuest ?? false,
+        guestName: b.isGuest ? b.guestName || null : null,
       })),
       fielding: state.fielding.map((f) => ({
-        academyMemberId: f.memberId,
+        academyMemberId: f.isGuest ? null : f.memberId,
         catches: f.catches,
         runOuts: f.runOuts,
         stumpings: f.stumpings,
+        isGuest: f.isGuest ?? false,
+        guestName: f.isGuest ? f.guestName || null : null,
       })),
       awards:
         state.awards.playerOfMatchId ||
