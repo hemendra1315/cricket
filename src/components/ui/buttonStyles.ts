@@ -12,10 +12,10 @@ const VARIANTS: Record<ButtonVariant, string> = {
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-12 px-6 text-base',
-  icon: 'h-10 w-10',
+  sm: 'h-9 md:h-8 px-3 text-xs md:text-sm min-h-[36px] touch-manipulation',
+  md: 'h-12 md:h-10 px-4 text-base md:text-sm min-h-[48px] md:min-h-[40px] font-medium touch-manipulation',
+  lg: 'h-14 md:h-12 px-6 text-base min-h-[52px] md:min-h-[48px] font-semibold touch-manipulation',
+  icon: 'h-11 w-11 md:h-10 md:w-10 min-h-[44px] min-w-[44px] md:min-h-[40px] md:min-w-[40px] touch-manipulation',
 };
 
 /** Shared class list, so router `<Link>`s can look exactly like buttons. */

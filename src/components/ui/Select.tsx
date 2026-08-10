@@ -9,7 +9,7 @@ export function Select({ className, hasError = false, children, ...props }: Sele
     <select
       aria-invalid={hasError || undefined}
       className={cn(
-        'bg-surface text-fg border-border-subtle h-10 w-full rounded-lg border px-3 text-sm',
+        'bg-surface text-fg border-border-subtle h-12 min-h-[48px] w-full rounded-xl border px-3.5 text-base transition-colors md:h-10 md:min-h-[40px] md:text-sm',
         'disabled:cursor-not-allowed disabled:opacity-60',
         hasError && 'border-danger',
         className,
