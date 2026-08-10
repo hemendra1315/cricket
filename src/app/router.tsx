@@ -88,31 +88,34 @@ export const router = createBrowserRouter([
                 children: [{ path: '/coach', element: <CoachDashboardPage /> }],
               },
               {
+                element: <RequireRole allow={['player', 'super_admin']} />,
+                children: [{ path: '/me', element: <PlayerDashboardPage /> }],
+              },
+              {
                 element: (
                   <RequireRole allow={['player', 'coach', 'academy_owner', 'super_admin']} />
                 ),
                 children: [
-                  { path: '/me', element: <PlayerDashboardPage /> },
                   { path: '/drills', element: <DrillsPage /> },
                   { path: '/drills/:drillId', element: <DrillDetailPage /> },
                 ],
               },
-                {
-                  element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
-                  children: [
-                    { path: '/members', element: <MembersPage /> },
-                    { path: '/members/:memberId', element: <PlayerProfilePage /> },
-                    { path: '/members/:memberId/attendance', element: <PlayerAttendancePage /> },
-                    { path: '/batches', element: <BatchesPage /> },
-                    { path: '/batches/:batchId', element: <BatchDetailPage /> },
-                    { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
-                    { path: '/matches', element: <MatchesPage /> },
-                    { path: '/matches/:matchId', element: <MatchDetailPage /> },
-                    { path: '/sessions', element: <TrainingSessionsPage /> },
-                    { path: '/sessions/:sessionId', element: <TrainingSessionDetailPage /> },
-                    { path: '/sessions/:sessionId/attendance', element: <AttendanceSessionPage /> },
-                  ],
-                },
+              {
+                element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
+                children: [
+                  { path: '/members', element: <MembersPage /> },
+                  { path: '/members/:memberId', element: <PlayerProfilePage /> },
+                  { path: '/members/:memberId/attendance', element: <PlayerAttendancePage /> },
+                  { path: '/batches', element: <BatchesPage /> },
+                  { path: '/batches/:batchId', element: <BatchDetailPage /> },
+                  { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
+                  { path: '/matches', element: <MatchesPage /> },
+                  { path: '/matches/:matchId', element: <MatchDetailPage /> },
+                  { path: '/sessions', element: <TrainingSessionsPage /> },
+                  { path: '/sessions/:sessionId', element: <TrainingSessionDetailPage /> },
+                  { path: '/sessions/:sessionId/attendance', element: <AttendanceSessionPage /> },
+                ],
+              },
             ],
           },
         ],

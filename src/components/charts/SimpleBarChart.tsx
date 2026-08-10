@@ -21,15 +21,13 @@ export function SimpleBarChart({ data, height = 200, showLabels = true }: Simple
         {data.map((item, index) => (
           <div key={index} className="flex flex-1 flex-col items-center gap-1">
             <div
-              className="w-full rounded-t-md bg-primary-500 transition-all"
+              className="bg-primary-500 w-full rounded-t-md transition-all"
               style={{
                 height: `${(item.value / maxValue) * 100}%`,
                 minHeight: item.value > 0 ? '4px' : '0',
               }}
             />
-            {showLabels && (
-              <span className="text-fg-muted truncate text-xs">{item.label}</span>
-            )}
+            {showLabels && <span className="text-fg-muted truncate text-xs">{item.label}</span>}
           </div>
         ))}
       </div>
@@ -82,9 +80,9 @@ export function SimpleLineChart({
         />
       </svg>
       {showLabels && (
-        <div className="flex justify-between mt-1">
+        <div className="mt-1 flex justify-between">
           {data.map((item, index) => (
-            <span key={index} className="text-fg-muted text-xs truncate">
+            <span key={index} className="text-fg-muted truncate text-xs">
               {item.label}
             </span>
           ))}

@@ -53,14 +53,11 @@ export const queryKeys = {
     matchPartnerships: (matchId: string) => ['matches', matchId, 'partnerships'] as const,
     matchAwards: (matchId: string) => ['matches', matchId, 'awards'] as const,
     matchCoachNotes: (matchId: string) => ['matches', matchId, 'coach-notes'] as const,
-    playerStatistics: (academyId: string) =>
-      ['academies', academyId, 'player-statistics'] as const,
+    playerStatistics: (academyId: string) => ['academies', academyId, 'player-statistics'] as const,
     playerStatisticsById: (academyId: string, playerId: string) =>
       ['academies', academyId, 'player-statistics', playerId] as const,
-    playerMilestones: (academyId: string) =>
-      ['academies', academyId, 'player-milestones'] as const,
-    academyRecords: (academyId: string) =>
-      ['academies', academyId, 'academy-records'] as const,
+    playerMilestones: (academyId: string) => ['academies', academyId, 'player-milestones'] as const,
+    academyRecords: (academyId: string) => ['academies', academyId, 'academy-records'] as const,
   },
 
   // Reserved for later phases; kept here so key shapes stay consistent.

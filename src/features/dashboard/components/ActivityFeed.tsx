@@ -3,7 +3,13 @@ import { Link } from 'react-router-dom';
 import { Card, CardBody, CardHeader } from '@/components/ui';
 import type { UUID } from '@/types';
 
-export type ActivityType = 'player_joined' | 'match_completed' | 'attendance_marked' | 'coach_feedback' | 'drill_assigned' | 'join_approved';
+export type ActivityType =
+  | 'player_joined'
+  | 'match_completed'
+  | 'attendance_marked'
+  | 'coach_feedback'
+  | 'drill_assigned'
+  | 'join_approved';
 
 export interface ActivityItem {
   id: UUID;
@@ -28,7 +34,11 @@ const ACTIVITY_ICONS: Record<ActivityType, string> = {
   join_approved: '✓',
 };
 
-export function ActivityFeed({ title, activities, emptyMessage = 'No recent activity' }: ActivityFeedProps) {
+export function ActivityFeed({
+  title,
+  activities,
+  emptyMessage = 'No recent activity',
+}: ActivityFeedProps) {
   return (
     <Card>
       <CardHeader title={title} />

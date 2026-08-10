@@ -3,20 +3,14 @@ import { useForm } from 'react-hook-form';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-import {
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  Input,
-  Select,
-} from '@/components/ui';
+import { Button, Card, CardBody, CardFooter, CardHeader, Input, Select } from '@/components/ui';
 import { EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { useCan } from '@/lib/rbac';
 import { useUiStore } from '@/stores';
 import { useAcademyMatches, useCreateMatch, useDeleteMatch } from '../hooks/useMatches';
+import { useBatches } from '@/features/batches';
+import { formatDate } from '@/lib/utils/date';
 import { Link } from 'react-router-dom';
 import type { MatchFormat, MatchType } from '@/types/enums';
 
@@ -62,6 +56,7 @@ export default function MatchesPage() {
   const canManage = useCan('matches:manage');
 
   const matchesQuery = useAcademyMatches(academyId);
+  const batchesQuery = useBatches(academyId);
   const createMatch = useCreateMatch(academyId as string);
   const deleteMatch = useDeleteMatch(academyId as string);
 
@@ -131,10 +126,7 @@ export default function MatchesPage() {
       {showForm && canManage ? (
         <Card>
           <form onSubmit={handleCreate} noValidate>
-            <CardHeader
-              title="Create match"
-              description="Set up a new match with basic details."
-            />
+            <CardHeader title="Create match" description="Set up a new match with basic details." />
 
             <CardBody className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -204,7 +196,14 @@ export default function MatchesPage() {
 
                 <div>
                   <label className="text-fg block text-sm font-medium">Batch</label>
-                  <Input {...register('batchId')} placeholder="Batch ID (optional)" />
+                  <Select {...register('batchId')}>
+                    <option value="">No batch (optional)</option>
+                    {batchesQuery.data?.map((batch) => (
+                      <option key={batch.id} value={batch.id}>
+                        {batch.name}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               </div>
             </CardBody>
@@ -234,18 +233,20 @@ export default function MatchesPage() {
           ) : (
             <div className="space-y-3">
               {matchesQuery.data.map((match) => (
-                <div key={match.id} className="border-border-subtle rounded-2xl border p-4">
+                <Link
+                  key={match.id}
+                  to={`/matches/${match.id}`}
+                  className="border-border-subtle hover:border-primary/40 block rounded-2xl border p-4 transition"
+                >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <Link
-                        to={`/matches/${match.id}`}
-                        className="text-fg text-lg font-semibold hover:underline"
-                      >
+                      <p className="text-fg text-lg font-semibold hover:underline">
                         {match.matchName}
-                      </Link>
+                      </p>
 
                       <p className="text-fg-muted text-sm">
-                        {new Date(match.matchDate).toLocaleDateString()} • {match.opponentName}
+                        {formatDate(match.matchDate)}
+                        {match.opponentName ? ` · vs ${match.opponentName}` : ''}
                       </p>
                     </div>
 
@@ -270,13 +271,17 @@ export default function MatchesPage() {
                         variant="danger"
                         size="sm"
                         isLoading={deleteMatch.isPending}
-                        onClick={() => void handleDelete(match.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          void handleDelete(match.id);
+                        }}
                       >
                         Delete
                       </Button>
                     </div>
                   ) : null}
-                </div>
+                </Link>
               ))}
             </div>
           )}

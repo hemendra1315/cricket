@@ -27,10 +27,7 @@ export default function MatchDetailPage() {
   const matchTypeLabel = matchQuery.data?.matchType;
   const formatLabel = matchQuery.data?.format;
 
-  const captain = useMemo(
-    () => lineupsQuery.data?.find((l) => l.isCaptain),
-    [lineupsQuery.data],
-  );
+  const captain = useMemo(() => lineupsQuery.data?.find((l) => l.isCaptain), [lineupsQuery.data]);
   const viceCaptain = useMemo(
     () => lineupsQuery.data?.find((l) => l.isViceCaptain),
     [lineupsQuery.data],
@@ -43,9 +40,7 @@ export default function MatchDetailPage() {
   if (!matchId) return null;
   if (matchQuery.isPending) return <p className="text-fg-muted">Loading match…</p>;
   if (matchQuery.isError || !matchQuery.data)
-    return (
-      <ErrorState error={matchQuery.error} onRetry={() => void matchQuery.refetch()} />
-    );
+    return <ErrorState error={matchQuery.error} onRetry={() => void matchQuery.refetch()} />;
 
   const match = matchQuery.data;
 
@@ -126,16 +121,12 @@ export default function MatchDetailPage() {
                 <tbody>
                   {battingQuery.data?.map((b) => (
                     <tr key={b.id} className="border-b last:border-0">
-                      <td className="py-2">
-                        {b.player.fullName ?? b.player.email}
-                      </td>
+                      <td className="py-2">{b.player.fullName ?? b.player.email}</td>
                       <td className="py-2">{b.runs}</td>
                       <td className="py-2">{b.balls}</td>
                       <td className="py-2">{b.fours}</td>
                       <td className="py-2">{b.sixes}</td>
-                      <td className="py-2">
-                        {b.isOut ? b.dismissalType ?? 'Out' : 'Not out'}
-                      </td>
+                      <td className="py-2">{b.isOut ? (b.dismissalType ?? 'Out') : 'Not out'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -169,9 +160,7 @@ export default function MatchDetailPage() {
                 <tbody>
                   {bowlingQuery.data?.map((b) => (
                     <tr key={b.id} className="border-b last:border-0">
-                      <td className="py-2">
-                        {b.player.fullName ?? b.player.email}
-                      </td>
+                      <td className="py-2">{b.player.fullName ?? b.player.email}</td>
                       <td className="py-2">{b.overs}</td>
                       <td className="py-2">{b.maidens}</td>
                       <td className="py-2">{b.runsConceded}</td>
@@ -208,9 +197,7 @@ export default function MatchDetailPage() {
                 <tbody>
                   {fieldingQuery.data?.map((f) => (
                     <tr key={f.id} className="border-b last:border-0">
-                      <td className="py-2">
-                        {f.player.fullName ?? f.player.email}
-                      </td>
+                      <td className="py-2">{f.player.fullName ?? f.player.email}</td>
                       <td className="py-2">{f.catches}</td>
                       <td className="py-2">{f.runOuts}</td>
                       <td className="py-2">{f.stumpings}</td>

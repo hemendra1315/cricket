@@ -38,7 +38,7 @@ const NAV_ITEMS: {
     to: ROLE_HOME.player,
     label: 'My cricket',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
-    requiresCapability: null,
+    requiresCapability: 'stats:read_own',
   },
   {
     to: '/members',

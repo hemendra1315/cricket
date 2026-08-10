@@ -24,7 +24,13 @@ export function JoinCodeCard({
   const { data: code, isPending, isError, error, refetch } = useJoinCode(academyId, role);
   const regenerate = useRegenerateJoinCode(academyId, role);
   const pushToast = useUiStore((state) => state.pushToast);
+  const [prevCode, setPrevCode] = useState(code);
   const [copied, setCopied] = useState(false);
+
+  if (code !== prevCode) {
+    setPrevCode(code);
+    setCopied(false);
+  }
 
   const copy = async () => {
     if (!code) return;

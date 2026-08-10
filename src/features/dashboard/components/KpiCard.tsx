@@ -17,13 +17,14 @@ export function KpiCard({ title, value, icon, trend, href }: KpiCardProps) {
     <Card>
       <CardBody className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-fg-muted text-xs uppercase tracking-wide">{title}</p>
+          <p className="text-fg-muted text-xs tracking-wide uppercase">{title}</p>
           {icon && <div className="text-fg-muted">{icon}</div>}
         </div>
         <p className="text-fg text-3xl font-semibold">{value}</p>
         {trend && (
           <p className={`text-sm ${trend.positive ? 'text-success' : 'text-danger'}`}>
-            {trend.positive ? '+' : ''}{trend.value} {trend.label}
+            {trend.positive ? '+' : ''}
+            {trend.value} {trend.label}
           </p>
         )}
       </CardBody>
@@ -32,7 +33,7 @@ export function KpiCard({ title, value, icon, trend, href }: KpiCardProps) {
 
   if (href) {
     return (
-      <a href={href} className="block hover:opacity-80 transition-opacity">
+      <a href={href} className="block transition-opacity hover:opacity-80">
         {content}
       </a>
     );

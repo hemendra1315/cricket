@@ -171,10 +171,7 @@ export function usePlayerStatistics(academyId: UUID | null) {
 
 export function usePlayerStatisticsById(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerStatistics | null>({
-    queryKey: queryKeys.academy.playerStatisticsById(
-      academyId ?? 'none',
-      playerId ?? 'none',
-    ),
+    queryKey: queryKeys.academy.playerStatisticsById(academyId ?? 'none', playerId ?? 'none'),
     enabled: Boolean(academyId) && Boolean(playerId),
     queryFn: () => fetchPlayerStatisticsById(academyId as UUID, playerId as UUID),
   });

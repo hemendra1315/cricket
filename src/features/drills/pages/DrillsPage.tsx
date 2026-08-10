@@ -64,6 +64,7 @@ export default function DrillsPage() {
   } = useForm<CreateDrillInput>({ defaultValues: DEFAULT_FORM_VALUES });
 
   const [selectedDrillId, setSelectedDrillId] = useState('');
+  const [targetType, setTargetType] = useState<'player' | 'batch'>('player');
   const [selectedPlayerId, setSelectedPlayerId] = useState('');
   const [selectedBatchId, setSelectedBatchId] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -72,7 +73,8 @@ export default function DrillsPage() {
   const batches = batchesQuery.data ?? [];
   const assignments = assignmentsQuery.data ?? [];
 
-  const assignmentSaveDisabled = !selectedDrillId || (!selectedPlayerId && !selectedBatchId);
+  const assignmentSaveDisabled =
+    !selectedDrillId || (targetType === 'player' ? !selectedPlayerId : !selectedBatchId);
 
   const handleCreate = handleSubmit(async (values) => {
     if (!academyId || !canManage) return;
@@ -87,8 +89,8 @@ export default function DrillsPage() {
     await assignDrill.mutateAsync({
       academyId,
       drillId: selectedDrillId,
-      playerId: selectedPlayerId || null,
-      batchId: selectedBatchId || null,
+      playerId: targetType === 'player' ? selectedPlayerId : null,
+      batchId: targetType === 'batch' ? selectedBatchId : null,
       dueDate: dueDate || null,
     });
     pushToast({ title: 'Drill assigned', variant: 'success' });
@@ -184,7 +186,35 @@ export default function DrillsPage() {
         <Card>
           <CardHeader title="Assign drills" description="Assign drills to a player or batch." />
           <CardBody className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="text-fg mb-1 block text-sm font-medium">Assign to</label>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant={targetType === 'player' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => {
+                    setTargetType('player');
+                    setSelectedBatchId('');
+                  }}
+                >
+                  Individual Player
+                </Button>
+                <Button
+                  type="button"
+                  variant={targetType === 'batch' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => {
+                    setTargetType('batch');
+                    setSelectedPlayerId('');
+                  }}
+                >
+                  Entire Batch
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-fg block text-sm font-medium">Drill</label>
                 <Select
@@ -199,34 +229,37 @@ export default function DrillsPage() {
                   ))}
                 </Select>
               </div>
-              <div>
-                <label className="text-fg block text-sm font-medium">Player</label>
-                <Select
-                  value={selectedPlayerId}
-                  onChange={(event) => setSelectedPlayerId(event.target.value)}
-                >
-                  <option value="">Select player</option>
-                  {activePlayers.map((player) => (
-                    <option key={player.id} value={player.id}>
-                      {player.fullName ?? player.email}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <label className="text-fg block text-sm font-medium">Batch</label>
-                <Select
-                  value={selectedBatchId}
-                  onChange={(event) => setSelectedBatchId(event.target.value)}
-                >
-                  <option value="">Select batch</option>
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
+              {targetType === 'player' ? (
+                <div>
+                  <label className="text-fg block text-sm font-medium">Player</label>
+                  <Select
+                    value={selectedPlayerId}
+                    onChange={(event) => setSelectedPlayerId(event.target.value)}
+                  >
+                    <option value="">Select player</option>
+                    {activePlayers.map((player) => (
+                      <option key={player.id} value={player.id}>
+                        {player.fullName ?? player.email}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-fg block text-sm font-medium">Batch</label>
+                  <Select
+                    value={selectedBatchId}
+                    onChange={(event) => setSelectedBatchId(event.target.value)}
+                  >
+                    <option value="">Select batch</option>
+                    {batches.map((batch) => (
+                      <option key={batch.id} value={batch.id}>
+                        {batch.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -249,8 +282,7 @@ export default function DrillsPage() {
               </div>
             </div>
             <p className="text-fg-muted text-sm">
-              You must select a drill and either a player or a batch. Both player and batch are
-              allowed.
+              Select a drill and assign to either an individual player or an entire batch.
             </p>
           </CardBody>
         </Card>

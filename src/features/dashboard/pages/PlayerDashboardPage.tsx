@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
-import { ErrorState } from '@/components/feedback';
+import { EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { usePlayerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
 import { SimpleBarChart, SimpleLineChart } from '@/components/charts/SimpleBarChart';
@@ -10,9 +10,26 @@ import { SessionRow } from '../components/SessionRow';
 export default function PlayerDashboardPage() {
   const { academyId, membership } = useActiveAcademy();
   const playerId = membership?.id ?? null;
-  const analyticsQuery = usePlayerDashboardAnalytics(academyId, playerId);
+  const isPlayer = membership?.role === 'player';
+
+  const analyticsQuery = usePlayerDashboardAnalytics(academyId, isPlayer ? playerId : null);
 
   const analytics = analyticsQuery.data;
+
+  if (!isPlayer) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-fg text-xl font-semibold">My dashboard</h1>
+          <p className="text-fg-muted text-sm">{membership?.academyName ?? 'Academy'}</p>
+        </div>
+        <EmptyState
+          title="Player Dashboard Reserved for Players"
+          description="You are currently signed in as an Academy Owner or Coach. Switch to a registered player account to access player statistics and personal training performance."
+        />
+      </div>
+    );
+  }
 
   if (analyticsQuery.isPending) {
     return <p className="text-fg-muted">Loading dashboard…</p>;

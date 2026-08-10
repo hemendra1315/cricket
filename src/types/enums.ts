@@ -159,4 +159,3 @@ export const AWARD_LABELS: Record<AwardType, string> = {
   best_bowler: 'Best Bowler',
   best_fielder: 'Best Fielder',
 };
-

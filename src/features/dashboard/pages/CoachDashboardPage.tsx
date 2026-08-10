@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
 import { EmptyState, ErrorState } from '@/components/feedback';
+import { formatDate } from '@/lib/utils/date';
 import { buttonStyles } from '@/components/ui/buttonStyles';
 import { useActiveAcademy } from '@/features/academies';
 import { useCoachDashboardAnalytics } from '../hooks/useDashboardAnalytics';
@@ -213,7 +214,8 @@ export default function CoachDashboardPage() {
                   <div>
                     <p className="text-fg font-medium">{match.matchName}</p>
                     <p className="text-fg-muted text-sm">
-                      {new Date(match.matchDate).toLocaleDateString()} • {match.opponentName}
+                      {formatDate(match.matchDate)}
+                      {match.opponentName ? ` · vs ${match.opponentName}` : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

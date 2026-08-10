@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
-import { ErrorState } from '@/components/feedback';
+import { EmptyState, ErrorState } from '@/components/feedback';
+import { formatDate } from '@/lib/utils/date';
 import { buttonStyles } from '@/components/ui/buttonStyles';
 import { useActiveAcademy } from '@/features/academies';
 import { useOwnerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
@@ -145,19 +146,33 @@ export default function OwnerDashboardPage() {
         <Card>
           <CardHeader title="Weekly Attendance" />
           <CardBody>
-            <SimpleBarChart
-              data={weeklyAttendanceData.map((d) => ({
-                label: d.day,
-                value: d.total > 0 ? Math.round((d.attended / d.total) * 100) : 0,
-              }))}
-              height={200}
-            />
+            {weeklyAttendanceData.some((d) => d.total > 0) ? (
+              <SimpleBarChart
+                data={weeklyAttendanceData.map((d) => ({
+                  label: d.day,
+                  value: d.total > 0 ? Math.round((d.attended / d.total) * 100) : 0,
+                }))}
+                height={200}
+              />
+            ) : (
+              <EmptyState
+                title="No attendance data yet"
+                description="Attendance records will appear here once training sessions are marked."
+              />
+            )}
           </CardBody>
         </Card>
         <Card>
           <CardHeader title="Monthly Attendance" />
           <CardBody>
-            <SimpleBarChart data={monthlyAttendanceData} height={200} />
+            {monthlyAttendanceData.some((d) => d.value > 0) ? (
+              <SimpleBarChart data={monthlyAttendanceData} height={200} />
+            ) : (
+              <EmptyState
+                title="No attendance data yet"
+                description="Attendance records will appear here once training sessions are marked."
+              />
+            )}
           </CardBody>
         </Card>
       </div>
@@ -186,7 +201,8 @@ export default function OwnerDashboardPage() {
                     <div>
                       <p className="text-fg font-medium">{match.matchName}</p>
                       <p className="text-fg-muted text-sm">
-                        {new Date(match.matchDate).toLocaleDateString()} • {match.opponentName}
+                        {formatDate(match.matchDate)}
+                        {match.opponentName ? ` · vs ${match.opponentName}` : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
