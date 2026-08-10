@@ -1,36 +1,38 @@
 import {
   CalendarDays,
+  Home,
   LayoutDashboard,
+  LogOut,
   Menu,
+  MoreHorizontal,
   ShieldCheck,
+  Trophy,
   User,
   Users,
   WifiOff,
 } from 'lucide-react';
-import { Suspense, type ReactNode } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Suspense, useState, type ReactNode } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { LoadingScreen } from '@/components/feedback';
-import { Avatar, Button, ThemeToggle } from '@/components/ui';
+import { Avatar, Button, Modal, ThemeToggle } from '@/components/ui';
 import { AcademySwitcher } from '@/features/academies';
 import { useAuth } from '@/features/auth';
+import { InstallAppButton } from '@/features/pwa/components/InstallAppButton';
 import { useOnlineStatus } from '@/hooks';
 import { hasCapability, useActiveRoles, type Capability } from '@/lib/rbac';
 import { cn } from '@/lib/utils/cn';
 import { ROLE_HOME } from '@/types/enums';
-import { useUiStore } from '@/stores';
 
-/**
- * Navigation entries are filtered by capability, so a coach never sees owner-only
- * destinations. `requiresCapability: null` means "visible to any member".
- */
-const NAV_ITEMS: {
+interface NavItemDef {
   to: string;
   label: string;
   icon: ReactNode;
   requiresCapability: Capability | null;
   superAdminOnly?: boolean;
-}[] = [
+}
+
+const SIDEBAR_ITEMS: NavItemDef[] = [
   {
     to: '/admin',
     label: 'Super Admin',
@@ -40,19 +42,19 @@ const NAV_ITEMS: {
   },
   {
     to: ROLE_HOME.academy_owner,
-    label: 'Dashboard',
+    label: 'Owner Dashboard',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'members:manage',
   },
   {
     to: ROLE_HOME.coach,
-    label: 'Coaching',
+    label: 'Coach Dashboard',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'attendance:mark',
   },
   {
     to: ROLE_HOME.player,
-    label: 'My cricket',
+    label: 'Player Dashboard',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'stats:read_own',
   },
@@ -75,59 +77,76 @@ const NAV_ITEMS: {
     requiresCapability: 'sessions:read',
   },
   {
+    to: '/matches',
+    label: 'Matches',
+    icon: <Trophy className="h-4 w-4" aria-hidden />,
+    requiresCapability: null,
+  },
+  {
     to: '/profile',
-    label: 'My profile',
+    label: 'My Profile',
     icon: <User className="h-4 w-4" aria-hidden />,
     requiresCapability: null,
   },
 ];
 
-/** Authenticated application chrome: sidebar, top bar and routed content. */
+/** Authenticated application chrome: sidebar (desktop), bottom nav (mobile), top bar & routed content. */
 export function AppShell() {
   const { profile, displayName, logout } = useAuth();
   const roles = useActiveRoles();
   const isSuperAdmin = roles.includes('super_admin');
-  const sidebarOpen = useUiStore((state) => state.sidebarOpen);
-  const toggleSidebar = useUiStore((state) => state.toggleSidebar);
-  const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const online = useOnlineStatus();
+  const location = useLocation();
 
-  const navItems = NAV_ITEMS.filter((item) => {
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+
+  // Compute primary home route based on user role
+  const homePath = roles.includes('academy_owner')
+    ? ROLE_HOME.academy_owner
+    : roles.includes('coach')
+      ? ROLE_HOME.coach
+      : ROLE_HOME.player;
+
+  // Filter allowed items for the user
+  const allowedNavItems = SIDEBAR_ITEMS.filter((item) => {
     if (item.superAdminOnly) return isSuperAdmin;
     return item.requiresCapability === null || hasCapability(roles, item.requiresCapability);
   });
 
-  const handleNavClick = () => {
-    setSidebarOpen(false);
-  };
+  // Mobile Bottom Nav primary tabs
+  const mobilePrimaryTabs = [
+    { to: homePath, label: 'Home', icon: <Home className="h-5 w-5" /> },
+    { to: '/members', label: 'Players', icon: <Users className="h-5 w-5" /> },
+    { to: '/sessions', label: 'Sessions', icon: <CalendarDays className="h-5 w-5" /> },
+    { to: '/matches', label: 'Matches', icon: <Trophy className="h-5 w-5" /> },
+  ];
 
   return (
     <div className="bg-bg min-h-screen">
-      <header className="border-border-subtle bg-surface sticky top-0 z-30 flex h-14 items-center gap-3 border-b px-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          aria-label="Toggle navigation"
-          className="min-h-[44px] min-w-[44px]"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-        <AcademySwitcher />
+      {/* HEADER: Compact & Responsive */}
+      <header className="border-border-subtle bg-surface/95 sticky top-0 z-30 flex h-14 items-center justify-between border-b px-4 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <AcademySwitcher />
+        </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {!online ? (
-            <span className="text-warning flex items-center gap-1 text-xs" role="status">
+            <span
+              className="text-warning flex items-center gap-1 text-xs font-medium"
+              role="status"
+            >
               <WifiOff className="h-4 w-4" aria-hidden /> Offline
             </span>
           ) : null}
           <ThemeToggle />
-          <Avatar name={displayName} src={profile?.avatarUrl} size="sm" />
+          <NavLink to="/profile" aria-label="View Profile">
+            <Avatar name={displayName} src={profile?.avatarUrl} size="sm" />
+          </NavLink>
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
             onClick={() => void logout()}
-            className="min-h-[44px] px-3"
+            className="hidden min-h-[40px] px-3 text-xs sm:inline-flex"
           >
             Sign out
           </Button>
@@ -135,28 +154,13 @@ export function AppShell() {
       </header>
 
       <div className="flex">
-        {/* Mobile backdrop overlay */}
-        {sidebarOpen ? (
-          <div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden"
-            onClick={() => setSidebarOpen(false)}
-            aria-hidden="true"
-          />
-        ) : null}
-
-        <aside
-          className={cn(
-            'border-border-subtle bg-surface transition-transform duration-200 ease-in-out md:static md:z-auto md:w-56 md:translate-x-0 md:border-r md:p-3 md:shadow-none',
-            'fixed inset-y-0 left-0 z-50 w-64 border-r p-4 shadow-xl',
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-          )}
-        >
+        {/* DESKTOP SIDEBAR (>= 768px / md) */}
+        <aside className="border-border-subtle bg-surface hidden md:block md:w-56 md:shrink-0 md:border-r md:p-3">
           <nav className="space-y-1">
-            {navItems.map((item) => (
+            {allowedNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                onClick={handleNavClick}
                 className={({ isActive }) =>
                   cn(
                     'flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
@@ -173,12 +177,106 @@ export function AppShell() {
           </nav>
         </aside>
 
-        <main className="min-w-0 flex-1 p-4 md:p-6">
+        {/* MAIN CONTENT AREA */}
+        <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-6">
           <Suspense fallback={<LoadingScreen />}>
             <Outlet />
           </Suspense>
         </main>
       </div>
+
+      {/* MOBILE FIXED BOTTOM NAVIGATION (< 768px / md) */}
+      <nav
+        className="border-border-subtle bg-surface/95 fixed right-0 bottom-0 left-0 z-40 flex h-16 items-center justify-around border-t backdrop-blur-md md:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        aria-label="Mobile Navigation"
+      >
+        {mobilePrimaryTabs.map((tab) => {
+          const isActive = location.pathname.startsWith(tab.to);
+          return (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              className={cn(
+                'flex min-h-[48px] min-w-[56px] flex-col items-center justify-center rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
+                isActive ? 'text-primary font-semibold' : 'text-fg-muted hover:text-fg',
+              )}
+            >
+              <div className="mb-0.5">{tab.icon}</div>
+              <span>{tab.label}</span>
+            </NavLink>
+          );
+        })}
+
+        {/* MORE MENU TAB BUTTON */}
+        <button
+          type="button"
+          onClick={() => setIsMoreMenuOpen(true)}
+          className={cn(
+            'flex min-h-[48px] min-w-[56px] flex-col items-center justify-center rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
+            isMoreMenuOpen ? 'text-primary font-semibold' : 'text-fg-muted hover:text-fg',
+          )}
+          aria-label="More navigation items"
+        >
+          <MoreHorizontal className="mb-0.5 h-5 w-5" />
+          <span>More</span>
+        </button>
+      </nav>
+
+      {/* MORE MENU SHEET MODAL (< 768px / md) */}
+      <Modal
+        open={isMoreMenuOpen}
+        onClose={() => setIsMoreMenuOpen(false)}
+        title="Menu & Account"
+        size="sm"
+      >
+        <div className="space-y-4 py-2">
+          {/* Navigation Links */}
+          <div className="space-y-1">
+            <p className="text-fg-muted mb-2 px-2 text-xs font-semibold tracking-wider uppercase">
+              Navigation
+            </p>
+            {allowedNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => setIsMoreMenuOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-fg-muted hover:bg-surface-muted',
+                  )
+                }
+              >
+                {item.icon}
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+
+          {/* Quick Actions & PWA Controls */}
+          <div className="border-border-subtle space-y-2 border-t pt-3">
+            <p className="text-fg-muted mb-2 px-2 text-xs font-semibold tracking-wider uppercase">
+              App Controls
+            </p>
+            <div className="px-2">
+              <InstallAppButton />
+            </div>
+            <Button
+              variant="secondary"
+              className="min-h-[44px] w-full justify-start gap-3 text-red-500 hover:text-red-600"
+              onClick={() => {
+                setIsMoreMenuOpen(false);
+                void logout();
+              }}
+            >
+              <LogOut className="h-4 w-4" /> Sign out
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
