@@ -53,7 +53,63 @@ export function PlayerMappingStep({
         </p>
       </div>
 
-      <div className="border-border-subtle overflow-x-auto rounded-xl border">
+      {/* Mobile Card Layout (< md) */}
+      <div className="space-y-3 md:hidden">
+        {mappedPlayers.map((player, idx) => (
+          <div
+            key={player.cricheroesName + idx}
+            className="border-border-subtle bg-surface space-y-3 rounded-xl border p-4 shadow-2xs"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-fg truncate text-base font-bold">{player.cricheroesName}</span>
+              {player.isIgnored ? (
+                <Badge tone="neutral">Ignored</Badge>
+              ) : player.savedMapping ? (
+                <Badge tone="success">Saved Mapping ✓</Badge>
+              ) : player.isGuest ? (
+                <Badge tone="warning">Guest Player</Badge>
+              ) : player.status === 'exact_match' ? (
+                <Badge tone="success">Exact Match</Badge>
+              ) : (
+                <Badge tone="brand">Matched</Badge>
+              )}
+            </div>
+
+            <div>
+              <label className="text-fg-muted mb-1 block text-xs font-medium">
+                Academy Player Assignment
+              </label>
+              <Select
+                value={player.academyMemberId ?? ''}
+                onChange={(e) => handleSelectAcademyPlayer(idx, e.target.value)}
+                className="w-full text-sm"
+                disabled={player.isIgnored}
+              >
+                <option value="">-- Guest Player (Not in Academy) --</option>
+                {academyPlayers.map((ap) => (
+                  <option key={ap.id} value={ap.id}>
+                    {ap.fullName ?? ap.email}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="border-border-subtle flex justify-end border-t pt-2">
+              <Button
+                size="sm"
+                variant={player.isIgnored ? 'secondary' : 'ghost'}
+                onClick={() => updatePlayerMapping(idx, { isIgnored: !player.isIgnored })}
+                className="min-h-[44px]"
+              >
+                {player.isIgnored ? 'Include Player' : 'Ignore'}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table Layout (>= md) */}
+      <div className="border-border-subtle hidden overflow-x-auto rounded-xl border md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-surface-subtle border-border-subtle border-b">
             <tr>

@@ -537,56 +537,112 @@ export default function PlatformDashboardPage() {
             ) : filteredUsers.length === 0 ? (
               <p className="text-fg-muted text-sm">No users found matching your search.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="border-border-subtle text-fg-muted border-b text-xs tracking-wider uppercase">
-                    <tr>
-                      <th className="px-2 py-3">User</th>
-                      <th className="px-2 py-3">Role Status</th>
-                      <th className="px-2 py-3">Academy Memberships</th>
-                      <th className="px-2 py-3">Joined Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-border-subtle divide-y">
-                    {filteredUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-surface-subtle/50">
-                        <td className="px-2 py-3">
-                          <div className="text-fg font-medium">{u.fullName ?? u.email}</div>
-                          <div className="text-fg-muted text-xs">{u.email}</div>
-                        </td>
-                        <td className="px-2 py-3">
-                          {u.isSuperAdmin ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-500">
-                              <ShieldCheck className="h-3 w-3" /> Super Admin
-                            </span>
-                          ) : (
-                            <span className="text-fg-muted text-xs">Standard User</span>
-                          )}
-                        </td>
-                        <td className="px-2 py-3">
-                          {u.memberships.length === 0 ? (
-                            <span className="text-fg-muted text-xs">No active memberships</span>
-                          ) : (
-                            <div className="flex flex-wrap gap-1">
-                              {u.memberships.map((m) => (
-                                <span
-                                  key={m.academyId}
-                                  className="bg-surface-muted text-fg border-border-subtle inline-flex rounded border px-2 py-0.5 text-xs"
-                                >
-                                  {m.academyName} ({m.role})
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </td>
-                        <td className="text-fg-muted px-2 py-3 text-xs">
-                          {formatDate(u.createdAt)}
-                        </td>
+              <>
+                {/* Mobile Cards Layout (< md) */}
+                <div className="space-y-3 md:hidden">
+                  {filteredUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      className="border-border-subtle bg-surface space-y-2.5 rounded-xl border p-4 shadow-2xs"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-fg block truncate text-sm font-bold">
+                            {u.fullName ?? u.email}
+                          </h3>
+                          <p className="text-fg-muted truncate text-xs">{u.email}</p>
+                        </div>
+                        {u.isSuperAdmin ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-500">
+                            <ShieldCheck className="h-3 w-3" /> Super Admin
+                          </span>
+                        ) : (
+                          <span className="text-fg-muted shrink-0 text-xs font-medium">
+                            Standard User
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="border-border-subtle text-fg-muted border-t pt-2 text-xs">
+                        <span className="mb-1 block text-[11px] font-semibold tracking-wider uppercase">
+                          Academy Memberships
+                        </span>
+                        {u.memberships.length === 0 ? (
+                          <span className="text-fg-muted text-xs">No active memberships</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {u.memberships.map((m) => (
+                              <span
+                                key={m.academyId}
+                                className="bg-surface-muted text-fg border-border-subtle inline-flex rounded-md border px-2 py-0.5 text-xs font-medium"
+                              >
+                                {m.academyName} ({m.role})
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-border-subtle text-fg-muted flex items-center justify-between border-t pt-2 text-xs">
+                        <span>Joined Date</span>
+                        <span className="text-fg font-medium">{formatDate(u.createdAt)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table Layout (>= md) */}
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-border-subtle text-fg-muted border-b text-xs tracking-wider uppercase">
+                      <tr>
+                        <th className="px-2 py-3">User</th>
+                        <th className="px-2 py-3">Role Status</th>
+                        <th className="px-2 py-3">Academy Memberships</th>
+                        <th className="px-2 py-3">Joined Date</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-border-subtle divide-y">
+                      {filteredUsers.map((u) => (
+                        <tr key={u.id} className="hover:bg-surface-subtle/50">
+                          <td className="px-2 py-3">
+                            <div className="text-fg font-medium">{u.fullName ?? u.email}</div>
+                            <div className="text-fg-muted text-xs">{u.email}</div>
+                          </td>
+                          <td className="px-2 py-3">
+                            {u.isSuperAdmin ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-500">
+                                <ShieldCheck className="h-3 w-3" /> Super Admin
+                              </span>
+                            ) : (
+                              <span className="text-fg-muted text-xs">Standard User</span>
+                            )}
+                          </td>
+                          <td className="px-2 py-3">
+                            {u.memberships.length === 0 ? (
+                              <span className="text-fg-muted text-xs">No active memberships</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {u.memberships.map((m) => (
+                                  <span
+                                    key={m.academyId}
+                                    className="bg-surface-muted text-fg border-border-subtle inline-flex rounded border px-2 py-0.5 text-xs"
+                                  >
+                                    {m.academyName} ({m.role})
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                          <td className="text-fg-muted px-2 py-3 text-xs">
+                            {formatDate(u.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </CardBody>
         </Card>
