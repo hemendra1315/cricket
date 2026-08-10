@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
 import { useActiveRoles } from '@/lib/rbac';
+import { useAuthStore } from '@/stores';
 import type { AppRole } from '@/types/enums';
 
 /**
@@ -9,7 +10,8 @@ import type { AppRole } from '@/types/enums';
  */
 export function RequireRole({ allow }: { allow: readonly AppRole[] }) {
   const roles = useActiveRoles();
-  const permitted = roles.some((role) => allow.includes(role));
+  const isSuperAdmin = useAuthStore((state) => state.profile?.isSuperAdmin === true);
+  const permitted = isSuperAdmin || roles.some((role) => allow.includes(role));
 
   if (!permitted) return <Navigate to="/forbidden" replace />;
 

@@ -53,7 +53,10 @@ export function useActiveAcademy(): {
   const { current } = useMemberships();
   const activeAcademyId = useAcademyStore((state) => state.activeAcademyId);
   const setActiveAcademy = useAcademyStore((state) => state.setActiveAcademy);
+  const isSuperAdmin = useAuthStore((state) => state.profile?.isSuperAdmin === true);
   const queryClient = useQueryClient();
+
+  const academyQuery = useAcademy(isSuperAdmin && !current ? activeAcademyId : null);
 
   const switchAcademy = useCallback(
     (academyId: UUID) => {
@@ -66,7 +69,32 @@ export function useActiveAcademy(): {
     [activeAcademyId, setActiveAcademy, queryClient],
   );
 
-  return { academyId: activeAcademyId, membership: current, switchAcademy };
+  const effectiveMembership = useMemo(() => {
+    if (current) return current;
+    if (isSuperAdmin && activeAcademyId && academyQuery.data) {
+      return {
+        id: `super-admin-virtual-${activeAcademyId}`,
+        userId: '',
+        academyId: activeAcademyId,
+        role: 'academy_owner' as const,
+        status: 'active' as const,
+        joinedAt: academyQuery.data.createdAt,
+        academyName: academyQuery.data.name,
+        academySlug: academyQuery.data.slug,
+        slug: academyQuery.data.slug,
+        logoUrl: academyQuery.data.logoUrl ?? null,
+        city: academyQuery.data.city ?? null,
+        timezone: 'UTC',
+      };
+    }
+    return null;
+  }, [current, isSuperAdmin, activeAcademyId, academyQuery.data]);
+
+  return {
+    academyId: activeAcademyId ?? current?.academyId ?? null,
+    membership: effectiveMembership,
+    switchAcademy,
+  };
 }
 
 export function useAcademy(academyId: UUID | null) {

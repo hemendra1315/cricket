@@ -12,15 +12,16 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { Suspense, useState, type ReactNode } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { LoadingScreen } from '@/components/feedback';
 import { Avatar, Button, Modal, ThemeToggle } from '@/components/ui';
-import { AcademySwitcher } from '@/features/academies';
+import { AcademySwitcher, useActiveAcademy } from '@/features/academies';
 import { useAuth } from '@/features/auth';
 import { InstallAppButton } from '@/features/pwa/components/InstallAppButton';
 import { useOnlineStatus } from '@/hooks';
 import { hasCapability, useActiveRoles, type Capability } from '@/lib/rbac';
+import { useAcademyStore } from '@/stores';
 import { cn } from '@/lib/utils/cn';
 import { ROLE_HOME } from '@/types/enums';
 
@@ -41,20 +42,20 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
     superAdminOnly: true,
   },
   {
-    to: ROLE_HOME.academy_owner,
-    label: 'Owner Dashboard',
+    to: '/owner',
+    label: 'Dashboard',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
-    requiresCapability: 'members:manage',
+    requiresCapability: 'academy:update',
   },
   {
-    to: ROLE_HOME.coach,
-    label: 'Coach Dashboard',
+    to: '/coach',
+    label: 'Coach View',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
-    requiresCapability: 'attendance:mark',
+    requiresCapability: 'sessions:manage',
   },
   {
-    to: ROLE_HOME.player,
-    label: 'Player Dashboard',
+    to: '/player',
+    label: 'My Cricket',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'stats:read_own',
   },
@@ -80,7 +81,7 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
     to: '/matches',
     label: 'Matches',
     icon: <Trophy className="h-4 w-4" aria-hidden />,
-    requiresCapability: null,
+    requiresCapability: 'matches:read',
   },
   {
     to: '/profile',
@@ -92,13 +93,21 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
 
 /** Authenticated application chrome: sidebar (desktop), bottom nav (mobile), top bar & routed content. */
 export function AppShell() {
-  const { profile, displayName, logout } = useAuth();
+  const { profile, logout } = useAuth();
   const roles = useActiveRoles();
-  const isSuperAdmin = roles.includes('super_admin');
   const online = useOnlineStatus();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { membership } = useActiveAcademy();
+  const activeAcademyId = useAcademyStore((state) => state.activeAcademyId);
+
+  const isSuperAdmin = profile?.isSuperAdmin === true;
+  const displayName = profile?.fullName ?? profile?.email ?? 'User';
 
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+
+  const isSuperAdminMode =
+    isSuperAdmin && Boolean(activeAcademyId) && location.pathname !== '/admin';
 
   // Compute primary home route based on user role
   const homePath = roles.includes('academy_owner')
@@ -152,6 +161,27 @@ export function AppShell() {
           </Button>
         </div>
       </header>
+
+      {/* SUPER ADMIN MODE BANNER */}
+      {isSuperAdminMode ? (
+        <div className="relative z-30 flex items-center justify-between border-b border-amber-500/30 bg-amber-500/15 px-4 py-2 text-xs font-medium text-amber-700 md:text-sm dark:text-amber-300">
+          <div className="flex min-w-0 items-center gap-2">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-amber-500" />
+            <span className="truncate">
+              <strong className="font-bold">SUPER ADMIN MODE</strong> — Viewing:{' '}
+              <span className="font-semibold">{membership?.academyName || 'Academy'}</span>
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 shrink-0 border-amber-500/40 bg-amber-500/20 px-2.5 text-xs font-medium text-amber-700 hover:bg-amber-500/30 dark:text-amber-200"
+            onClick={() => navigate('/admin')}
+          >
+            Back to Platform Admin
+          </Button>
+        </div>
+      ) : null}
 
       <div className="flex">
         {/* DESKTOP SIDEBAR (>= 768px / md) */}
