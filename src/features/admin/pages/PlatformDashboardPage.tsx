@@ -57,7 +57,7 @@ export default function PlatformDashboardPage() {
       description: 'You are now inspecting this academy in Super Admin Mode.',
       variant: 'success',
     });
-    navigate('/owner');
+    navigate('/dashboard');
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {

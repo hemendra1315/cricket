@@ -47,7 +47,7 @@ export const ROLE_HOME: Record<AppRole, string> = {
   super_admin: '/admin',
   academy_owner: '/dashboard',
   coach: '/coach',
-  player: '/me',
+  player: '/player',
 };
 
 /** === MATCH MODULE ENUMS === */

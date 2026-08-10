@@ -42,7 +42,7 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
     superAdminOnly: true,
   },
   {
-    to: '/owner',
+    to: '/dashboard',
     label: 'Dashboard',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'academy:update',

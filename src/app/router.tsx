@@ -82,7 +82,10 @@ export const router = createBrowserRouter([
             children: [
               {
                 element: <RequireRole allow={['academy_owner', 'super_admin']} />,
-                children: [{ path: '/dashboard', element: <OwnerDashboardPage /> }],
+                children: [
+                  { path: '/dashboard', element: <OwnerDashboardPage /> },
+                  { path: '/owner', element: <OwnerDashboardPage /> },
+                ],
               },
               {
                 element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
@@ -90,7 +93,10 @@ export const router = createBrowserRouter([
               },
               {
                 element: <RequireRole allow={['player', 'super_admin']} />,
-                children: [{ path: '/me', element: <PlayerDashboardPage /> }],
+                children: [
+                  { path: '/me', element: <PlayerDashboardPage /> },
+                  { path: '/player', element: <PlayerDashboardPage /> },
+                ],
               },
               {
                 element: (
