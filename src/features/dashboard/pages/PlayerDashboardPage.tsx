@@ -37,43 +37,43 @@ export default function PlayerDashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
           <Card>
             <CardBody className="py-3">
-              <p className="text-fg-muted text-xs uppercase tracking-wide">Matches</p>
+              <p className="text-fg-muted text-xs tracking-wide uppercase">Matches</p>
               <p className="text-fg text-lg font-semibold">{stats.matchesPlayed}</p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-fg-muted text-xs uppercase tracking-wide">Runs</p>
+              <p className="text-fg-muted text-xs tracking-wide uppercase">Runs</p>
               <p className="text-fg text-lg font-semibold">{stats.battingRuns}</p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-fg-muted text-xs uppercase tracking-wide">Wickets</p>
+              <p className="text-fg-muted text-xs tracking-wide uppercase">Wickets</p>
               <p className="text-fg text-lg font-semibold">{stats.bowlingWickets}</p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-fg-muted text-xs uppercase tracking-wide">Batting Avg</p>
+              <p className="text-fg-muted text-xs tracking-wide uppercase">Batting Avg</p>
               <p className="text-fg text-lg font-semibold">{stats.battingAverage}</p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-fg-muted text-xs uppercase tracking-wide">Strike Rate</p>
+              <p className="text-fg-muted text-xs tracking-wide uppercase">Strike Rate</p>
               <p className="text-fg text-lg font-semibold">{stats.strikeRate}</p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-fg-muted text-xs uppercase tracking-wide">Economy</p>
+              <p className="text-fg-muted text-xs tracking-wide uppercase">Economy</p>
               <p className="text-fg text-lg font-semibold">{stats.economy}</p>
             </CardBody>
           </Card>
           <Card>
             <CardBody className="py-3">
-              <p className="text-fg-muted text-xs uppercase tracking-wide">Attendance %</p>
+              <p className="text-fg-muted text-xs tracking-wide uppercase">Attendance %</p>
               <p className="text-fg text-lg font-semibold">{stats?.attendancePercentage ?? 0}%</p>
             </CardBody>
           </Card>
@@ -87,7 +87,7 @@ export default function PlayerDashboardPage() {
             <p className="text-fg-muted">No upcoming sessions.</p>
           ) : (
             <div className="space-y-3">
-              {analytics.upcomingSessions.map((session: any) => (
+              {analytics.upcomingSessions.map((session) => (
                 <SessionRow key={session.id} session={session} />
               ))}
             </div>
@@ -102,7 +102,7 @@ export default function PlayerDashboardPage() {
             <p className="text-fg-muted">No matches played yet.</p>
           ) : (
             <div className="space-y-3">
-              {analytics.recentMatches.map((match: any) => (
+              {analytics.recentMatches.map((match) => (
                 <Link
                   key={match.id}
                   to={`/matches/${match.id}`}
@@ -116,18 +116,16 @@ export default function PlayerDashboardPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {match.batting && (
-                      <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                      <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
                         {match.batting.runs} ({match.batting.balls})
                       </span>
                     )}
                     {match.bowling && (
-                      <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                      <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
                         {match.bowling.wickets}/{match.bowling.runsConceded}
                       </span>
                     )}
-                    {match.awards?.playerOfMatch && (
-                      <Badge tone="success">POM</Badge>
-                    )}
+                    {match.awards?.playerOfMatch && <Badge tone="success">POM</Badge>}
                   </div>
                 </Link>
               ))}
@@ -140,19 +138,25 @@ export default function PlayerDashboardPage() {
         <Card>
           <CardHeader title="Assigned Drills" description="Pending and completed" />
           <CardBody>
-            {analytics.pendingAssignments?.length === 0 && analytics.completedAssignments?.length === 0 ? (
+            {analytics.pendingAssignments?.length === 0 &&
+            analytics.completedAssignments?.length === 0 ? (
               <p className="text-fg-muted">No drills assigned yet.</p>
             ) : (
               <div className="space-y-3">
                 {analytics.pendingAssignments?.length > 0 && (
                   <div>
                     <p className="text-fg-muted mb-2 text-sm font-medium">Pending</p>
-                    {analytics.pendingAssignments.map((assignment: any) => (
-                      <div key={assignment.id} className="border-border-subtle rounded-xl border p-3">
+                    {analytics.pendingAssignments.map((assignment) => (
+                      <div
+                        key={assignment.id}
+                        className="border-border-subtle rounded-xl border p-3"
+                      >
                         <p className="text-fg font-medium">{assignment.drill.name}</p>
                         <p className="text-fg-muted text-sm">{assignment.drill.category}</p>
                         {assignment.dueDate && (
-                          <p className="text-fg-muted text-xs">Due: {new Date(assignment.dueDate).toLocaleDateString()}</p>
+                          <p className="text-fg-muted text-xs">
+                            Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                          </p>
                         )}
                       </div>
                     ))}
@@ -161,8 +165,11 @@ export default function PlayerDashboardPage() {
                 {analytics.completedAssignments?.length > 0 && (
                   <div>
                     <p className="text-fg-muted mb-2 text-sm font-medium">Completed</p>
-                    {analytics.completedAssignments.map((assignment: any) => (
-                      <div key={assignment.id} className="border-border-subtle rounded-xl border p-3">
+                    {analytics.completedAssignments.map((assignment) => (
+                      <div
+                        key={assignment.id}
+                        className="border-border-subtle rounded-xl border p-3"
+                      >
                         <p className="text-fg font-medium">{assignment.drill.name}</p>
                         <p className="text-fg-muted text-sm">{assignment.drill.category}</p>
                       </div>
@@ -181,7 +188,7 @@ export default function PlayerDashboardPage() {
               <p className="text-fg-muted">No awards yet.</p>
             ) : (
               <div className="space-y-3">
-                {analytics.recentAwards.map((award: any) => (
+                {analytics.recentAwards.map((award) => (
                   <Link
                     key={award.id}
                     to={`/matches/${award.matchId}`}
@@ -207,7 +214,7 @@ export default function PlayerDashboardPage() {
           <CardHeader title="Career Highlights" />
           <CardBody>
             <div className="flex flex-wrap gap-2">
-              {analytics.careerHighlights.map((highlight: any, index: number) => (
+              {analytics.careerHighlights.map((highlight, index: number) => (
                 <Badge key={index} tone="brand">
                   {highlight.label}
                 </Badge>
@@ -225,7 +232,7 @@ export default function PlayerDashboardPage() {
               <div>
                 <h4 className="text-fg-muted mb-2 text-sm font-medium">Runs Trend</h4>
                 <SimpleBarChart
-                  data={analytics.runsTrend.map((m: any) => ({
+                  data={analytics.runsTrend.map((m) => ({
                     label: m.matchDate ? new Date(m.matchDate).toLocaleDateString() : '',
                     value: m.runs,
                   }))}

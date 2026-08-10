@@ -54,12 +54,18 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
     unwrap<any[]>((supabase as any).from('batches').select('id').eq('academy_id', academyId)),
     // Total matches
     unwrap<any[]>((supabase as any).from('matches').select('id').eq('academy_id', academyId)),
-    // Attendance records (join through training_sessions for session_date)
+    // Attendance records (join through training_sessions for session_date, last 6 months)
     unwrap<any[]>(
       (supabase as any)
         .from('attendance')
-        .select('status, session:training_sessions(session_date)')
-        .eq('academy_id', academyId),
+        .select('status, session:training_sessions!inner(session_date)')
+        .eq('academy_id', academyId)
+        .gte(
+          'training_sessions.session_date',
+          new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1)
+            .toISOString()
+            .split('T')[0],
+        ),
     ),
     // Sessions this week
     unwrap<any[]>(
@@ -159,6 +165,42 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
 
   const sessionsThisWeek = sessionsResult.length;
 
+  // Monthly attendance breakdown (last 6 months)
+  const monthlyStats: Record<string, { present: number; total: number }> = {};
+  const monthKeys: string[] = [];
+  const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'short' });
+
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    monthlyStats[key] = { present: 0, total: 0 };
+    monthKeys.push(key);
+  }
+
+  for (const record of attendanceResult ?? []) {
+    const sessionDate = record.session?.session_date;
+    if (!sessionDate) continue;
+    const key = sessionDate.substring(0, 7);
+    if (monthlyStats[key]) {
+      monthlyStats[key].total += 1;
+      if (record.status === 'present') {
+        monthlyStats[key].present += 1;
+      }
+    }
+  }
+
+  const monthlyAttendance = monthKeys.map((key) => {
+    const parts = key.split('-');
+    const year = parseInt(parts[0] ?? '0', 10);
+    const month = parseInt(parts[1] ?? '1', 10);
+    const dateObj = new Date(year, month - 1, 1);
+    const label = monthFormatter.format(dateObj);
+    const stat = monthlyStats[key] ?? { present: 0, total: 0 };
+    const value = stat.total > 0 ? Math.round((stat.present / stat.total) * 100) : 0;
+    return { label, value };
+  });
+
   const recentMatches = (recentMatchesResult ?? []).map((match: any) => ({
     id: match.id,
     matchName: match.match_name,
@@ -243,6 +285,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
     topBowlers,
     topFielders,
     academyRecords,
+    monthlyAttendance,
   };
 }
 
@@ -332,11 +375,11 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
       unwrap<any[]>(
         (supabase as any)
           .from('attendance')
-          .select('status, session:training_sessions(session_date)')
+          .select('status, session:training_sessions!inner(session_date)')
           .eq('academy_id', academyId)
           .eq('player_id', player.id)
           .gte(
-            'session.session_date',
+            'training_sessions.session_date',
             new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           ),
       ),

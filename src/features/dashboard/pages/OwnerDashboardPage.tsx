@@ -35,15 +35,7 @@ export default function OwnerDashboardPage() {
   }, [analytics]);
 
   const monthlyAttendanceData = useMemo(() => {
-    if (!analytics?.activities) return [];
-    return [
-      { label: 'Jan', value: 85 },
-      { label: 'Feb', value: 78 },
-      { label: 'Mar', value: 92 },
-      { label: 'Apr', value: 88 },
-      { label: 'May', value: 95 },
-      { label: 'Jun', value: 90 },
-    ];
+    return analytics?.monthlyAttendance ?? [];
   }, [analytics]);
 
   if (analyticsQuery.isPending) {
@@ -56,12 +48,13 @@ export default function OwnerDashboardPage() {
     );
   }
 
-  const activities: ActivityItem[] = analytics.activities?.map((a: any) => ({
-    id: a.id,
-    type: a.type,
-    message: a.message,
-    timestamp: a.timestamp,
-  })) ?? [];
+  const activities: ActivityItem[] =
+    analytics.activities?.map((a) => ({
+      id: a.id,
+      type: a.type,
+      message: a.message,
+      timestamp: a.timestamp,
+    })) ?? [];
 
   return (
     <div className="space-y-4">
@@ -87,35 +80,41 @@ export default function OwnerDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <LeaderboardCard
           title="Top Run Scorers"
-          entries={analytics.topBatters?.map((b: any) => ({
-            id: b.id,
-            name: b.name,
-            value: b.runs,
-            secondaryValue: `Avg: ${b.average}`,
-            href: b.href,
-          })) ?? []}
+          entries={
+            analytics.topBatters?.map((b) => ({
+              id: b.id,
+              name: b.name,
+              value: b.runs,
+              secondaryValue: `Avg: ${b.average}`,
+              href: b.href,
+            })) ?? []
+          }
           secondaryLabel="Average"
         />
         <LeaderboardCard
           title="Top Wicket Takers"
-          entries={analytics.topBowlers?.map((b: any) => ({
-            id: b.id,
-            name: b.name,
-            value: b.wickets,
-            secondaryValue: `Econ: ${b.economy}`,
-            href: b.href,
-          })) ?? []}
+          entries={
+            analytics.topBowlers?.map((b) => ({
+              id: b.id,
+              name: b.name,
+              value: b.wickets,
+              secondaryValue: `Econ: ${b.economy}`,
+              href: b.href,
+            })) ?? []
+          }
           secondaryLabel="Economy"
         />
         <LeaderboardCard
           title="Top Fielders"
-          entries={analytics.topFielders?.map((f: any) => ({
-            id: f.id,
-            name: f.name,
-            value: f.catches,
-            secondaryValue: `Run outs: ${f.runOuts}`,
-            href: f.href,
-          })) ?? []}
+          entries={
+            analytics.topFielders?.map((f) => ({
+              id: f.id,
+              name: f.name,
+              value: f.catches,
+              secondaryValue: `Run outs: ${f.runOuts}`,
+              href: f.href,
+            })) ?? []
+          }
           secondaryLabel="Run Outs"
         />
       </div>
@@ -125,13 +124,15 @@ export default function OwnerDashboardPage() {
           <CardHeader title="Academy Records" />
           <CardBody>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {analytics.academyRecords.map((record: any) => (
+              {analytics.academyRecords.map((record) => (
                 <Link
                   key={record.id}
                   to={record.href}
                   className="border-border-subtle hover:border-primary/40 rounded-xl border p-4 transition"
                 >
-                  <p className="text-fg-muted text-xs uppercase">{record.recordType.replace(/_/g, ' ')}</p>
+                  <p className="text-fg-muted text-xs uppercase">
+                    {record.recordType.replace(/_/g, ' ')}
+                  </p>
                   <p className="text-fg text-lg font-semibold">{record.value}</p>
                 </Link>
               ))}
@@ -145,7 +146,10 @@ export default function OwnerDashboardPage() {
           <CardHeader title="Weekly Attendance" />
           <CardBody>
             <SimpleBarChart
-              data={weeklyAttendanceData.map((d) => ({ label: d.day, value: d.total > 0 ? Math.round((d.attended / d.total) * 100) : 0 }))}
+              data={weeklyAttendanceData.map((d) => ({
+                label: d.day,
+                value: d.total > 0 ? Math.round((d.attended / d.total) * 100) : 0,
+              }))}
               height={200}
             />
           </CardBody>
@@ -153,10 +157,7 @@ export default function OwnerDashboardPage() {
         <Card>
           <CardHeader title="Monthly Attendance" />
           <CardBody>
-            <SimpleBarChart
-              data={monthlyAttendanceData}
-              height={200}
-            />
+            <SimpleBarChart data={monthlyAttendanceData} height={200} />
           </CardBody>
         </Card>
       </div>
@@ -176,7 +177,7 @@ export default function OwnerDashboardPage() {
               <p className="text-fg-muted">No matches yet.</p>
             ) : (
               <div className="space-y-3">
-                {analytics.recentMatches.map((match: any) => (
+                {analytics.recentMatches.map((match) => (
                   <Link
                     key={match.id}
                     to={`/matches/${match.id}`}
@@ -190,12 +191,20 @@ export default function OwnerDashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {match.teamScore && (
-                        <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                        <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
                           {match.teamScore}
                         </span>
                       )}
                       {match.result && (
-                        <Badge tone={match.result === 'won' ? 'success' : match.result === 'lost' ? 'danger' : 'warning'}>
+                        <Badge
+                          tone={
+                            match.result === 'won'
+                              ? 'success'
+                              : match.result === 'lost'
+                                ? 'danger'
+                                : 'warning'
+                          }
+                        >
                           {match.result}
                         </Badge>
                       )}
@@ -221,7 +230,7 @@ export default function OwnerDashboardPage() {
               <p className="text-fg-muted">No upcoming sessions.</p>
             ) : (
               <div className="space-y-3">
-                {analytics.upcomingSessions.map((session: any) => (
+                {analytics.upcomingSessions.map((session) => (
                   <SessionRow key={session.id} session={session} />
                 ))}
               </div>

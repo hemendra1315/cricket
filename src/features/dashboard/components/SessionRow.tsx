@@ -1,11 +1,23 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
-import type { TrainingSession } from '@/features/sessions/api/sessionsTypes';
 import { formatDate, formatTime } from '@/lib/utils/date';
 
-type DashboardSession = TrainingSession & {
+export type DashboardSession = {
+  id: string;
+  title: string;
+  sessionDate: string;
+  startAt: string;
+  endAt: string;
+  status?: string;
   batchName?: string | null;
+  batch?: { name: string } | null;
+  coach?: {
+    id?: string;
+    fullName?: string | null;
+    email?: string;
+    avatarUrl?: string | null;
+  } | null;
 };
 
 type SessionRowProps = {

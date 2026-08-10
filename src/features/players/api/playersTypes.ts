@@ -26,6 +26,7 @@ export type PlayerStatistics = {
   matchesPlayed: number;
   battingInnings: number;
   battingRuns: number;
+  ballsFacedSum: number;
   battingHighestScore: number | null;
   battingNotOuts: number;
   battingFifties: number;

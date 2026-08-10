@@ -17,9 +17,28 @@ import {
   usePlayerChartData,
   usePlayerUpcomingSessions,
 } from '../hooks/usePlayers';
+import type {
+  PlayerAttendanceSummary,
+  PlayerAward,
+  PlayerCareerHighlight,
+  PlayerChartData,
+  PlayerCoachNote,
+  PlayerDrillSummary,
+  PlayerMatch,
+  PlayerMilestone,
+  PlayerStatistics,
+} from '../api/playersTypes';
 import { SimpleBarChart, SimpleLineChart } from '@/components/charts/SimpleBarChart';
 
-type TabId = 'overview' | 'statistics' | 'matches' | 'awards' | 'highlights' | 'notes' | 'attendance' | 'drills';
+type TabId =
+  | 'overview'
+  | 'statistics'
+  | 'matches'
+  | 'awards'
+  | 'highlights'
+  | 'notes'
+  | 'attendance'
+  | 'drills';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -61,17 +80,20 @@ export default function PlayerProfilePage() {
     (activeTab === 'attendance' && attendanceQuery.isPending) ||
     (activeTab === 'drills' && drillsQuery.isPending);
 
-  const battingAverage = statsQuery.data && statsQuery.data.battingInnings > 0
-    ? (statsQuery.data.battingRuns / statsQuery.data.battingInnings).toFixed(2)
-    : '0.00';
+  const battingAverage =
+    statsQuery.data && statsQuery.data.battingInnings > 0
+      ? (statsQuery.data.battingRuns / statsQuery.data.battingInnings).toFixed(2)
+      : '0.00';
 
-  const strikeRate = statsQuery.data && statsQuery.data.battingInnings > 0
-    ? ((statsQuery.data.battingRuns / statsQuery.data.battingInnings) * 100).toFixed(2)
-    : '0.00';
+  const strikeRate =
+    statsQuery.data && statsQuery.data.battingInnings > 0
+      ? ((statsQuery.data.battingRuns / statsQuery.data.battingInnings) * 100).toFixed(2)
+      : '0.00';
 
-  const economy = statsQuery.data && statsQuery.data.bowlingOvers > 0
-    ? (statsQuery.data.bowlingRunsConceded / statsQuery.data.bowlingOvers).toFixed(2)
-    : '0.00';
+  const economy =
+    statsQuery.data && statsQuery.data.bowlingOvers > 0
+      ? (statsQuery.data.bowlingRunsConceded / statsQuery.data.bowlingOvers).toFixed(2)
+      : '0.00';
 
   const renderTabContent = () => {
     if (isLoading) {
@@ -80,21 +102,35 @@ export default function PlayerProfilePage() {
 
     switch (activeTab) {
       case 'overview':
-        return <OverviewTab stats={statsQuery.data} matches={matchesQuery.data ?? []} sessions={sessionsQuery.data ?? []} notes={notesQuery.data ?? []} />;
+        return (
+          <OverviewTab
+            stats={statsQuery.data ?? null}
+            matches={matchesQuery.data ?? []}
+            sessions={sessionsQuery.data ?? []}
+            notes={notesQuery.data ?? []}
+          />
+        );
       case 'statistics':
-        return <StatisticsTab stats={statsQuery.data} chartData={chartDataQuery.data} />;
+        return (
+          <StatisticsTab stats={statsQuery.data ?? null} chartData={chartDataQuery.data ?? null} />
+        );
       case 'matches':
         return <MatchHistoryTab matches={matchesQuery.data ?? []} />;
       case 'awards':
         return <AwardsTab awards={awardsQuery.data ?? []} />;
       case 'highlights':
-        return <HighlightsTab highlights={highlightsQuery.data ?? []} milestones={milestonesQuery.data ?? []} />;
+        return (
+          <HighlightsTab
+            highlights={highlightsQuery.data ?? []}
+            milestones={milestonesQuery.data ?? []}
+          />
+        );
       case 'notes':
         return <CoachNotesTab notes={notesQuery.data ?? []} />;
       case 'attendance':
-        return <AttendanceTab summary={attendanceQuery.data} />;
+        return <AttendanceTab summary={attendanceQuery.data ?? null} />;
       case 'drills':
-        return <DrillsTab summary={drillsQuery.data} />;
+        return <DrillsTab summary={drillsQuery.data ?? null} />;
       default:
         return null;
     }
@@ -117,9 +153,13 @@ export default function PlayerProfilePage() {
           <Card>
             <CardBody>
               <div className="flex flex-wrap items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
+                <div className="bg-surface-muted flex h-16 w-16 items-center justify-center rounded-full">
                   {profileQuery.data.avatarUrl ? (
-                    <img src={profileQuery.data.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
+                    <img
+                      src={profileQuery.data.avatarUrl}
+                      alt=""
+                      className="h-full w-full rounded-full object-cover"
+                    />
                   ) : (
                     <span className="text-fg text-xl font-semibold">
                       {profileQuery.data.fullName?.[0] ?? '?'}
@@ -127,7 +167,9 @@ export default function PlayerProfilePage() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h1 className="text-fg text-2xl font-semibold">{profileQuery.data.fullName ?? 'Unknown'}</h1>
+                  <h1 className="text-fg text-2xl font-semibold">
+                    {profileQuery.data.fullName ?? 'Unknown'}
+                  </h1>
                   <p className="text-fg-muted text-sm">{profileQuery.data.email}</p>
                   {profileQuery.data.batchName && (
                     <p className="text-fg-muted text-sm">Batch: {profileQuery.data.batchName}</p>
@@ -154,9 +196,7 @@ export default function PlayerProfilePage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-surface-muted text-fg'
-                    : 'text-fg-muted hover:text-fg'
+                  activeTab === tab.id ? 'bg-surface-muted text-fg' : 'text-fg-muted hover:text-fg'
                 }`}
               >
                 {tab.label}
@@ -175,7 +215,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <Card>
       <CardBody className="py-3">
-        <p className="text-fg-muted text-xs uppercase tracking-wide">{label}</p>
+        <p className="text-fg-muted text-xs tracking-wide uppercase">{label}</p>
         <p className="text-fg text-lg font-semibold">{value}</p>
       </CardBody>
     </Card>
@@ -188,10 +228,18 @@ function OverviewTab({
   sessions,
   notes,
 }: {
-  stats: any;
-  matches: any[];
-  sessions: any[];
-  notes: any[];
+  stats: PlayerStatistics | null;
+  matches: PlayerMatch[];
+  sessions: Array<{
+    id: string;
+    title: string;
+    sessionDate: string;
+    startAt: string;
+    endAt: string;
+    ground: string | null;
+    coachName: string | null;
+  }>;
+  notes: PlayerCoachNote[];
 }) {
   const recentMatches = matches?.slice(0, 5) ?? [];
 
@@ -236,7 +284,7 @@ function OverviewTab({
                 <Link
                   key={match.id}
                   to={`/matches/${match.id}`}
-                  className="border-border-subtle flex flex-wrap items-center justify-between rounded-xl border p-3 hover:bg-surface-muted"
+                  className="border-border-subtle hover:bg-surface-muted flex flex-wrap items-center justify-between rounded-xl border p-3"
                 >
                   <div>
                     <p className="text-fg font-medium">{match.matchName}</p>
@@ -246,18 +294,16 @@ function OverviewTab({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {match.batting && (
-                      <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                      <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
                         {match.batting.runs} ({match.batting.balls})
                       </span>
                     )}
                     {match.bowling && (
-                      <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                      <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
                         {match.bowling.wickets}/{match.bowling.runsConceded}
                       </span>
                     )}
-                    {match.awards.playerOfMatch && (
-                      <Badge tone="success">POM</Badge>
-                    )}
+                    {match.awards.playerOfMatch && <Badge tone="success">POM</Badge>}
                   </div>
                 </Link>
               ))}
@@ -273,14 +319,19 @@ function OverviewTab({
             <p className="text-fg-muted">No upcoming sessions.</p>
           ) : (
             <div className="space-y-3">
-              {sessions?.slice(0, 1).map((session: any) => (
+              {sessions?.slice(0, 1).map((session) => (
                 <div key={session.id} className="rounded-xl border p-3">
                   <p className="text-fg font-medium">{session.title}</p>
                   <p className="text-fg-muted text-sm">
-                    {new Date(session.sessionDate).toLocaleDateString()} • {session.startAt} - {session.endAt}
+                    {new Date(session.sessionDate).toLocaleDateString()} • {session.startAt} -{' '}
+                    {session.endAt}
                   </p>
-                  {session.ground && <p className="text-fg-muted text-sm">Ground: {session.ground}</p>}
-                  {session.coachName && <p className="text-fg-muted text-sm">Coach: {session.coachName}</p>}
+                  {session.ground && (
+                    <p className="text-fg-muted text-sm">Ground: {session.ground}</p>
+                  )}
+                  {session.coachName && (
+                    <p className="text-fg-muted text-sm">Coach: {session.coachName}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -311,15 +362,27 @@ function OverviewTab({
   );
 }
 
-function StatisticsTab({ stats, chartData }: { stats: any; chartData: any }) {
+function StatisticsTab({
+  stats,
+  chartData,
+}: {
+  stats: PlayerStatistics | null;
+  chartData: PlayerChartData | null;
+}) {
   if (!stats) {
     return <p className="text-fg-muted">No statistics available.</p>;
   }
 
-  const battingAverage = stats.battingInnings > 0 ? (stats.battingRuns / stats.battingInnings).toFixed(2) : '0.00';
-  const strikeRate = stats.ballsFacedSum > 0 ? ((stats.battingRuns / stats.ballsFacedSum) * 100).toFixed(2) : '0.00';
-  const bowlingAverage = stats.bowlingWickets > 0 ? (stats.bowlingRunsConceded / stats.bowlingWickets).toFixed(2) : '0.00';
-  const economy = stats.bowlingOvers > 0 ? (stats.bowlingRunsConceded / stats.bowlingOvers).toFixed(2) : '0.00';
+  const battingAverage =
+    stats.battingInnings > 0 ? (stats.battingRuns / stats.battingInnings).toFixed(2) : '0.00';
+  const strikeRate =
+    stats.ballsFacedSum > 0 ? ((stats.battingRuns / stats.ballsFacedSum) * 100).toFixed(2) : '0.00';
+  const bowlingAverage =
+    stats.bowlingWickets > 0
+      ? (stats.bowlingRunsConceded / stats.bowlingWickets).toFixed(2)
+      : '0.00';
+  const economy =
+    stats.bowlingOvers > 0 ? (stats.bowlingRunsConceded / stats.bowlingOvers).toFixed(2) : '0.00';
 
   return (
     <div className="space-y-4">
@@ -337,24 +400,28 @@ function StatisticsTab({ stats, chartData }: { stats: any; chartData: any }) {
             <StatItem label="Fours" value={stats.battingFours.toString()} />
             <StatItem label="Sixes" value={stats.battingSixes.toString()} />
           </div>
-          {chartData?.runsByMatch?.length > 0 && (
+          {Boolean(chartData?.runsByMatch && chartData.runsByMatch.length > 0) && chartData && (
             <div className="mt-6">
               <h4 className="text-fg-muted mb-2 text-sm font-medium">Runs by Match</h4>
               <SimpleBarChart
-                data={chartData.runsByMatch.map((m: any) => ({ label: m.matchName, value: m.runs }))}
+                data={chartData.runsByMatch.map((m) => ({ label: m.matchName, value: m.runs }))}
                 height={200}
               />
             </div>
           )}
-          {chartData?.strikeRateTrend?.length > 0 && (
-            <div className="mt-6">
-              <h4 className="text-fg-muted mb-2 text-sm font-medium">Strike Rate Trend</h4>
-              <SimpleLineChart
-                data={chartData.strikeRateTrend.map((m: any) => ({ label: m.matchName, value: m.strikeRate }))}
-                height={200}
-              />
-            </div>
-          )}
+          {Boolean(chartData?.strikeRateTrend && chartData.strikeRateTrend.length > 0) &&
+            chartData && (
+              <div className="mt-6">
+                <h4 className="text-fg-muted mb-2 text-sm font-medium">Strike Rate Trend</h4>
+                <SimpleLineChart
+                  data={chartData.strikeRateTrend.map((m) => ({
+                    label: m.matchName,
+                    value: m.strikeRate,
+                  }))}
+                  height={200}
+                />
+              </div>
+            )}
         </CardBody>
       </Card>
 
@@ -370,20 +437,24 @@ function StatisticsTab({ stats, chartData }: { stats: any; chartData: any }) {
             <StatItem label="Economy" value={economy} />
             <StatItem label="Best" value={stats.bowlingBestBowling ?? '-'} />
           </div>
-          {chartData?.wicketsByMatch?.length > 0 && (
-            <div className="mt-6">
-              <h4 className="text-fg-muted mb-2 text-sm font-medium">Wickets by Match</h4>
-              <SimpleBarChart
-                data={chartData.wicketsByMatch.map((m: any) => ({ label: m.matchName, value: m.wickets }))}
-                height={200}
-              />
-            </div>
-          )}
-          {chartData?.economyTrend?.length > 0 && (
+          {Boolean(chartData?.wicketsByMatch && chartData.wicketsByMatch.length > 0) &&
+            chartData && (
+              <div className="mt-6">
+                <h4 className="text-fg-muted mb-2 text-sm font-medium">Wickets by Match</h4>
+                <SimpleBarChart
+                  data={chartData.wicketsByMatch.map((m) => ({
+                    label: m.matchName,
+                    value: m.wickets,
+                  }))}
+                  height={200}
+                />
+              </div>
+            )}
+          {Boolean(chartData?.economyTrend && chartData.economyTrend.length > 0) && chartData && (
             <div className="mt-6">
               <h4 className="text-fg-muted mb-2 text-sm font-medium">Economy Trend</h4>
               <SimpleLineChart
-                data={chartData.economyTrend.map((m: any) => ({ label: m.matchName, value: m.economy }))}
+                data={chartData.economyTrend.map((m) => ({ label: m.matchName, value: m.economy }))}
                 height={200}
               />
             </div>
@@ -405,7 +476,7 @@ function StatisticsTab({ stats, chartData }: { stats: any; chartData: any }) {
   );
 }
 
-function MatchHistoryTab({ matches }: { matches: any[] }) {
+function MatchHistoryTab({ matches }: { matches: PlayerMatch[] }) {
   return (
     <Card>
       <CardHeader title="Match History" description="All recorded matches" />
@@ -418,7 +489,7 @@ function MatchHistoryTab({ matches }: { matches: any[] }) {
               <Link
                 key={match.id}
                 to={`/matches/${match.id}`}
-                className="border-border-subtle flex flex-wrap items-center justify-between rounded-xl border p-3 hover:bg-surface-muted"
+                className="border-border-subtle hover:bg-surface-muted flex flex-wrap items-center justify-between rounded-xl border p-3"
               >
                 <div>
                   <p className="text-fg font-medium">{match.matchName}</p>
@@ -427,20 +498,32 @@ function MatchHistoryTab({ matches }: { matches: any[] }) {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">{match.matchType}</span>
-                  <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">{match.format.toUpperCase()}</span>
+                  <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
+                    {match.matchType}
+                  </span>
+                  <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
+                    {match.format.toUpperCase()}
+                  </span>
                   {match.result && (
-                    <Badge tone={match.result === 'won' ? 'success' : match.result === 'lost' ? 'danger' : 'warning'}>
+                    <Badge
+                      tone={
+                        match.result === 'won'
+                          ? 'success'
+                          : match.result === 'lost'
+                            ? 'danger'
+                            : 'warning'
+                      }
+                    >
                       {match.result}
                     </Badge>
                   )}
                   {match.batting && (
-                    <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                    <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
                       {match.batting.runs} ({match.batting.balls})
                     </span>
                   )}
                   {match.bowling && (
-                    <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                    <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
                       {match.bowling.wickets}/{match.bowling.runsConceded}
                     </span>
                   )}
@@ -454,7 +537,7 @@ function MatchHistoryTab({ matches }: { matches: any[] }) {
   );
 }
 
-function AwardsTab({ awards }: { awards: any[] }) {
+function AwardsTab({ awards }: { awards: PlayerAward[] }) {
   const counts = useMemo(() => {
     const countsMap: Record<string, number> = {};
     awards?.forEach((a) => {
@@ -490,13 +573,15 @@ function AwardsTab({ awards }: { awards: any[] }) {
                 <Link
                   key={award.id}
                   to={`/matches/${award.matchId}`}
-                  className="border-border-subtle flex items-center justify-between rounded-xl border p-3 hover:bg-surface-muted"
+                  className="border-border-subtle hover:bg-surface-muted flex items-center justify-between rounded-xl border p-3"
                 >
                   <div>
                     <p className="text-fg font-medium">{award.awardType}</p>
                     <p className="text-fg-muted text-sm">{award.matchName}</p>
                   </div>
-                  <p className="text-fg-muted text-sm">{new Date(award.matchDate).toLocaleDateString()}</p>
+                  <p className="text-fg-muted text-sm">
+                    {new Date(award.matchDate).toLocaleDateString()}
+                  </p>
                 </Link>
               ))}
             </div>
@@ -507,7 +592,13 @@ function AwardsTab({ awards }: { awards: any[] }) {
   );
 }
 
-function HighlightsTab({ highlights, milestones }: { highlights: any[]; milestones: any[] }) {
+function HighlightsTab({
+  highlights,
+  milestones,
+}: {
+  highlights: PlayerCareerHighlight[];
+  milestones: PlayerMilestone[];
+}) {
   return (
     <div className="space-y-4">
       <Card>
@@ -548,7 +639,7 @@ function HighlightsTab({ highlights, milestones }: { highlights: any[]; mileston
   );
 }
 
-function CoachNotesTab({ notes }: { notes: any[] }) {
+function CoachNotesTab({ notes }: { notes: PlayerCoachNote[] }) {
   return (
     <Card>
       <CardHeader title="Coach Notes" description="Feedback from coaches" />
@@ -561,7 +652,9 @@ function CoachNotesTab({ notes }: { notes: any[] }) {
               <div key={note.id} className="border-border-subtle rounded-xl border p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-fg font-medium">{note.matchName}</p>
-                  <p className="text-fg-muted text-sm">{new Date(note.matchDate).toLocaleDateString()}</p>
+                  <p className="text-fg-muted text-sm">
+                    {new Date(note.matchDate).toLocaleDateString()}
+                  </p>
                 </div>
                 <p className="text-fg-muted text-sm">Coach: {note.coachName}</p>
                 <p className="text-fg mt-2">{note.notes}</p>
@@ -574,7 +667,7 @@ function CoachNotesTab({ notes }: { notes: any[] }) {
   );
 }
 
-function AttendanceTab({ summary }: { summary: any }) {
+function AttendanceTab({ summary }: { summary: PlayerAttendanceSummary | null }) {
   return (
     <div className="space-y-4">
       <Card>
@@ -593,12 +686,12 @@ function AttendanceTab({ summary }: { summary: any }) {
         </CardBody>
       </Card>
 
-      {summary?.monthlyData?.length > 0 && (
+      {Boolean(summary?.monthlyData && summary.monthlyData.length > 0) && summary && (
         <Card>
           <CardHeader title="Monthly Attendance" />
           <CardBody>
             <SimpleBarChart
-              data={summary.monthlyData.map((m: any) => ({
+              data={summary.monthlyData.map((m) => ({
                 label: m.month,
                 value: Math.round((m.attended / m.total) * 100),
               }))}
@@ -611,7 +704,7 @@ function AttendanceTab({ summary }: { summary: any }) {
   );
 }
 
-function DrillsTab({ summary }: { summary: any }) {
+function DrillsTab({ summary }: { summary: PlayerDrillSummary | null }) {
   return (
     <div className="space-y-4">
       <Card>
@@ -637,8 +730,11 @@ function DrillsTab({ summary }: { summary: any }) {
             <p className="text-fg-muted">No assignments yet.</p>
           ) : (
             <div className="space-y-3">
-              {summary?.recentAssignments?.map((assignment: any) => (
-                <div key={assignment.id} className="border-border-subtle flex items-center justify-between rounded-xl border p-3">
+              {summary?.recentAssignments?.map((assignment) => (
+                <div
+                  key={assignment.id}
+                  className="border-border-subtle flex items-center justify-between rounded-xl border p-3"
+                >
                   <div>
                     <p className="text-fg font-medium">{assignment.drillName}</p>
                     <p className="text-fg-muted text-sm">{assignment.category}</p>
@@ -659,7 +755,7 @@ function DrillsTab({ summary }: { summary: any }) {
 function StatItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-fg-muted text-xs uppercase tracking-wide">{label}</p>
+      <p className="text-fg-muted text-xs tracking-wide uppercase">{label}</p>
       <p className="text-fg text-base font-medium">{value}</p>
     </div>
   );

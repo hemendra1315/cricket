@@ -27,17 +27,20 @@ export async function fetchPlayerProfile(academyId: UUID, playerId: UUID): Promi
         `
         id, academy_id, user_id, role, status, joined_at, 
         profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url, phone),
-        batch_members!left(batch_id, batches!inner(id, name))
+        batch_members!left(batch_id, joined_at, batches!inner(id, name))
       `,
       )
       .eq('academy_id', academyId)
       .eq('id', playerId)
+      .order('joined_at', { foreignTable: 'batch_members', ascending: false })
       .maybeSingle(),
   );
 
   if (!row) {
     throw new Error('Player not found');
   }
+
+  const batchMember = Array.isArray(row.batch_members) ? row.batch_members[0] : row.batch_members;
 
   return {
     id: row.id,
@@ -53,8 +56,8 @@ export async function fetchPlayerProfile(academyId: UUID, playerId: UUID): Promi
     battingStyle: null,
     bowlingStyle: null,
     jerseyNumber: null,
-    batchId: row.batch_members?.batch_id ?? null,
-    batchName: row.batch_members?.batches?.name ?? null,
+    batchId: batchMember?.batch_id ?? null,
+    batchName: batchMember?.batches?.name ?? null,
   };
 }
 
@@ -84,6 +87,7 @@ export async function fetchPlayerStatistics(
     matchesPlayed: row.matches_played,
     battingInnings: row.batting_innings,
     battingRuns: row.batting_runs,
+    ballsFacedSum: row.balls_faced_sum ?? 0,
     battingHighestScore: row.batting_highest_score,
     battingNotOuts: row.batting_not_outs,
     battingFifties: row.batting_fifties,

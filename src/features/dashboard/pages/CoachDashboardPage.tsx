@@ -92,7 +92,9 @@ export default function CoachDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-4">
             <div>
               <p className="text-fg-muted text-xs uppercase">Matches</p>
-              <p className="text-fg text-2xl font-semibold">{analytics.recentMatches?.length ?? 0}</p>
+              <p className="text-fg text-2xl font-semibold">
+                {analytics.recentMatches?.length ?? 0}
+              </p>
             </div>
             <div>
               <p className="text-fg-muted text-xs uppercase">Wins</p>
@@ -107,7 +109,8 @@ export default function CoachDashboardPage() {
               <p className="text-fg text-2xl font-semibold">
                 {analytics.recentMatches?.length > 0
                   ? Math.round((analytics.wins / analytics.recentMatches.length) * 100)
-                  : 0}%
+                  : 0}
+                %
               </p>
             </div>
           </div>
@@ -116,10 +119,13 @@ export default function CoachDashboardPage() {
 
       {analytics.playersNeedingAttention?.length > 0 && (
         <Card>
-          <CardHeader title="Players Needing Attention" description="Low attendance, pending drills, or no recent feedback" />
+          <CardHeader
+            title="Players Needing Attention"
+            description="Low attendance, pending drills, or no recent feedback"
+          />
           <CardBody>
             <div className="space-y-3">
-              {analytics.playersNeedingAttention.map((player: any) => (
+              {analytics.playersNeedingAttention.map((player) => (
                 <Link
                   key={player.id}
                   to={`/members/${player.id}`}
@@ -127,9 +133,7 @@ export default function CoachDashboardPage() {
                 >
                   <div>
                     <p className="text-fg font-medium">{player.name}</p>
-                    <p className="text-fg-muted text-sm">
-                      Attendance: {player.attendanceRate}%
-                    </p>
+                    <p className="text-fg-muted text-sm">Attendance: {player.attendanceRate}%</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {player.issues.map((issue: string, idx: number) => (
@@ -157,10 +161,13 @@ export default function CoachDashboardPage() {
         />
         <CardBody>
           {analytics.assignedBatches?.length === 0 ? (
-            <EmptyState title="No batches assigned" description="You are not coaching any batches yet." />
+            <EmptyState
+              title="No batches assigned"
+              description="You are not coaching any batches yet."
+            />
           ) : (
             <div className="space-y-3">
-              {analytics.assignedBatches.map((batch: any) => (
+              {analytics.assignedBatches.map((batch) => (
                 <Link
                   key={batch.id}
                   to={`/batches/${batch.id}`}
@@ -197,7 +204,7 @@ export default function CoachDashboardPage() {
             <p className="text-fg-muted">No matches yet.</p>
           ) : (
             <div className="space-y-3">
-              {analytics.recentMatches.map((match: any) => (
+              {analytics.recentMatches.map((match) => (
                 <Link
                   key={match.id}
                   to={`/matches/${match.id}`}
@@ -211,12 +218,20 @@ export default function CoachDashboardPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {match.teamScore && (
-                      <span className="rounded-full bg-surface-muted px-2 py-1 text-xs">
+                      <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
                         {match.teamScore}
                       </span>
                     )}
                     {match.result && (
-                      <Badge tone={match.result === 'won' ? 'success' : match.result === 'lost' ? 'danger' : 'warning'}>
+                      <Badge
+                        tone={
+                          match.result === 'won'
+                            ? 'success'
+                            : match.result === 'lost'
+                              ? 'danger'
+                              : 'warning'
+                        }
+                      >
                         {match.result}
                       </Badge>
                     )}
