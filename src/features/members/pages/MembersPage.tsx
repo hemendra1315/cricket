@@ -217,121 +217,241 @@ function MemberTable({
   const pushToast = useUiStore((state) => state.pushToast);
 
   return (
-    <Table>
-      <THead>
-        <TR>
-          <TH>Player</TH>
-          <TH>Role</TH>
-          <TH>Status</TH>
-          <TH>Joined</TH>
-          {canManage ? <TH>Actions</TH> : null}
-        </TR>
-      </THead>
-      <TBody>
+    <>
+      {/* MOBILE CARD LIST (< md) */}
+      <div className="space-y-3 md:hidden">
         {members.map((member) => {
           const isSelf = member.userId === user?.id;
           return (
-            <TR key={member.id}>
-              <TD>
-                <div className="flex items-center gap-2">
-                  <Avatar name={member.fullName ?? member.email} src={member.avatarUrl} size="sm" />
-                  <div className="min-w-0">
-                    <Link
-                      to={`/members/${member.id}`}
-                      className="text-fg truncate text-sm font-medium hover:underline"
+            <div
+              key={member.id}
+              className="border-border-subtle bg-surface space-y-3 rounded-xl border p-4 shadow-2xs"
+            >
+              <div className="flex items-center gap-3">
+                <Avatar name={member.fullName ?? member.email} src={member.avatarUrl} size="md" />
+                <div className="min-w-0 flex-1">
+                  <Link
+                    to={`/members/${member.id}`}
+                    className="text-fg block truncate text-sm font-semibold hover:underline"
+                  >
+                    {member.fullName ?? member.email}
+                  </Link>
+                  <p className="text-fg-muted truncate text-xs">{member.email}</p>
+                </div>
+                <Badge tone={STATUS_TONES[member.status]}>{member.status}</Badge>
+              </div>
+
+              <div className="border-border-subtle text-fg-muted flex items-center justify-between border-t pt-2 text-xs">
+                <span>
+                  Role: <strong className="text-fg font-medium">{ROLE_LABELS[member.role]}</strong>
+                </span>
+                <span>Joined: {member.joinedAt ? formatDate(member.joinedAt) : '—'}</span>
+              </div>
+
+              {canManage && member.role !== 'academy_owner' && !isSelf ? (
+                <div className="border-border-subtle flex flex-wrap items-center justify-between gap-2 border-t pt-2">
+                  <div className="w-36">
+                    <Select
+                      aria-label={`Role for ${member.email}`}
+                      className="h-9 text-xs"
+                      value={member.role}
+                      disabled={changeRole.isPending}
+                      onChange={(event) =>
+                        changeRole.mutate(
+                          {
+                            membershipId: member.id,
+                            role: event.target.value as JoinableRole,
+                          },
+                          {
+                            onSuccess: () =>
+                              pushToast({ title: 'Role updated', variant: 'success' }),
+                          },
+                        )
+                      }
                     >
-                      {member.fullName ?? member.email}
-                    </Link>
-                    <p className="text-fg-muted truncate text-xs">{member.email}</p>
+                      {JOINABLE_ROLES.map((role) => (
+                        <option key={role} value={role}>
+                          {ROLE_LABELS[role]}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {member.status === 'suspended' ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        isLoading={changeStatus.isPending}
+                        onClick={() =>
+                          changeStatus.mutate({ membershipId: member.id, status: 'active' })
+                        }
+                      >
+                        Reactivate
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isLoading={changeStatus.isPending}
+                        onClick={() =>
+                          changeStatus.mutate({ membershipId: member.id, status: 'suspended' })
+                        }
+                      >
+                        Suspend
+                      </Button>
+                    )}
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      isLoading={removeMember.isPending}
+                      onClick={() =>
+                        removeMember.mutate(
+                          { membershipId: member.id },
+                          {
+                            onSuccess: () =>
+                              pushToast({ title: 'Player removed', variant: 'success' }),
+                          },
+                        )
+                      }
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </div>
-              </TD>
-              <TD>
-                {canManage && member.role !== 'academy_owner' ? (
-                  <Select
-                    aria-label={`Role for ${member.email}`}
-                    className="h-8 w-32"
-                    value={member.role}
-                    disabled={changeRole.isPending}
-                    onChange={(event) =>
-                      changeRole.mutate(
-                        {
-                          membershipId: member.id,
-                          role: event.target.value as JoinableRole,
-                        },
-                        {
-                          onSuccess: () => pushToast({ title: 'Role updated', variant: 'success' }),
-                        },
-                      )
-                    }
-                  >
-                    {JOINABLE_ROLES.map((role) => (
-                      <option key={role} value={role}>
-                        {ROLE_LABELS[role]}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  ROLE_LABELS[member.role]
-                )}
-              </TD>
-              <TD>
-                <Badge tone={STATUS_TONES[member.status]}>{member.status}</Badge>
-              </TD>
-              <TD className="text-fg-muted text-sm">
-                {member.joinedAt ? formatDate(member.joinedAt) : '—'}
-              </TD>
-              {canManage ? (
-                <TD>
-                  {member.role === 'academy_owner' || isSelf ? null : (
-                    <div className="flex flex-wrap gap-2">
-                      {member.status === 'suspended' ? (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          isLoading={changeStatus.isPending}
-                          onClick={() =>
-                            changeStatus.mutate({ membershipId: member.id, status: 'active' })
-                          }
-                        >
-                          Reactivate
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          isLoading={changeStatus.isPending}
-                          onClick={() =>
-                            changeStatus.mutate({ membershipId: member.id, status: 'suspended' })
-                          }
-                        >
-                          Suspend
-                        </Button>
-                      )}
-                      <Button
-                        variant="danger"
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* DESKTOP TABLE (>= md) */}
+      <div className="hidden md:block">
+        <Table>
+          <THead>
+            <TR>
+              <TH>Player</TH>
+              <TH>Role</TH>
+              <TH>Status</TH>
+              <TH>Joined</TH>
+              {canManage ? <TH>Actions</TH> : null}
+            </TR>
+          </THead>
+          <TBody>
+            {members.map((member) => {
+              const isSelf = member.userId === user?.id;
+              return (
+                <TR key={member.id}>
+                  <TD>
+                    <div className="flex items-center gap-2">
+                      <Avatar
+                        name={member.fullName ?? member.email}
+                        src={member.avatarUrl}
                         size="sm"
-                        isLoading={removeMember.isPending}
-                        onClick={() =>
-                          removeMember.mutate(
-                            { membershipId: member.id },
+                      />
+                      <div className="min-w-0">
+                        <Link
+                          to={`/members/${member.id}`}
+                          className="text-fg truncate text-sm font-medium hover:underline"
+                        >
+                          {member.fullName ?? member.email}
+                        </Link>
+                        <p className="text-fg-muted truncate text-xs">{member.email}</p>
+                      </div>
+                    </div>
+                  </TD>
+                  <TD>
+                    {canManage && member.role !== 'academy_owner' ? (
+                      <Select
+                        aria-label={`Role for ${member.email}`}
+                        className="h-8 w-32"
+                        value={member.role}
+                        disabled={changeRole.isPending}
+                        onChange={(event) =>
+                          changeRole.mutate(
+                            {
+                              membershipId: member.id,
+                              role: event.target.value as JoinableRole,
+                            },
                             {
                               onSuccess: () =>
-                                pushToast({ title: 'Player removed', variant: 'success' }),
+                                pushToast({ title: 'Role updated', variant: 'success' }),
                             },
                           )
                         }
                       >
-                        Remove
-                      </Button>
-                    </div>
-                  )}
-                </TD>
-              ) : null}
-            </TR>
-          );
-        })}
-      </TBody>
-    </Table>
+                        {JOINABLE_ROLES.map((role) => (
+                          <option key={role} value={role}>
+                            {ROLE_LABELS[role]}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : (
+                      ROLE_LABELS[member.role]
+                    )}
+                  </TD>
+                  <TD>
+                    <Badge tone={STATUS_TONES[member.status]}>{member.status}</Badge>
+                  </TD>
+                  <TD className="text-fg-muted text-sm">
+                    {member.joinedAt ? formatDate(member.joinedAt) : '—'}
+                  </TD>
+                  {canManage ? (
+                    <TD>
+                      {member.role === 'academy_owner' || isSelf ? null : (
+                        <div className="flex flex-wrap gap-2">
+                          {member.status === 'suspended' ? (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              isLoading={changeStatus.isPending}
+                              onClick={() =>
+                                changeStatus.mutate({ membershipId: member.id, status: 'active' })
+                              }
+                            >
+                              Reactivate
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              isLoading={changeStatus.isPending}
+                              onClick={() =>
+                                changeStatus.mutate({
+                                  membershipId: member.id,
+                                  status: 'suspended',
+                                })
+                              }
+                            >
+                              Suspend
+                            </Button>
+                          )}
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            isLoading={removeMember.isPending}
+                            onClick={() =>
+                              removeMember.mutate(
+                                { membershipId: member.id },
+                                {
+                                  onSuccess: () =>
+                                    pushToast({ title: 'Player removed', variant: 'success' }),
+                                },
+                              )
+                            }
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      )}
+                    </TD>
+                  ) : null}
+                </TR>
+              );
+            })}
+          </TBody>
+        </Table>
+      </div>
+    </>
   );
 }
