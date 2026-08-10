@@ -1,4 +1,12 @@
-import { CalendarDays, LayoutDashboard, Menu, User, Users, WifiOff } from 'lucide-react';
+import {
+  CalendarDays,
+  LayoutDashboard,
+  Menu,
+  ShieldCheck,
+  User,
+  Users,
+  WifiOff,
+} from 'lucide-react';
 import { Suspense, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
@@ -21,7 +29,15 @@ const NAV_ITEMS: {
   label: string;
   icon: ReactNode;
   requiresCapability: Capability | null;
+  superAdminOnly?: boolean;
 }[] = [
+  {
+    to: '/admin',
+    label: 'Super Admin',
+    icon: <ShieldCheck className="h-4 w-4" aria-hidden />,
+    requiresCapability: null,
+    superAdminOnly: true,
+  },
   {
     to: ROLE_HOME.academy_owner,
     label: 'Dashboard',
@@ -70,14 +86,16 @@ const NAV_ITEMS: {
 export function AppShell() {
   const { profile, displayName, logout } = useAuth();
   const roles = useActiveRoles();
+  const isSuperAdmin = roles.includes('super_admin');
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const online = useOnlineStatus();
 
-  const navItems = NAV_ITEMS.filter(
-    (item) => item.requiresCapability === null || hasCapability(roles, item.requiresCapability),
-  );
+  const navItems = NAV_ITEMS.filter((item) => {
+    if (item.superAdminOnly) return isSuperAdmin;
+    return item.requiresCapability === null || hasCapability(roles, item.requiresCapability);
+  });
 
   const handleNavClick = () => {
     setSidebarOpen(false);
