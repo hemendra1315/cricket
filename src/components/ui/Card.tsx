@@ -25,12 +25,12 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        'border-border-subtle flex items-start justify-between border-b p-4',
+        'border-border-subtle flex flex-wrap items-start justify-between gap-3 border-b p-4',
         className,
       )}
     >
-      <div>
-        <h3 className="text-fg text-base font-semibold">{title}</h3>
+      <div className="min-w-0">
+        <h3 className="text-fg text-base font-semibold text-balance">{title}</h3>
         {description ? <p className="text-fg-muted mt-1 text-sm">{description}</p> : null}
       </div>
       {action}

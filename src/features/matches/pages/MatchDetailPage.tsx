@@ -106,38 +106,85 @@ export default function MatchDetailPage() {
           ) : battingQuery.data?.length === 0 ? (
             <p className="text-fg-muted">No batting data.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="pb-2">Pos</th>
-                    <th className="pb-2">Player</th>
-                    <th className="pb-2">R</th>
-                    <th className="pb-2">B</th>
-                    <th className="pb-2">4s</th>
-                    <th className="pb-2">6s</th>
-                    <th className="pb-2">Dismissal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...(battingQuery.data ?? [])]
-                    .sort((a, b) => (a.battingOrder ?? 99) - (b.battingOrder ?? 99))
-                    .map((b) => (
-                      <tr key={b.id} className="border-b last:border-0">
-                        <td className="py-2 font-medium">
+            <>
+              {/* MOBILE CARD LIST (< md) */}
+              <div className="space-y-3 md:hidden">
+                {[...(battingQuery.data ?? [])]
+                  .sort((a, b) => (a.battingOrder ?? 99) - (b.battingOrder ?? 99))
+                  .map((b) => (
+                    <div
+                      key={b.id}
+                      className="border-border-subtle bg-surface space-y-2 rounded-xl border p-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-fg min-w-0 truncate text-sm font-medium">
+                          {b.player.fullName ?? b.player.email}
+                        </p>
+                        <span className="text-fg-muted shrink-0 text-xs">
                           {b.battingOrder === 0 ? 'Opening' : (b.battingOrder ?? '-')}
-                        </td>
-                        <td className="py-2">{b.player.fullName ?? b.player.email}</td>
-                        <td className="py-2">{b.runs}</td>
-                        <td className="py-2">{b.balls}</td>
-                        <td className="py-2">{b.fours}</td>
-                        <td className="py-2">{b.sixes}</td>
-                        <td className="py-2">{b.isOut ? (b.dismissalType ?? 'Out') : 'Not out'}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        <div>
+                          <p className="text-fg text-sm font-semibold">{b.runs}</p>
+                          <p className="text-fg-muted text-[10px] uppercase">Runs</p>
+                        </div>
+                        <div>
+                          <p className="text-fg text-sm font-semibold">{b.balls}</p>
+                          <p className="text-fg-muted text-[10px] uppercase">Balls</p>
+                        </div>
+                        <div>
+                          <p className="text-fg text-sm font-semibold">{b.fours}</p>
+                          <p className="text-fg-muted text-[10px] uppercase">4s</p>
+                        </div>
+                        <div>
+                          <p className="text-fg text-sm font-semibold">{b.sixes}</p>
+                          <p className="text-fg-muted text-[10px] uppercase">6s</p>
+                        </div>
+                      </div>
+                      <p className="border-border-subtle text-fg-muted border-t pt-2 text-xs">
+                        {b.isOut ? (b.dismissalType ?? 'Out') : 'Not out'}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+
+              {/* DESKTOP TABLE (>= md) */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="pb-2">Pos</th>
+                      <th className="pb-2">Player</th>
+                      <th className="pb-2">R</th>
+                      <th className="pb-2">B</th>
+                      <th className="pb-2">4s</th>
+                      <th className="pb-2">6s</th>
+                      <th className="pb-2">Dismissal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...(battingQuery.data ?? [])]
+                      .sort((a, b) => (a.battingOrder ?? 99) - (b.battingOrder ?? 99))
+                      .map((b) => (
+                        <tr key={b.id} className="border-b last:border-0">
+                          <td className="py-2 font-medium">
+                            {b.battingOrder === 0 ? 'Opening' : (b.battingOrder ?? '-')}
+                          </td>
+                          <td className="py-2">{b.player.fullName ?? b.player.email}</td>
+                          <td className="py-2">{b.runs}</td>
+                          <td className="py-2">{b.balls}</td>
+                          <td className="py-2">{b.fours}</td>
+                          <td className="py-2">{b.sixes}</td>
+                          <td className="py-2">
+                            {b.isOut ? (b.dismissalType ?? 'Out') : 'Not out'}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardBody>
       </Card>
@@ -150,34 +197,75 @@ export default function MatchDetailPage() {
           ) : bowlingQuery.data?.length === 0 ? (
             <p className="text-fg-muted">No bowling data.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="pb-2">Player</th>
-                    <th className="pb-2">Overs</th>
-                    <th className="pb-2">Maidens</th>
-                    <th className="pb-2">Runs</th>
-                    <th className="pb-2">Wickets</th>
-                    <th className="pb-2">Wides</th>
-                    <th className="pb-2">No-balls</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bowlingQuery.data?.map((b) => (
-                    <tr key={b.id} className="border-b last:border-0">
-                      <td className="py-2">{b.player.fullName ?? b.player.email}</td>
-                      <td className="py-2">{b.overs}</td>
-                      <td className="py-2">{b.maidens}</td>
-                      <td className="py-2">{b.runsConceded}</td>
-                      <td className="py-2">{b.wickets}</td>
-                      <td className="py-2">{b.wides}</td>
-                      <td className="py-2">{b.noBalls}</td>
+            <>
+              {/* MOBILE CARD LIST (< md) */}
+              <div className="space-y-3 md:hidden">
+                {bowlingQuery.data?.map((b) => (
+                  <div
+                    key={b.id}
+                    className="border-border-subtle bg-surface space-y-2 rounded-xl border p-3"
+                  >
+                    <p className="text-fg truncate text-sm font-medium">
+                      {b.player.fullName ?? b.player.email}
+                    </p>
+                    <div className="grid grid-cols-5 gap-2 text-center">
+                      <div>
+                        <p className="text-fg text-sm font-semibold">{b.overs}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Ov</p>
+                      </div>
+                      <div>
+                        <p className="text-fg text-sm font-semibold">{b.maidens}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Md</p>
+                      </div>
+                      <div>
+                        <p className="text-fg text-sm font-semibold">{b.runsConceded}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Runs</p>
+                      </div>
+                      <div>
+                        <p className="text-fg text-sm font-semibold">{b.wickets}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Wkts</p>
+                      </div>
+                      <div>
+                        <p className="text-fg text-sm font-semibold">
+                          {b.wides}/{b.noBalls}
+                        </p>
+                        <p className="text-fg-muted text-[10px] uppercase">Wd/Nb</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP TABLE (>= md) */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="pb-2">Player</th>
+                      <th className="pb-2">Overs</th>
+                      <th className="pb-2">Maidens</th>
+                      <th className="pb-2">Runs</th>
+                      <th className="pb-2">Wickets</th>
+                      <th className="pb-2">Wides</th>
+                      <th className="pb-2">No-balls</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {bowlingQuery.data?.map((b) => (
+                      <tr key={b.id} className="border-b last:border-0">
+                        <td className="py-2">{b.player.fullName ?? b.player.email}</td>
+                        <td className="py-2">{b.overs}</td>
+                        <td className="py-2">{b.maidens}</td>
+                        <td className="py-2">{b.runsConceded}</td>
+                        <td className="py-2">{b.wickets}</td>
+                        <td className="py-2">{b.wides}</td>
+                        <td className="py-2">{b.noBalls}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardBody>
       </Card>
@@ -190,28 +278,59 @@ export default function MatchDetailPage() {
           ) : fieldingQuery.data?.length === 0 ? (
             <p className="text-fg-muted">No fielding data.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="pb-2">Player</th>
-                    <th className="pb-2">Catches</th>
-                    <th className="pb-2">Run-outs</th>
-                    <th className="pb-2">Stumpings</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fieldingQuery.data?.map((f) => (
-                    <tr key={f.id} className="border-b last:border-0">
-                      <td className="py-2">{f.player.fullName ?? f.player.email}</td>
-                      <td className="py-2">{f.catches}</td>
-                      <td className="py-2">{f.runOuts}</td>
-                      <td className="py-2">{f.stumpings}</td>
+            <>
+              {/* MOBILE CARD LIST (< md) */}
+              <div className="space-y-3 md:hidden">
+                {fieldingQuery.data?.map((f) => (
+                  <div
+                    key={f.id}
+                    className="border-border-subtle bg-surface space-y-2 rounded-xl border p-3"
+                  >
+                    <p className="text-fg truncate text-sm font-medium">
+                      {f.player.fullName ?? f.player.email}
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <p className="text-fg text-sm font-semibold">{f.catches}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Catches</p>
+                      </div>
+                      <div>
+                        <p className="text-fg text-sm font-semibold">{f.runOuts}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Run-outs</p>
+                      </div>
+                      <div>
+                        <p className="text-fg text-sm font-semibold">{f.stumpings}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Stumpings</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP TABLE (>= md) */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="pb-2">Player</th>
+                      <th className="pb-2">Catches</th>
+                      <th className="pb-2">Run-outs</th>
+                      <th className="pb-2">Stumpings</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {fieldingQuery.data?.map((f) => (
+                      <tr key={f.id} className="border-b last:border-0">
+                        <td className="py-2">{f.player.fullName ?? f.player.email}</td>
+                        <td className="py-2">{f.catches}</td>
+                        <td className="py-2">{f.runOuts}</td>
+                        <td className="py-2">{f.stumpings}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardBody>
       </Card>

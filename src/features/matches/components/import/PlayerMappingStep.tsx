@@ -53,7 +53,57 @@ export function PlayerMappingStep({
         </p>
       </div>
 
-      <div className="border-border-subtle overflow-x-auto rounded-xl border">
+      {/* MOBILE CARD LIST (< md) */}
+      <div className="space-y-3 md:hidden">
+        {mappedPlayers.map((player, idx) => (
+          <div
+            key={player.cricheroesName + idx}
+            className="border-border-subtle bg-surface space-y-3 rounded-xl border p-4"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-fg min-w-0 truncate text-sm font-medium">
+                {player.cricheroesName}
+              </p>
+              {player.isIgnored ? (
+                <Badge tone="neutral">Ignored</Badge>
+              ) : player.savedMapping ? (
+                <Badge tone="success">Saved ✓</Badge>
+              ) : player.isGuest ? (
+                <Badge tone="warning">Guest</Badge>
+              ) : player.status === 'exact_match' ? (
+                <Badge tone="success">100%</Badge>
+              ) : player.status === 'high_confidence' ? (
+                <Badge tone="success">{player.confidenceScore}%</Badge>
+              ) : (
+                <Badge tone="brand">Matched</Badge>
+              )}
+            </div>
+            <Select
+              value={player.academyMemberId ?? ''}
+              onChange={(e) => handleSelectAcademyPlayer(idx, e.target.value)}
+              className="w-full"
+              disabled={player.isIgnored}
+            >
+              <option value="">-- Guest Player (Not in Academy) --</option>
+              {academyPlayers.map((ap) => (
+                <option key={ap.id} value={ap.id}>
+                  {ap.fullName ?? ap.email}
+                </option>
+              ))}
+            </Select>
+            <button
+              type="button"
+              onClick={() => updatePlayerMapping(idx, { isIgnored: !player.isIgnored })}
+              className="text-fg-muted hover:text-fg text-xs font-medium underline"
+            >
+              {player.isIgnored ? 'Include' : 'Ignore'}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* DESKTOP TABLE (>= md) */}
+      <div className="border-border-subtle hidden overflow-x-auto rounded-xl border md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-surface-subtle border-border-subtle border-b">
             <tr>

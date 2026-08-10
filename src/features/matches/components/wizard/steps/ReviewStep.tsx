@@ -95,38 +95,78 @@ export function ReviewStep({
         {state.batting.length === 0 ? (
           <p className="text-fg-muted text-xs">No batting entries.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b">
-                  <th className="pb-1">Player</th>
-                  <th className="pb-1">Runs</th>
-                  <th className="pb-1">Balls</th>
-                  <th className="pb-1">4s</th>
-                  <th className="pb-1">6s</th>
-                  <th className="pb-1">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.batting.map((b) => {
-                  const p = memberMap.get(b.memberId);
-                  const displayName = b.isGuest
-                    ? `${b.guestName || 'Guest Player'} (Guest)`
-                    : (p?.fullName ?? p?.email ?? 'Unknown Player');
-                  return (
-                    <tr key={b.memberId} className="border-b last:border-0">
-                      <td className="py-1.5 font-medium">{displayName}</td>
-                      <td className="py-1.5">{b.runs}</td>
-                      <td className="py-1.5">{b.balls}</td>
-                      <td className="py-1.5">{b.fours}</td>
-                      <td className="py-1.5">{b.sixes}</td>
-                      <td className="py-1.5">{b.isOut ? b.dismissalType : 'Not Out'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* MOBILE CARD LIST (< md) */}
+            <div className="space-y-2 md:hidden">
+              {state.batting.map((b) => {
+                const p = memberMap.get(b.memberId);
+                const displayName = b.isGuest
+                  ? `${b.guestName || 'Guest Player'} (Guest)`
+                  : (p?.fullName ?? p?.email ?? 'Unknown Player');
+                return (
+                  <div
+                    key={b.memberId}
+                    className="border-border-subtle bg-surface-subtle space-y-2 rounded-lg border p-2.5"
+                  >
+                    <p className="text-fg truncate text-xs font-medium">{displayName}</p>
+                    <div className="grid grid-cols-4 gap-1 text-center text-xs">
+                      <div>
+                        <p className="text-fg font-semibold">{b.runs}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">R</p>
+                      </div>
+                      <div>
+                        <p className="text-fg font-semibold">{b.balls}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">B</p>
+                      </div>
+                      <div>
+                        <p className="text-fg font-semibold">{b.fours}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">4s</p>
+                      </div>
+                      <div>
+                        <p className="text-fg font-semibold">{b.sixes}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">6s</p>
+                      </div>
+                    </div>
+                    <p className="text-fg-muted text-xs">{b.isOut ? b.dismissalType : 'Not Out'}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP TABLE (>= md) */}
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b">
+                    <th className="pb-1">Player</th>
+                    <th className="pb-1">Runs</th>
+                    <th className="pb-1">Balls</th>
+                    <th className="pb-1">4s</th>
+                    <th className="pb-1">6s</th>
+                    <th className="pb-1">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.batting.map((b) => {
+                    const p = memberMap.get(b.memberId);
+                    const displayName = b.isGuest
+                      ? `${b.guestName || 'Guest Player'} (Guest)`
+                      : (p?.fullName ?? p?.email ?? 'Unknown Player');
+                    return (
+                      <tr key={b.memberId} className="border-b last:border-0">
+                        <td className="py-1.5 font-medium">{displayName}</td>
+                        <td className="py-1.5">{b.runs}</td>
+                        <td className="py-1.5">{b.balls}</td>
+                        <td className="py-1.5">{b.fours}</td>
+                        <td className="py-1.5">{b.sixes}</td>
+                        <td className="py-1.5">{b.isOut ? b.dismissalType : 'Not Out'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
@@ -136,36 +176,75 @@ export function ReviewStep({
         {state.bowling.length === 0 ? (
           <p className="text-fg-muted text-xs">No bowling entries.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b">
-                  <th className="pb-1">Player</th>
-                  <th className="pb-1">Overs</th>
-                  <th className="pb-1">M</th>
-                  <th className="pb-1">Runs</th>
-                  <th className="pb-1">Wkts</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.bowling.map((b) => {
-                  const p = memberMap.get(b.memberId);
-                  const displayName = b.isGuest
-                    ? `${b.guestName || 'Guest Player'} (Guest)`
-                    : (p?.fullName ?? p?.email ?? 'Unknown Player');
-                  return (
-                    <tr key={b.memberId} className="border-b last:border-0">
-                      <td className="py-1.5 font-medium">{displayName}</td>
-                      <td className="py-1.5">{b.overs}</td>
-                      <td className="py-1.5">{b.maidens}</td>
-                      <td className="py-1.5">{b.runsConceded}</td>
-                      <td className="py-1.5">{b.wickets}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* MOBILE CARD LIST (< md) */}
+            <div className="space-y-2 md:hidden">
+              {state.bowling.map((b) => {
+                const p = memberMap.get(b.memberId);
+                const displayName = b.isGuest
+                  ? `${b.guestName || 'Guest Player'} (Guest)`
+                  : (p?.fullName ?? p?.email ?? 'Unknown Player');
+                return (
+                  <div
+                    key={b.memberId}
+                    className="border-border-subtle bg-surface-subtle space-y-2 rounded-lg border p-2.5"
+                  >
+                    <p className="text-fg truncate text-xs font-medium">{displayName}</p>
+                    <div className="grid grid-cols-4 gap-1 text-center text-xs">
+                      <div>
+                        <p className="text-fg font-semibold">{b.overs}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Ov</p>
+                      </div>
+                      <div>
+                        <p className="text-fg font-semibold">{b.maidens}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">M</p>
+                      </div>
+                      <div>
+                        <p className="text-fg font-semibold">{b.runsConceded}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Runs</p>
+                      </div>
+                      <div>
+                        <p className="text-fg font-semibold">{b.wickets}</p>
+                        <p className="text-fg-muted text-[10px] uppercase">Wkts</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP TABLE (>= md) */}
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b">
+                    <th className="pb-1">Player</th>
+                    <th className="pb-1">Overs</th>
+                    <th className="pb-1">M</th>
+                    <th className="pb-1">Runs</th>
+                    <th className="pb-1">Wkts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.bowling.map((b) => {
+                    const p = memberMap.get(b.memberId);
+                    const displayName = b.isGuest
+                      ? `${b.guestName || 'Guest Player'} (Guest)`
+                      : (p?.fullName ?? p?.email ?? 'Unknown Player');
+                    return (
+                      <tr key={b.memberId} className="border-b last:border-0">
+                        <td className="py-1.5 font-medium">{displayName}</td>
+                        <td className="py-1.5">{b.overs}</td>
+                        <td className="py-1.5">{b.maidens}</td>
+                        <td className="py-1.5">{b.runsConceded}</td>
+                        <td className="py-1.5">{b.wickets}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

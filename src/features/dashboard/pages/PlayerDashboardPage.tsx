@@ -51,47 +51,49 @@ export default function PlayerDashboardPage() {
       </div>
 
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-7">
           <Card>
-            <CardBody className="py-3">
+            <CardBody className="min-w-0 py-3">
               <p className="text-fg-muted text-xs tracking-wide uppercase">Matches</p>
-              <p className="text-fg text-lg font-semibold">{stats.matchesPlayed}</p>
+              <p className="text-fg truncate text-lg font-semibold">{stats.matchesPlayed}</p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardBody className="min-w-0 py-3">
               <p className="text-fg-muted text-xs tracking-wide uppercase">Runs</p>
-              <p className="text-fg text-lg font-semibold">{stats.battingRuns}</p>
+              <p className="text-fg truncate text-lg font-semibold">{stats.battingRuns}</p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardBody className="min-w-0 py-3">
               <p className="text-fg-muted text-xs tracking-wide uppercase">Wickets</p>
-              <p className="text-fg text-lg font-semibold">{stats.bowlingWickets}</p>
+              <p className="text-fg truncate text-lg font-semibold">{stats.bowlingWickets}</p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardBody className="min-w-0 py-3">
               <p className="text-fg-muted text-xs tracking-wide uppercase">Batting Avg</p>
-              <p className="text-fg text-lg font-semibold">{stats.battingAverage}</p>
+              <p className="text-fg truncate text-lg font-semibold">{stats.battingAverage}</p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardBody className="min-w-0 py-3">
               <p className="text-fg-muted text-xs tracking-wide uppercase">Strike Rate</p>
-              <p className="text-fg text-lg font-semibold">{stats.strikeRate}</p>
+              <p className="text-fg truncate text-lg font-semibold">{stats.strikeRate}</p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardBody className="min-w-0 py-3">
               <p className="text-fg-muted text-xs tracking-wide uppercase">Economy</p>
-              <p className="text-fg text-lg font-semibold">{stats.economy}</p>
+              <p className="text-fg truncate text-lg font-semibold">{stats.economy}</p>
             </CardBody>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardBody className="min-w-0 py-3">
               <p className="text-fg-muted text-xs tracking-wide uppercase">Attendance %</p>
-              <p className="text-fg text-lg font-semibold">{stats?.attendancePercentage ?? 0}%</p>
+              <p className="text-fg truncate text-lg font-semibold">
+                {stats?.attendancePercentage ?? 0}%
+              </p>
             </CardBody>
           </Card>
         </div>

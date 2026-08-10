@@ -122,19 +122,20 @@ export default function PlatformDashboardPage() {
         </div>
 
         {/* Tab Navigation & Action */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
           <Button
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2"
+            className="flex w-full items-center justify-center gap-2 sm:w-auto"
           >
             <Plus className="h-4 w-4" /> Create Academy
           </Button>
 
-          <div className="bg-surface-subtle border-border-subtle flex rounded-xl border p-1">
+          <div className="bg-surface-subtle border-border-subtle flex w-full rounded-xl border p-1 sm:w-auto">
             <Button
               variant={activeTab === 'overview' ? 'primary' : 'ghost'}
               size="sm"
+              className="flex-1 sm:flex-initial"
               onClick={() => setActiveTab('overview')}
             >
               Overview
@@ -142,6 +143,7 @@ export default function PlatformDashboardPage() {
             <Button
               variant={activeTab === 'academies' ? 'primary' : 'ghost'}
               size="sm"
+              className="flex-1 sm:flex-initial"
               onClick={() => setActiveTab('academies')}
             >
               Academies ({academies.length})
@@ -149,6 +151,7 @@ export default function PlatformDashboardPage() {
             <Button
               variant={activeTab === 'users' ? 'primary' : 'ghost'}
               size="sm"
+              className="flex-1 sm:flex-initial"
               onClick={() => setActiveTab('users')}
             >
               Users ({users.length})
@@ -174,7 +177,7 @@ export default function PlatformDashboardPage() {
                   <div className="bg-primary/10 text-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
                     <Building2 className="h-6 w-6" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-fg-muted text-xs font-medium tracking-wider uppercase">
                       Academies
                     </p>
@@ -191,7 +194,7 @@ export default function PlatformDashboardPage() {
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
                     <Users className="h-6 w-6" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-fg-muted text-xs font-medium tracking-wider uppercase">
                       Platform Users
                     </p>
@@ -209,7 +212,7 @@ export default function PlatformDashboardPage() {
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
                     <Trophy className="h-6 w-6" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-fg-muted text-xs font-medium tracking-wider uppercase">
                       Total Matches
                     </p>
@@ -224,7 +227,7 @@ export default function PlatformDashboardPage() {
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
                     <Calendar className="h-6 w-6" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-fg-muted text-xs font-medium tracking-wider uppercase">
                       Training Sessions
                     </p>
@@ -256,59 +259,112 @@ export default function PlatformDashboardPage() {
                   }
                 />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="border-border-subtle text-fg-muted border-b text-xs tracking-wider uppercase">
-                      <tr>
-                        <th className="py-2">Academy</th>
-                        <th className="py-2">Owner</th>
-                        <th className="py-2">Members</th>
-                        <th className="py-2">Matches</th>
-                        <th className="py-2">Created</th>
-                        <th className="py-2 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-border-subtle divide-y">
-                      {academies.slice(0, 5).map((acad) => (
-                        <tr key={acad.id} className="hover:bg-surface-subtle/50">
-                          <td className="text-fg py-3 font-medium">
-                            {acad.name}
+                <>
+                  {/* MOBILE CARD LIST (< md) */}
+                  <div className="space-y-3 md:hidden">
+                    {academies.slice(0, 5).map((acad) => (
+                      <div
+                        key={acad.id}
+                        className="border-border-subtle bg-surface space-y-3 rounded-xl border p-4"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-fg truncate text-sm font-medium">{acad.name}</p>
                             {acad.city ? (
-                              <span className="text-fg-muted text-xs font-normal">
-                                {' '}
-                                · {acad.city}
-                              </span>
+                              <p className="text-fg-muted truncate text-xs">{acad.city}</p>
                             ) : null}
-                          </td>
-                          <td className="text-fg-muted py-3">{acad.ownerName}</td>
-                          <td className="text-fg py-3">{acad.memberCount}</td>
-                          <td className="text-fg py-3">{acad.matchCount}</td>
-                          <td className="text-fg-muted py-3">{formatDate(acad.createdAt)}</td>
-                          <td className="flex items-center justify-end gap-2 py-3 text-right">
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => {
-                                setSelectedAcademyId(acad.id);
-                              }}
-                            >
-                              View Details
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-red-500 hover:text-red-600"
-                              onClick={() => setAcademyToDelete(acad)}
-                              aria-label={`Delete ${acad.name}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </td>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="shrink-0 text-red-500 hover:text-red-600"
+                            onClick={() => setAcademyToDelete(acad)}
+                            aria-label={`Delete ${acad.name}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <p className="text-fg-muted">
+                            Owner: <span className="text-fg truncate">{acad.ownerName}</span>
+                          </p>
+                          <p className="text-fg-muted">
+                            Created: <span className="text-fg">{formatDate(acad.createdAt)}</span>
+                          </p>
+                          <p className="text-fg-muted">
+                            Members: <span className="text-fg">{acad.memberCount}</span>
+                          </p>
+                          <p className="text-fg-muted">
+                            Matches: <span className="text-fg">{acad.matchCount}</span>
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="w-full"
+                          onClick={() => setSelectedAcademyId(acad.id)}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* DESKTOP TABLE (>= md) */}
+                  <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full text-left text-sm">
+                      <thead className="border-border-subtle text-fg-muted border-b text-xs tracking-wider uppercase">
+                        <tr>
+                          <th className="py-2">Academy</th>
+                          <th className="py-2">Owner</th>
+                          <th className="py-2">Members</th>
+                          <th className="py-2">Matches</th>
+                          <th className="py-2">Created</th>
+                          <th className="py-2 text-right">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-border-subtle divide-y">
+                        {academies.slice(0, 5).map((acad) => (
+                          <tr key={acad.id} className="hover:bg-surface-subtle/50">
+                            <td className="text-fg py-3 font-medium">
+                              {acad.name}
+                              {acad.city ? (
+                                <span className="text-fg-muted text-xs font-normal">
+                                  {' '}
+                                  · {acad.city}
+                                </span>
+                              ) : null}
+                            </td>
+                            <td className="text-fg-muted py-3">{acad.ownerName}</td>
+                            <td className="text-fg py-3">{acad.memberCount}</td>
+                            <td className="text-fg py-3">{acad.matchCount}</td>
+                            <td className="text-fg-muted py-3">{formatDate(acad.createdAt)}</td>
+                            <td className="flex items-center justify-end gap-2 py-3 text-right">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => {
+                                  setSelectedAcademyId(acad.id);
+                                }}
+                              >
+                                View Details
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-500 hover:text-red-600"
+                                onClick={() => setAcademyToDelete(acad)}
+                                aria-label={`Delete ${acad.name}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardBody>
           </Card>
@@ -322,11 +378,11 @@ export default function PlatformDashboardPage() {
             title="Academy Management"
             description="Manage all registered cricket academies on the platform."
             action={
-              <div className="flex items-center gap-3">
+              <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
                 <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
                   + Create Academy
                 </Button>
-                <div className="w-64">
+                <div className="w-full sm:w-64">
                   <Input
                     placeholder="Search academy, owner, city..."
                     value={academySearch}
@@ -347,54 +403,103 @@ export default function PlatformDashboardPage() {
             ) : filteredAcademies.length === 0 ? (
               <p className="text-fg-muted text-sm">No academies found matching your search.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="border-border-subtle text-fg-muted border-b text-xs tracking-wider uppercase">
-                    <tr>
-                      <th className="px-2 py-3">Academy</th>
-                      <th className="px-2 py-3">Owner</th>
-                      <th className="px-2 py-3">Players</th>
-                      <th className="px-2 py-3">Coaches</th>
-                      <th className="px-2 py-3">Batches</th>
-                      <th className="px-2 py-3">Matches</th>
-                      <th className="px-2 py-3">Created</th>
-                      <th className="px-2 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-border-subtle divide-y">
-                    {filteredAcademies.map((acad) => (
-                      <tr key={acad.id} className="hover:bg-surface-subtle/50">
-                        <td className="text-fg px-2 py-3 font-medium">
-                          <div>{acad.name}</div>
-                          <div className="text-fg-muted text-xs">
-                            /{acad.slug} {acad.city ? `· ${acad.city}` : ''}
-                          </div>
-                        </td>
-                        <td className="px-2 py-3">
-                          <div className="text-fg">{acad.ownerName}</div>
-                          <div className="text-fg-muted text-xs">{acad.ownerEmail}</div>
-                        </td>
-                        <td className="text-fg px-2 py-3">{acad.playerCount}</td>
-                        <td className="text-fg px-2 py-3">{acad.coachCount}</td>
-                        <td className="text-fg px-2 py-3">{acad.batchCount}</td>
-                        <td className="text-fg px-2 py-3">{acad.matchCount}</td>
-                        <td className="text-fg-muted px-2 py-3">{formatDate(acad.createdAt)}</td>
-                        <td className="px-2 py-3 text-right">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => {
-                              setSelectedAcademyId(acad.id);
-                            }}
-                          >
-                            Details
-                          </Button>
-                        </td>
+              <>
+                {/* MOBILE CARD LIST (< md) */}
+                <div className="space-y-3 md:hidden">
+                  {filteredAcademies.map((acad) => (
+                    <div
+                      key={acad.id}
+                      className="border-border-subtle bg-surface space-y-3 rounded-xl border p-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-fg truncate text-sm font-medium">{acad.name}</p>
+                        <p className="text-fg-muted truncate text-xs">
+                          /{acad.slug} {acad.city ? `· ${acad.city}` : ''}
+                        </p>
+                      </div>
+                      <div className="border-border-subtle border-t pt-2">
+                        <p className="text-fg truncate text-sm">{acad.ownerName}</p>
+                        <p className="text-fg-muted truncate text-xs">{acad.ownerEmail}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <p className="text-fg-muted">
+                          Players: <span className="text-fg">{acad.playerCount}</span>
+                        </p>
+                        <p className="text-fg-muted">
+                          Coaches: <span className="text-fg">{acad.coachCount}</span>
+                        </p>
+                        <p className="text-fg-muted">
+                          Batches: <span className="text-fg">{acad.batchCount}</span>
+                        </p>
+                        <p className="text-fg-muted">
+                          Matches: <span className="text-fg">{acad.matchCount}</span>
+                        </p>
+                        <p className="text-fg-muted col-span-2">
+                          Created: <span className="text-fg">{formatDate(acad.createdAt)}</span>
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="w-full"
+                        onClick={() => setSelectedAcademyId(acad.id)}
+                      >
+                        Details
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* DESKTOP TABLE (>= md) */}
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-border-subtle text-fg-muted border-b text-xs tracking-wider uppercase">
+                      <tr>
+                        <th className="px-2 py-3">Academy</th>
+                        <th className="px-2 py-3">Owner</th>
+                        <th className="px-2 py-3">Players</th>
+                        <th className="px-2 py-3">Coaches</th>
+                        <th className="px-2 py-3">Batches</th>
+                        <th className="px-2 py-3">Matches</th>
+                        <th className="px-2 py-3">Created</th>
+                        <th className="px-2 py-3 text-right">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-border-subtle divide-y">
+                      {filteredAcademies.map((acad) => (
+                        <tr key={acad.id} className="hover:bg-surface-subtle/50">
+                          <td className="text-fg px-2 py-3 font-medium">
+                            <div>{acad.name}</div>
+                            <div className="text-fg-muted text-xs">
+                              /{acad.slug} {acad.city ? `· ${acad.city}` : ''}
+                            </div>
+                          </td>
+                          <td className="px-2 py-3">
+                            <div className="text-fg">{acad.ownerName}</div>
+                            <div className="text-fg-muted text-xs">{acad.ownerEmail}</div>
+                          </td>
+                          <td className="text-fg px-2 py-3">{acad.playerCount}</td>
+                          <td className="text-fg px-2 py-3">{acad.coachCount}</td>
+                          <td className="text-fg px-2 py-3">{acad.batchCount}</td>
+                          <td className="text-fg px-2 py-3">{acad.matchCount}</td>
+                          <td className="text-fg-muted px-2 py-3">{formatDate(acad.createdAt)}</td>
+                          <td className="px-2 py-3 text-right">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                setSelectedAcademyId(acad.id);
+                              }}
+                            >
+                              Details
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </CardBody>
         </Card>
@@ -407,7 +512,7 @@ export default function PlatformDashboardPage() {
             title="User Management"
             description="Manage all registered platform profiles and system access."
             action={
-              <div className="w-64">
+              <div className="w-full sm:w-64">
                 <Input
                   placeholder="Search user name or email..."
                   value={userSearch}
@@ -424,56 +529,100 @@ export default function PlatformDashboardPage() {
             ) : filteredUsers.length === 0 ? (
               <p className="text-fg-muted text-sm">No users found matching your search.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="border-border-subtle text-fg-muted border-b text-xs tracking-wider uppercase">
-                    <tr>
-                      <th className="px-2 py-3">User</th>
-                      <th className="px-2 py-3">Role Status</th>
-                      <th className="px-2 py-3">Academy Memberships</th>
-                      <th className="px-2 py-3">Joined Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-border-subtle divide-y">
-                    {filteredUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-surface-subtle/50">
-                        <td className="px-2 py-3">
-                          <div className="text-fg font-medium">{u.fullName ?? u.email}</div>
-                          <div className="text-fg-muted text-xs">{u.email}</div>
-                        </td>
-                        <td className="px-2 py-3">
-                          {u.isSuperAdmin ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-500">
-                              <ShieldCheck className="h-3 w-3" /> Super Admin
-                            </span>
-                          ) : (
-                            <span className="text-fg-muted text-xs">Standard User</span>
-                          )}
-                        </td>
-                        <td className="px-2 py-3">
-                          {u.memberships.length === 0 ? (
-                            <span className="text-fg-muted text-xs">No active memberships</span>
-                          ) : (
-                            <div className="flex flex-wrap gap-1">
-                              {u.memberships.map((m) => (
-                                <span
-                                  key={m.academyId}
-                                  className="bg-surface-muted text-fg border-border-subtle inline-flex rounded border px-2 py-0.5 text-xs"
-                                >
-                                  {m.academyName} ({m.role})
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </td>
-                        <td className="text-fg-muted px-2 py-3 text-xs">
-                          {formatDate(u.createdAt)}
-                        </td>
+              <>
+                {/* MOBILE CARD LIST (< md) */}
+                <div className="space-y-3 md:hidden">
+                  {filteredUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      className="border-border-subtle bg-surface space-y-3 rounded-xl border p-4"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-fg truncate text-sm font-medium">
+                            {u.fullName ?? u.email}
+                          </p>
+                          <p className="text-fg-muted truncate text-xs">{u.email}</p>
+                        </div>
+                        {u.isSuperAdmin ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-500">
+                            <ShieldCheck className="h-3 w-3" /> Admin
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="border-border-subtle border-t pt-2">
+                        {u.memberships.length === 0 ? (
+                          <span className="text-fg-muted text-xs">No active memberships</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {u.memberships.map((m) => (
+                              <span
+                                key={m.academyId}
+                                className="bg-surface-muted text-fg border-border-subtle inline-flex max-w-full truncate rounded border px-2 py-0.5 text-xs"
+                              >
+                                {m.academyName} ({m.role})
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-fg-muted text-xs">Joined: {formatDate(u.createdAt)}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* DESKTOP TABLE (>= md) */}
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-border-subtle text-fg-muted border-b text-xs tracking-wider uppercase">
+                      <tr>
+                        <th className="px-2 py-3">User</th>
+                        <th className="px-2 py-3">Role Status</th>
+                        <th className="px-2 py-3">Academy Memberships</th>
+                        <th className="px-2 py-3">Joined Date</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-border-subtle divide-y">
+                      {filteredUsers.map((u) => (
+                        <tr key={u.id} className="hover:bg-surface-subtle/50">
+                          <td className="px-2 py-3">
+                            <div className="text-fg font-medium">{u.fullName ?? u.email}</div>
+                            <div className="text-fg-muted text-xs">{u.email}</div>
+                          </td>
+                          <td className="px-2 py-3">
+                            {u.isSuperAdmin ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-500">
+                                <ShieldCheck className="h-3 w-3" /> Super Admin
+                              </span>
+                            ) : (
+                              <span className="text-fg-muted text-xs">Standard User</span>
+                            )}
+                          </td>
+                          <td className="px-2 py-3">
+                            {u.memberships.length === 0 ? (
+                              <span className="text-fg-muted text-xs">No active memberships</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {u.memberships.map((m) => (
+                                  <span
+                                    key={m.academyId}
+                                    className="bg-surface-muted text-fg border-border-subtle inline-flex rounded border px-2 py-0.5 text-xs"
+                                  >
+                                    {m.academyName} ({m.role})
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                          <td className="text-fg-muted px-2 py-3 text-xs">
+                            {formatDate(u.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </CardBody>
         </Card>

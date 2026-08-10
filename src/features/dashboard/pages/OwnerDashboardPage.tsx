@@ -69,7 +69,7 @@ export default function OwnerDashboardPage() {
 
       {academyId ? <JoinCodeCard academyId={academyId} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
         <KpiCard title="Total Players" value={analytics.totalPlayers} />
         <KpiCard title="Active Coaches" value={analytics.totalCoaches} />
         <KpiCard title="Active Batches" value={analytics.totalBatches} />

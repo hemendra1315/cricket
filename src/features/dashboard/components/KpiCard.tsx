@@ -14,15 +14,15 @@ interface KpiCardProps {
 
 export function KpiCard({ title, value, icon, trend, href }: KpiCardProps) {
   const content = (
-    <Card>
-      <CardBody className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-fg-muted text-xs tracking-wide uppercase">{title}</p>
-          {icon && <div className="text-fg-muted">{icon}</div>}
+    <Card className="h-full">
+      <CardBody className="min-w-0 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-fg-muted min-w-0 text-xs tracking-wide uppercase">{title}</p>
+          {icon && <div className="text-fg-muted shrink-0">{icon}</div>}
         </div>
-        <p className="text-fg text-3xl font-semibold">{value}</p>
+        <p className="text-fg truncate text-2xl font-semibold sm:text-3xl">{value}</p>
         {trend && (
-          <p className={`text-sm ${trend.positive ? 'text-success' : 'text-danger'}`}>
+          <p className={`truncate text-sm ${trend.positive ? 'text-success' : 'text-danger'}`}>
             {trend.positive ? '+' : ''}
             {trend.value} {trend.label}
           </p>

@@ -90,24 +90,24 @@ export default function CoachDashboardPage() {
       <Card>
         <CardHeader title="Team Performance" description="Last 5 matches summary" />
         <CardBody>
-          <div className="grid gap-4 sm:grid-cols-4">
-            <div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="min-w-0">
               <p className="text-fg-muted text-xs uppercase">Matches</p>
-              <p className="text-fg text-2xl font-semibold">
+              <p className="text-fg truncate text-2xl font-semibold">
                 {analytics.recentMatches?.length ?? 0}
               </p>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-fg-muted text-xs uppercase">Wins</p>
-              <p className="text-success text-2xl font-semibold">{analytics.wins}</p>
+              <p className="text-success truncate text-2xl font-semibold">{analytics.wins}</p>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-fg-muted text-xs uppercase">Losses</p>
-              <p className="text-danger text-2xl font-semibold">{analytics.losses}</p>
+              <p className="text-danger truncate text-2xl font-semibold">{analytics.losses}</p>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-fg-muted text-xs uppercase">Win Rate</p>
-              <p className="text-fg text-2xl font-semibold">
+              <p className="text-fg truncate text-2xl font-semibold">
                 {analytics.recentMatches?.length > 0
                   ? Math.round((analytics.wins / analytics.recentMatches.length) * 100)
                   : 0}

@@ -35,9 +35,11 @@ export function AcademySwitcher({ className }: { className?: string }) {
   // A single academy needs no switcher, just a label.
   if (active.length < 2) {
     return (
-      <div className={cn('flex items-center gap-2', className)}>
+      <div className={cn('flex min-w-0 items-center gap-2', className)}>
         <Avatar name={membership.academyName} src={membership.logoUrl} size="sm" />
-        <span className="text-fg truncate text-sm font-medium">{membership.academyName}</span>
+        <span className="text-fg max-w-[9rem] min-w-0 truncate text-sm font-medium sm:max-w-xs">
+          {membership.academyName}
+        </span>
       </div>
     );
   }
