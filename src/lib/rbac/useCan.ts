@@ -16,8 +16,10 @@ export function useActiveRoles(): AppRole[] {
   const activeAcademyId = useAcademyStore((state) => state.activeAcademyId);
 
   return useMemo(() => {
-    const roles = memberships
-      .filter((m) => m.academyId === activeAcademyId && m.status === 'active')
+    const activeMemberships = memberships.filter((m) => m.status === 'active');
+    const targetAcademyId = activeAcademyId ?? activeMemberships[0]?.academyId;
+    const roles = activeMemberships
+      .filter((m) => m.academyId === targetAcademyId)
       .map((m) => m.role);
     if (isSuperAdmin) roles.push('super_admin');
     return roles;

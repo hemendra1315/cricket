@@ -73,12 +73,13 @@ export const MATCH_TYPE_LABELS: Record<MatchType, string> = {
   tournament: 'Tournament',
 };
 
-export const MATCH_RESULTS = ['won', 'lost', 'tie', 'no_result'] as const;
+export const MATCH_RESULTS = ['won', 'lost', 'draw', 'tie', 'no_result'] as const;
 export type MatchResult = (typeof MATCH_RESULTS)[number];
 
 export const MATCH_RESULT_LABELS: Record<MatchResult, string> = {
   won: 'Won',
   lost: 'Lost',
+  draw: 'Draw',
   tie: 'Tie',
   no_result: 'No Result',
 };

@@ -126,7 +126,7 @@ export async function fetchPlayerMatches(academyId: UUID, playerId: UUID): Promi
         .select(
           `
           match_id,
-          runs, balls, fours, sixes, is_out, dismissal_type,
+          runs, balls, fours, sixes, is_out, dismissal_type, batting_order,
           matches!inner(${matchSelect})
         `,
         )
@@ -199,6 +199,7 @@ export async function fetchPlayerMatches(academyId: UUID, playerId: UUID): Promi
       result: match.result,
       winningMargin: match.winning_margin,
       status: match.status,
+      battingOrder: row.batting_order ?? null,
       batting: {
         runs: row.runs,
         balls: row.balls,

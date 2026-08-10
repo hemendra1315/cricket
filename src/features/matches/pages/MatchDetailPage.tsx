@@ -110,6 +110,7 @@ export default function MatchDetailPage() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b">
+                    <th className="pb-2">Pos</th>
                     <th className="pb-2">Player</th>
                     <th className="pb-2">R</th>
                     <th className="pb-2">B</th>
@@ -119,16 +120,21 @@ export default function MatchDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {battingQuery.data?.map((b) => (
-                    <tr key={b.id} className="border-b last:border-0">
-                      <td className="py-2">{b.player.fullName ?? b.player.email}</td>
-                      <td className="py-2">{b.runs}</td>
-                      <td className="py-2">{b.balls}</td>
-                      <td className="py-2">{b.fours}</td>
-                      <td className="py-2">{b.sixes}</td>
-                      <td className="py-2">{b.isOut ? (b.dismissalType ?? 'Out') : 'Not out'}</td>
-                    </tr>
-                  ))}
+                  {[...(battingQuery.data ?? [])]
+                    .sort((a, b) => (a.battingOrder ?? 99) - (b.battingOrder ?? 99))
+                    .map((b) => (
+                      <tr key={b.id} className="border-b last:border-0">
+                        <td className="py-2 font-medium">
+                          {b.battingOrder === 0 ? 'Opening' : (b.battingOrder ?? '-')}
+                        </td>
+                        <td className="py-2">{b.player.fullName ?? b.player.email}</td>
+                        <td className="py-2">{b.runs}</td>
+                        <td className="py-2">{b.balls}</td>
+                        <td className="py-2">{b.fours}</td>
+                        <td className="py-2">{b.sixes}</td>
+                        <td className="py-2">{b.isOut ? (b.dismissalType ?? 'Out') : 'Not out'}</td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>

@@ -143,6 +143,10 @@ export default function AttendanceSessionPage() {
                   {batchPlayersQuery.data.map((player) => {
                     const currentStatus =
                       attendanceByPlayer.get(player.academyMemberId) ?? 'absent';
+                    const isPlayerSaving =
+                      markAttendance.isPending &&
+                      markAttendance.variables?.playerId === player.academyMemberId;
+
                     return (
                       <div
                         key={player.id}
@@ -153,18 +157,35 @@ export default function AttendanceSessionPage() {
                           <p className="text-fg-muted text-sm">{player.email}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          {ATTENDANCE_OPTIONS.map((option) => (
-                            <Button
-                              key={option.value}
-                              size="sm"
-                              variant={currentStatus === option.value ? 'primary' : 'secondary'}
-                              onClick={() => void handleMark(player.academyMemberId, option.value)}
-                              isLoading={markAttendance.isPending}
-                              disabled={!canManage}
-                            >
-                              {option.label}
-                            </Button>
-                          ))}
+                          {ATTENDANCE_OPTIONS.map((option) => {
+                            const isSelected = currentStatus === option.value;
+                            return (
+                              <Button
+                                key={option.value}
+                                size="sm"
+                                variant={isSelected ? 'primary' : 'secondary'}
+                                onClick={async () => {
+                                  if (isSelected || isPlayerSaving) return;
+                                  try {
+                                    await handleMark(player.academyMemberId, option.value);
+                                  } catch (err) {
+                                    pushToast({
+                                      title: 'Failed to update attendance',
+                                      description:
+                                        err instanceof Error ? err.message : 'Unknown error',
+                                      variant: 'error',
+                                    });
+                                  }
+                                }}
+                                isLoading={isPlayerSaving}
+                                disabled={
+                                  !canManage || (markAttendance.isPending && !isPlayerSaving)
+                                }
+                              >
+                                {option.label}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
                     );

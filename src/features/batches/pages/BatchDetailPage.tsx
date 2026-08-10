@@ -258,9 +258,15 @@ function BatchEditForm({
   const [startTime, setStartTime] = useState<Date | null>(parseTime(startTimeText));
   const [endTime, setEndTime] = useState<Date | null>(parseTime(endTimeText));
 
+  const formatTimeStr = (date: Date | null): string => {
+    if (!date) return '';
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  };
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { isDirty },
   } = useForm<BatchFormValues>({
     defaultValues: {
@@ -274,9 +280,28 @@ function BatchEditForm({
   });
 
   const toggleDay = (day: string) => {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((item) => item !== day) : [...prev, day],
-    );
+    const updated = selectedDays.includes(day)
+      ? selectedDays.filter((item) => item !== day)
+      : [...prevDays(day)];
+    setSelectedDays(updated);
+    setValue('trainingDays', updated.join(', '), { shouldDirty: true });
+  };
+
+  const prevDays = (day: string) =>
+    selectedDays.includes(day)
+      ? selectedDays.filter((item) => item !== day)
+      : [...selectedDays, day];
+
+  const handleStartTimeChange = (date: Date | null) => {
+    setStartTime(date);
+    const newTimeStr = `${formatTimeStr(date)} - ${formatTimeStr(endTime)}`;
+    setValue('trainingTime', newTimeStr, { shouldDirty: true });
+  };
+
+  const handleEndTimeChange = (date: Date | null) => {
+    setEndTime(date);
+    const newTimeStr = `${formatTimeStr(startTime)} - ${formatTimeStr(date)}`;
+    setValue('trainingTime', newTimeStr, { shouldDirty: true });
   };
 
   const handleSubmitEdit = handleSubmit(async (value) => {
@@ -287,13 +312,7 @@ function BatchEditForm({
         ageGroup: value.ageGroup,
         description: value.description || null,
         trainingDays: selectedDays.join(', '),
-        trainingTime: `${startTime?.toLocaleTimeString([], {
-          hour: 'numeric',
-          minute: '2-digit',
-        })} - ${endTime?.toLocaleTimeString([], {
-          hour: 'numeric',
-          minute: '2-digit',
-        })}`,
+        trainingTime: `${formatTimeStr(startTime)} - ${formatTimeStr(endTime)}`,
         coachId: value.coachId,
       },
     });
@@ -345,7 +364,7 @@ function BatchEditForm({
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <DatePicker
                   selected={startTime}
-                  onChange={(date: Date | null) => setStartTime(date)}
+                  onChange={handleStartTimeChange}
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={30}
@@ -355,7 +374,7 @@ function BatchEditForm({
                 />
                 <DatePicker
                   selected={endTime}
-                  onChange={(date: Date | null) => setEndTime(date)}
+                  onChange={handleEndTimeChange}
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={30}

@@ -72,16 +72,27 @@ export function AppShell() {
   const roles = useActiveRoles();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+  const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const online = useOnlineStatus();
 
   const navItems = NAV_ITEMS.filter(
     (item) => item.requiresCapability === null || hasCapability(roles, item.requiresCapability),
   );
 
+  const handleNavClick = () => {
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="bg-bg min-h-screen">
       <header className="border-border-subtle bg-surface sticky top-0 z-30 flex h-14 items-center gap-3 border-b px-4">
-        <Button variant="ghost" size="icon" onClick={toggleSidebar} aria-label="Toggle navigation">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          aria-label="Toggle navigation"
+          className="min-h-[44px] min-w-[44px]"
+        >
           <Menu className="h-5 w-5" />
         </Button>
         <AcademySwitcher />
@@ -94,17 +105,32 @@ export function AppShell() {
           ) : null}
           <ThemeToggle />
           <Avatar name={displayName} src={profile?.avatarUrl} size="sm" />
-          <Button variant="secondary" size="sm" onClick={() => void logout()}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void logout()}
+            className="min-h-[44px] px-3"
+          >
             Sign out
           </Button>
         </div>
       </header>
 
       <div className="flex">
+        {/* Mobile backdrop overlay */}
+        {sidebarOpen ? (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        ) : null}
+
         <aside
           className={cn(
-            'border-border-subtle bg-surface w-56 shrink-0 border-r p-3 md:block',
-            sidebarOpen ? 'block' : 'hidden',
+            'border-border-subtle bg-surface transition-transform duration-200 ease-in-out md:static md:z-auto md:w-56 md:translate-x-0 md:border-r md:p-3 md:shadow-none',
+            'fixed inset-y-0 left-0 z-50 w-64 border-r p-4 shadow-xl',
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
           )}
         >
           <nav className="space-y-1">
@@ -112,9 +138,10 @@ export function AppShell() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                onClick={handleNavClick}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-2 rounded-lg px-3 py-2 text-sm',
+                    'flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
                     isActive
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-fg-muted hover:bg-surface-muted',

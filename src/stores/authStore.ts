@@ -37,9 +37,45 @@ const signedOutState = {
   joinRequests: [],
 } satisfies Partial<AuthState>;
 
+const getInitialState = (): Partial<AuthState> => {
+  if (typeof window !== 'undefined') {
+    const storedAuth = sessionStorage.getItem('cam.e2e_auth');
+    if (storedAuth) {
+      try {
+        const { user, profile, memberships, joinRequests = [] } = JSON.parse(storedAuth);
+        const mockSession = user
+          ? ({
+              user,
+              access_token: 'e2e-token',
+              refresh_token: 'e2e-refresh',
+              expires_in: 3600,
+              token_type: 'bearer',
+            } as unknown as Session)
+          : null;
+        return {
+          status: mockSession ? 'authenticated' : 'unauthenticated',
+          identityStatus: 'ready',
+          session: mockSession,
+          user: mockSession?.user ?? null,
+          profile: (profile as Profile) ?? null,
+          memberships: (memberships as Membership[]) ?? [],
+          joinRequests: (joinRequests as JoinRequest[]) ?? [],
+        };
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return {
+    ...signedOutState,
+    status: 'loading',
+  };
+};
+
 export const useAuthStore = create<AuthState>((set) => ({
   ...signedOutState,
   status: 'loading',
+  ...getInitialState(),
   setSession: (session) =>
     set((state) => ({
       session,

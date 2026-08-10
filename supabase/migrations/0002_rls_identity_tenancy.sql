@@ -38,7 +38,17 @@ language sql stable security definer set search_path = public as $$
   select has_role(p_academy, array['academy_owner']::app_role[]);
 $$;
 
-grant execute on function is_super_admin, has_role, is_member, is_staff, is_owner to authenticated;
+create or replace function my_player_id(p_academy uuid) returns uuid
+language sql stable security definer set search_path = public as $$
+  select id
+  from academy_members
+  where academy_id = p_academy
+    and user_id = auth.uid()
+    and status = 'active'
+  limit 1;
+$$;
+
+grant execute on function is_super_admin, has_role, is_member, is_staff, is_owner, my_player_id to authenticated;
 
 -- ---------------------------------------------------------------- rls -------
 alter table profiles enable row level security;

@@ -18,6 +18,7 @@ type Identity = { profile: Profile; memberships: Membership[]; joinRequests: Joi
  */
 export function useIdentity() {
   const user = useAuthStore((state) => state.user);
+  const memberships = useAuthStore((state) => state.memberships);
   const setProfile = useAuthStore((state) => state.setProfile);
   const setMemberships = useAuthStore((state) => state.setMemberships);
   const setJoinRequests = useAuthStore((state) => state.setJoinRequests);
@@ -30,7 +31,7 @@ export function useIdentity() {
 
   const query = useQuery<Identity>({
     queryKey: queryKeys.identity(userId ?? 'anonymous'),
-    enabled: Boolean(userId && email),
+    enabled: Boolean(userId && email) && useAuthStore.getState().identityStatus !== 'ready',
     staleTime: 30_000,
     queryFn: async () => {
       // Non-null: the query is disabled until both are present.
@@ -56,6 +57,7 @@ export function useIdentity() {
 
   useEffect(() => {
     if (!userId) return;
+    if (useAuthStore.getState().identityStatus === 'ready') return;
     if (isPending) {
       setIdentityStatus('loading');
       return;
@@ -84,15 +86,13 @@ export function useIdentity() {
   ]);
 
   useEffect(() => {
-    if (!data) return;
-    const active = data.memberships.filter((membership) => membership.status === 'active');
+    const active = memberships.filter((membership) => membership.status === 'active');
     const stillValid = active.some((membership) => membership.academyId === activeAcademyId);
 
-    if (!stillValid) {
-      // Auto-select when there is exactly one academy; otherwise let the user choose.
+    if (!stillValid && active.length > 0) {
       setActiveAcademy(active.length === 1 ? (active[0]?.academyId ?? null) : null);
     }
-  }, [data, activeAcademyId, setActiveAcademy]);
+  }, [memberships, activeAcademyId, setActiveAcademy]);
 
   return query;
 }

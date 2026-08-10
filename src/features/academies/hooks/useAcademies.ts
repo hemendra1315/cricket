@@ -37,7 +37,9 @@ export function useMemberships() {
       pendingRequests,
       hasAnyAcademy: active.length > 0,
       isAwaitingApproval: active.length === 0 && (pending.length > 0 || pendingRequests.length > 0),
-      current: active.find((membership) => membership.academyId === activeAcademyId) ?? null,
+      current: activeAcademyId
+        ? (active.find((membership) => membership.academyId === activeAcademyId) ?? null)
+        : (active[0] ?? null),
     };
   }, [memberships, joinRequests, identityStatus, activeAcademyId]);
 }

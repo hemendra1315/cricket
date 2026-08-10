@@ -117,9 +117,9 @@ export default function MatchesPage() {
         </div>
 
         {canManage ? (
-          <Button onClick={() => setShowForm((open) => !open)}>
-            {showForm ? 'Hide form' : 'New match'}
-          </Button>
+          <Link to="/matches/new" id="add-match-btn">
+            <Button>+ Add Match</Button>
+          </Link>
         ) : null}
       </div>
 

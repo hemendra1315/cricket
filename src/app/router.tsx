@@ -18,6 +18,7 @@ const PlayerProfilePage = lazy(() => import('@/features/players/pages/PlayerProf
 const BatchesPage = lazy(() => import('@/features/batches/pages/BatchesPage'));
 const BatchDetailPage = lazy(() => import('@/features/batches/pages/BatchDetailPage'));
 const MatchesPage = lazy(() => import('@/features/matches/pages/MatchesPage'));
+const AddMatchPage = lazy(() => import('@/features/matches/pages/AddMatchPage'));
 const MatchDetailPage = lazy(() => import('@/features/matches/pages/MatchDetailPage'));
 const TrainingSessionsPage = lazy(() => import('@/features/sessions/pages/TrainingSessionsPage'));
 const TrainingSessionDetailPage = lazy(
@@ -110,6 +111,7 @@ export const router = createBrowserRouter([
                   { path: '/batches/:batchId', element: <BatchDetailPage /> },
                   { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
                   { path: '/matches', element: <MatchesPage /> },
+                  { path: '/matches/new', element: <AddMatchPage /> },
                   { path: '/matches/:matchId', element: <MatchDetailPage /> },
                   { path: '/sessions', element: <TrainingSessionsPage /> },
                   { path: '/sessions/:sessionId', element: <TrainingSessionDetailPage /> },

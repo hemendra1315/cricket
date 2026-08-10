@@ -190,18 +190,22 @@ export default function PlayerProfilePage() {
             </div>
           )}
 
-          <div className="border-border-subtle flex flex-wrap gap-1 rounded-lg border p-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === tab.id ? 'bg-surface-muted text-fg' : 'text-fg-muted hover:text-fg'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="border-border-subtle max-w-full overflow-x-auto rounded-lg border p-1">
+            <div className="flex min-w-max gap-1">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`min-h-[44px] shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-surface-muted text-fg font-semibold'
+                      : 'text-fg-muted hover:text-fg'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {renderTabContent()}
@@ -516,6 +520,11 @@ function MatchHistoryTab({ matches }: { matches: PlayerMatch[] }) {
                     >
                       {match.result}
                     </Badge>
+                  )}
+                  {match.battingOrder !== undefined && match.battingOrder !== null && (
+                    <span className="bg-surface-muted rounded-full px-2 py-1 text-xs font-medium">
+                      Pos: {match.battingOrder === 0 ? 'Opening' : match.battingOrder}
+                    </span>
                   )}
                   {match.batting && (
                     <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">

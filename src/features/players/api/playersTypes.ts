@@ -59,6 +59,7 @@ export type PlayerMatch = {
   result: MatchResult | null;
   winningMargin: string | null;
   status: string;
+  battingOrder?: number | null;
   batting: {
     runs: number;
     balls: number;

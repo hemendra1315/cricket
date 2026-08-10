@@ -2,9 +2,25 @@ import { useEffect, type ReactNode } from 'react';
 
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase/client';
-import { useAuthStore } from '@/stores';
+import { useAcademyStore, useAuthStore } from '@/stores';
 
 import { useIdentity } from '../hooks/useIdentity';
+
+/**
+ * Bridges Supabase auth events into the auth store, then loads the identity
+ * (profile, memberships, pending join requests) that routing depends on.
+ */
+declare global {
+  interface Window {
+    __E2E_SET_AUTH__?: (data: {
+      user?: unknown;
+      profile?: unknown;
+      memberships?: unknown[];
+      joinRequests?: unknown[];
+      activeAcademyId?: string | null;
+    }) => void;
+  }
+}
 
 /**
  * Bridges Supabase auth events into the auth store, then loads the identity
@@ -16,19 +32,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
+    if (typeof window !== 'undefined') {
+      window.__E2E_SET_AUTH__ = (data) => {
+        if (data.user) {
+          sessionStorage.setItem('cam.e2e_auth', JSON.stringify(data));
+        } else {
+          sessionStorage.removeItem('cam.e2e_auth');
+        }
+        const { user, profile, memberships, joinRequests = [], activeAcademyId } = data;
+        const mockSession = user
+          ? ({
+              user,
+              access_token: 'e2e-token',
+              refresh_token: 'e2e-refresh',
+              expires_in: 3600,
+              token_type: 'bearer',
+            } as unknown as import('@supabase/supabase-js').Session)
+          : null;
+        useAuthStore.getState().setSession(mockSession);
+        useAuthStore.getState().setProfile((profile as import('@/types').Profile) ?? null);
+        useAuthStore
+          .getState()
+          .setMemberships((memberships as import('@/types').Membership[]) ?? []);
+        useAuthStore
+          .getState()
+          .setJoinRequests((joinRequests as import('@/types').JoinRequest[]) ?? []);
+        useAuthStore.getState().setIdentityStatus('ready');
+        if (activeAcademyId !== undefined) {
+          useAcademyStore.getState().setActiveAcademy(activeAcademyId);
+          if (typeof localStorage !== 'undefined' && activeAcademyId) {
+            localStorage.setItem(
+              'cam.active-academy',
+              JSON.stringify({ state: { activeAcademyId }, version: 0 }),
+            );
+          }
+        }
+      };
+
+      const storedAuth = sessionStorage.getItem('cam.e2e_auth');
+      if (storedAuth) {
+        try {
+          const parsed = JSON.parse(storedAuth);
+          window.__E2E_SET_AUTH__(parsed);
+        } catch {
+          // ignore invalid json
+        }
+      }
+    }
+
     supabase.auth
       .getSession()
       .then(({ data }) => {
-        if (active) setSession(data.session);
+        const isE2E = Boolean(
+          typeof window !== 'undefined' && sessionStorage.getItem('cam.e2e_auth'),
+        );
+        if (active && !isE2E && useAuthStore.getState().identityStatus !== 'ready') {
+          setSession(data.session);
+        }
       })
       .catch((error: unknown) => {
         logger.error('session_bootstrap_failed', { error: String(error) });
-        if (active) setSession(null);
+        const isE2E = Boolean(
+          typeof window !== 'undefined' && sessionStorage.getItem('cam.e2e_auth'),
+        );
+        if (active && !isE2E && useAuthStore.getState().identityStatus !== 'ready') {
+          setSession(null);
+        }
       });
 
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       logger.debug('auth_state_change', { event });
-      setSession(session);
+      const isE2E = Boolean(
+        typeof window !== 'undefined' && sessionStorage.getItem('cam.e2e_auth'),
+      );
+      if (!isE2E && useAuthStore.getState().identityStatus !== 'ready') {
+        setSession(session);
+      }
     });
 
     return () => {
