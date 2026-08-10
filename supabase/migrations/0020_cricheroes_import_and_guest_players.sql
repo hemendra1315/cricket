@@ -164,18 +164,23 @@ BEGIN
   END IF;
 
   -- 7. Save awards
-  IF v_awards IS NOT NULL THEN
-    INSERT INTO match_awards (match_id, player_of_match_id, best_batter_id, best_bowler_id, best_fielder_id)
-    VALUES (v_match_id,
-            (v_awards->>'player_of_match_id')::uuid,
-            (v_awards->>'best_batter_id')::uuid,
-            (v_awards->>'best_bowler_id')::uuid,
-            (v_awards->>'best_fielder_id')::uuid)
-    ON CONFLICT (match_id) DO UPDATE SET
-      player_of_match_id = excluded.player_of_match_id,
-      best_batter_id = excluded.best_batter_id,
-      best_bowler_id = excluded.best_bowler_id,
-      best_fielder_id = excluded.best_fielder_id;
+  IF v_awards IS NOT NULL AND v_awards != '{}'::jsonb THEN
+    IF nullif(v_awards->>'player_of_match_id', '') IS NOT NULL OR
+       nullif(v_awards->>'best_batter_id', '') IS NOT NULL OR
+       nullif(v_awards->>'best_bowler_id', '') IS NOT NULL OR
+       nullif(v_awards->>'best_fielder_id', '') IS NOT NULL THEN
+      INSERT INTO match_awards (match_id, player_of_match_id, best_batter_id, best_bowler_id, best_fielder_id)
+      VALUES (v_match_id,
+              nullif(v_awards->>'player_of_match_id', '')::uuid,
+              nullif(v_awards->>'best_batter_id', '')::uuid,
+              nullif(v_awards->>'best_bowler_id', '')::uuid,
+              nullif(v_awards->>'best_fielder_id', '')::uuid)
+      ON CONFLICT (match_id) DO UPDATE SET
+        player_of_match_id = excluded.player_of_match_id,
+        best_batter_id = excluded.best_batter_id,
+        best_bowler_id = excluded.best_bowler_id,
+        best_fielder_id = excluded.best_fielder_id;
+    END IF;
   END IF;
 
   -- 8. Refresh player statistics ONLY for non-guest academy members

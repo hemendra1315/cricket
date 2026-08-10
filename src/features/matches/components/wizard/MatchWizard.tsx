@@ -101,18 +101,24 @@ export function MatchWizard({
         isGuest: f.isGuest ?? false,
         guestName: f.isGuest ? f.guestName || null : null,
       })),
-      awards:
-        state.awards.playerOfMatchId ||
-        state.awards.bestBatterId ||
-        state.awards.bestBowlerId ||
-        state.awards.bestFielderId
-          ? {
-              playerOfMatchId: state.awards.playerOfMatchId ?? undefined,
-              bestBatterId: state.awards.bestBatterId ?? undefined,
-              bestBowlerId: state.awards.bestBowlerId ?? undefined,
-              bestFielderId: state.awards.bestFielderId ?? undefined,
-            }
-          : undefined,
+      awards: {
+        playerOfMatchId:
+          state.awards.playerOfMatchId && !state.awards.playerOfMatchId.startsWith('guest_')
+            ? state.awards.playerOfMatchId
+            : null,
+        bestBatterId:
+          state.awards.bestBatterId && !state.awards.bestBatterId.startsWith('guest_')
+            ? state.awards.bestBatterId
+            : null,
+        bestBowlerId:
+          state.awards.bestBowlerId && !state.awards.bestBowlerId.startsWith('guest_')
+            ? state.awards.bestBowlerId
+            : null,
+        bestFielderId:
+          state.awards.bestFielderId && !state.awards.bestFielderId.startsWith('guest_')
+            ? state.awards.bestFielderId
+            : null,
+      },
     };
 
     const res = await saveMutation.mutateAsync(payload);
