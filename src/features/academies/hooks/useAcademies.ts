@@ -71,19 +71,19 @@ export function useActiveAcademy(): {
 
   const effectiveMembership = useMemo(() => {
     if (current) return current;
-    if (isSuperAdmin && activeAcademyId && academyQuery.data) {
+    if (isSuperAdmin && activeAcademyId) {
       return {
         id: `super-admin-virtual-${activeAcademyId}`,
         userId: '',
         academyId: activeAcademyId,
         role: 'academy_owner' as const,
         status: 'active' as const,
-        joinedAt: academyQuery.data.createdAt,
-        academyName: academyQuery.data.name,
-        academySlug: academyQuery.data.slug,
-        slug: academyQuery.data.slug,
-        logoUrl: academyQuery.data.logoUrl ?? null,
-        city: academyQuery.data.city ?? null,
+        joinedAt: academyQuery.data?.createdAt ?? new Date().toISOString(),
+        academyName: academyQuery.data?.name ?? 'Academy',
+        academySlug: academyQuery.data?.slug ?? '',
+        slug: academyQuery.data?.slug ?? '',
+        logoUrl: academyQuery.data?.logoUrl ?? null,
+        city: academyQuery.data?.city ?? null,
         timezone: 'UTC',
       };
     }

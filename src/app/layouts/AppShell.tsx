@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  FlaskConical,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -19,7 +20,7 @@ import { useAuth } from '@/features/auth';
 import { InstallAppButton } from '@/features/pwa/components/InstallAppButton';
 import { useOnlineStatus } from '@/hooks';
 import { hasCapability, useActiveRoles, type Capability } from '@/lib/rbac';
-import { useAcademyStore } from '@/stores';
+import { useAcademyStore, useTestModeStore } from '@/stores';
 import { cn } from '@/lib/utils/cn';
 import { MobileBottomNav, MobileFab } from '@/components/mobile';
 
@@ -98,6 +99,8 @@ export function AppShell() {
   const navigate = useNavigate();
   const { membership } = useActiveAcademy();
   const activeAcademyId = useAcademyStore((state) => state.activeAcademyId);
+  const testModeRole = useTestModeStore((state) => state.activeRole);
+  const exitTestMode = useTestModeStore((state) => state.exitTestMode);
 
   const isSuperAdmin = profile?.isSuperAdmin === true;
   const displayName = profile?.fullName ?? profile?.email ?? 'User';
@@ -105,10 +108,14 @@ export function AppShell() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   const isSuperAdminMode =
-    isSuperAdmin && Boolean(activeAcademyId) && location.pathname !== '/admin';
+    isSuperAdmin && !testModeRole && Boolean(activeAcademyId) && location.pathname !== '/admin';
 
   // Filter allowed items for the user
   const allowedNavItems = SIDEBAR_ITEMS.filter((item) => {
+    if (testModeRole) {
+      if (item.superAdminOnly) return false;
+      return item.requiresCapability === null || hasCapability(roles, item.requiresCapability);
+    }
     if (item.superAdminOnly) return isSuperAdmin;
     return item.requiresCapability === null || hasCapability(roles, item.requiresCapability);
   });
@@ -145,8 +152,35 @@ export function AppShell() {
         </div>
       </header>
 
-      {/* SUPER ADMIN MODE BANNER */}
-      {isSuperAdminMode ? (
+      {/* TEST MODE BANNER */}
+      {testModeRole ? (
+        <div className="relative z-30 flex min-h-[36px] items-center justify-between border-b border-purple-500/30 bg-purple-500/15 px-3 py-1.5 text-xs font-medium text-purple-700 md:text-sm dark:text-purple-300">
+          <div className="flex min-w-0 items-center gap-2">
+            <FlaskConical className="h-4 w-4 shrink-0 text-purple-500" />
+            <span className="truncate">
+              <strong className="font-bold">TEST MODE</strong> · Viewing as{' '}
+              <span className="font-semibold">
+                {testModeRole === 'student'
+                  ? 'Student'
+                  : testModeRole === 'coach'
+                    ? 'Coach'
+                    : 'Academy Owner'}
+              </span>
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-7 shrink-0 border-purple-500/40 bg-purple-500/20 px-2.5 text-xs font-semibold text-purple-700 hover:bg-purple-500/30 dark:text-purple-200"
+            onClick={() => {
+              exitTestMode();
+              navigate('/admin');
+            }}
+          >
+            Exit Test Mode
+          </Button>
+        </div>
+      ) : isSuperAdminMode ? (
         <div className="relative z-30 flex items-center justify-between border-b border-amber-500/30 bg-amber-500/15 px-4 py-2 text-xs font-medium text-amber-700 md:text-sm dark:text-amber-300">
           <div className="flex min-w-0 items-center gap-2">
             <ShieldCheck className="h-4 w-4 shrink-0 text-amber-500" />

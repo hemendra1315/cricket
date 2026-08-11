@@ -86,6 +86,10 @@ export function useIdentity() {
   ]);
 
   useEffect(() => {
+    const profile = useAuthStore.getState().profile;
+    const isSuperAdmin = profile?.isSuperAdmin === true;
+    if (isSuperAdmin) return;
+
     const active = memberships.filter((membership) => membership.status === 'active');
     const stillValid = active.some((membership) => membership.academyId === activeAcademyId);
 

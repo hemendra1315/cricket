@@ -2,7 +2,7 @@ import { Copy, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 import { ErrorState } from '@/components/feedback';
-import { Button, Card, CardBody, CardHeader, Skeleton } from '@/components/ui';
+import { Button, Skeleton } from '@/components/ui';
 import { Can } from '@/lib/rbac';
 import { useUiStore } from '@/stores';
 import type { UUID } from '@/types';
@@ -11,8 +11,8 @@ import type { JoinableRole } from '@/types/enums';
 import { useJoinCode, useRegenerateJoinCode } from '../hooks/useAcademies';
 
 /**
- * Shows the academy's shareable join code. Owners can rotate it, which
- * immediately deactivates the previous code server-side.
+ * Ultra-compact single-row Join Code component (40-50px vertical height).
+ * Displays Join Code, copy action, and secondary regenerate button.
  */
 export function JoinCodeCard({
   academyId,
@@ -43,40 +43,51 @@ export function JoinCodeCard({
     }
   };
 
+  if (isError) {
+    return <ErrorState error={error} onRetry={() => void refetch()} />;
+  }
+
   return (
-    <Card>
-      <CardHeader
-        title={role === 'coach' ? 'Coach join code' : 'Player join code'}
-        description="Share this code so people can request to join. You approve every request."
-      />
-      <CardBody className="flex flex-wrap items-center gap-3">
-        {isError ? (
-          <ErrorState error={error} onRetry={() => void refetch()} />
-        ) : isPending ? (
-          <Skeleton className="h-9 w-32" />
+    <div className="border-border-subtle bg-surface flex h-12 min-h-[44px] items-center justify-between gap-2.5 rounded-xl border px-3.5 py-1.5 shadow-2xs">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="text-fg-muted shrink-0 text-xs font-bold tracking-wider uppercase">
+          {role === 'coach' ? 'Coach Code:' : 'Join Code:'}
+        </span>
+        {isPending ? (
+          <Skeleton className="h-6 w-20" />
         ) : (
-          <>
-            <code className="bg-surface-muted text-fg rounded-lg px-4 py-2 text-lg font-semibold tracking-[0.3em]">
-              {code ?? '—'}
-            </code>
-            <Button variant="secondary" size="sm" onClick={() => void copy()} disabled={!code}>
-              <Copy className="h-4 w-4" aria-hidden />
-              {copied ? 'Copied' : 'Copy'}
-            </Button>
-            <Can do="academy:regenerate_join_code">
-              <Button
-                variant="ghost"
-                size="sm"
-                isLoading={regenerate.isPending}
-                onClick={() => regenerate.mutate()}
-              >
-                <RefreshCw className="h-4 w-4" aria-hidden />
-                Regenerate
-              </Button>
-            </Can>
-          </>
+          <code className="text-fg truncate font-mono text-sm font-extrabold tracking-[0.2em]">
+            {code ?? '—'}
+          </code>
         )}
-      </CardBody>
-    </Card>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => void copy()}
+          disabled={!code || isPending}
+          className="h-9 min-h-[36px] px-2.5 text-xs font-semibold"
+          aria-label="Copy join code"
+        >
+          <Copy className="mr-1 h-3.5 w-3.5" aria-hidden />
+          {copied ? 'Copied!' : 'Copy'}
+        </Button>
+        <Can do="academy:regenerate_join_code">
+          <Button
+            variant="ghost"
+            size="sm"
+            isLoading={regenerate.isPending}
+            onClick={() => regenerate.mutate()}
+            className="text-fg-muted hover:text-fg h-9 min-h-[36px] w-9 min-w-[36px] p-0"
+            aria-label="Regenerate join code"
+            title="Regenerate code"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+        </Can>
+      </div>
+    </div>
   );
 }

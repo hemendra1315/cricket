@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { queryClient } from '@/lib/query/queryClient';
-import { useAcademyStore, useAuthStore } from '@/stores';
+import { useAcademyStore, useAuthStore, useTestModeStore } from '@/stores';
 
 import { signInWithGoogle, signOut } from '../api/authApi';
 
@@ -16,13 +16,15 @@ export function useAuth() {
   const joinRequests = useAuthStore((state) => state.joinRequests);
   const reset = useAuthStore((state) => state.reset);
   const setActiveAcademy = useAcademyStore((state) => state.setActiveAcademy);
+  const exitTestMode = useTestModeStore((state) => state.exitTestMode);
 
   const logout = useCallback(async () => {
     await signOut();
+    exitTestMode();
     reset();
     setActiveAcademy(null);
     queryClient.clear();
-  }, [reset, setActiveAcademy]);
+  }, [reset, setActiveAcademy, exitTestMode]);
 
   return {
     status,

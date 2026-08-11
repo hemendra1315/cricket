@@ -44,7 +44,7 @@ export function SelectPlayersStep({
         fullName: member?.fullName ?? null,
         email: member?.email ?? '',
         avatarUrl: member?.avatarUrl ?? null,
-        battingOrder: idx + 1,
+        battingOrder: idx < 2 ? 0 : idx + 1,
         isCaptain: false,
         isViceCaptain: false,
         isWicketkeeper: false,

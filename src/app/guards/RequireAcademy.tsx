@@ -15,9 +15,11 @@ export function RequireAcademy() {
 
   if (isLoading) return <LoadingScreen message="Loading your academies…" />;
 
-  // Super Admins with an active target academy bypass standard membership requirement
-  if (isSuperAdmin && activeAcademyId) {
-    return <Outlet />;
+  if (isSuperAdmin) {
+    if (activeAcademyId || current) {
+      return <Outlet />;
+    }
+    return <Navigate to="/admin" replace />;
   }
 
   if (isAwaitingApproval) return <Navigate to="/onboarding/pending" replace />;

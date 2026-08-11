@@ -1,17 +1,22 @@
 import { Link } from 'react-router-dom';
-import { useMemo } from 'react';
+import {
+  Users,
+  UserCheck,
+  Layers,
+  CalendarCheck,
+  CalendarDays,
+  Trophy,
+  ArrowRight,
+} from 'lucide-react';
 
-import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
-import { EmptyState, ErrorState } from '@/components/feedback';
+import { Card, CardBody } from '@/components/ui';
+import { ErrorState } from '@/components/feedback';
 import { formatDate } from '@/lib/utils/date';
-import { buttonStyles } from '@/components/ui/buttonStyles';
 import { useActiveAcademy } from '@/features/academies';
 import { useOwnerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
 import { KpiCard } from '../components/KpiCard';
-import { LeaderboardCard } from '../components/LeaderboardCard';
+import { PerformanceLeadersCard } from '../components/PerformanceLeadersCard';
 import { ActivityFeed } from '../components/ActivityFeed';
-import { SessionRow } from '../components/SessionRow';
-import { SimpleBarChart } from '@/components/charts/SimpleBarChart';
 import { JoinCodeCard } from '@/features/academies';
 import { SuperAdminAcademyActions } from '@/features/admin';
 import { DashboardQuickActions } from '../components/DashboardQuickActions';
@@ -23,26 +28,8 @@ export default function OwnerDashboardPage() {
 
   const analytics = analyticsQuery.data;
 
-  const weeklyAttendanceData = useMemo(() => {
-    if (!analytics?.activities) return [];
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const today = new Date();
-    const weekData: { day: string; attended: number; total: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dayName = days[date.getDay()] as string;
-      weekData.push({ day: dayName, attended: 0, total: 0 });
-    }
-    return weekData;
-  }, [analytics]);
-
-  const monthlyAttendanceData = useMemo(() => {
-    return analytics?.monthlyAttendance ?? [];
-  }, [analytics]);
-
   if (analyticsQuery.isPending) {
-    return <p className="text-fg-muted">Loading dashboard…</p>;
+    return <p className="text-fg-muted py-8 text-center text-sm">Loading dashboard…</p>;
   }
 
   if (analyticsQuery.isError || !analytics) {
@@ -59,211 +46,171 @@ export default function OwnerDashboardPage() {
       timestamp: a.timestamp,
     })) ?? [];
 
+  const nextSession = analytics.upcomingSessions?.[0] ?? null;
+  const latestMatch = analytics.recentMatches?.[0] ?? null;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4 pb-20 md:pb-6">
+      {/* 1. Header */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-fg text-2xl font-bold tracking-tight md:text-3xl">
-            {membership?.academyName ?? 'Academy'}
+          <h1 className="text-fg text-xl font-bold tracking-tight md:text-2xl">
+            {membership?.academyName ?? 'Academy Dashboard'}
           </h1>
-          <p className="text-fg-muted mt-1 text-xs font-medium md:text-sm">
-            Owner Dashboard{membership?.city ? ` · ${membership.city}` : ''}
+          <p className="text-fg-muted text-xs font-medium">
+            {membership?.city ? `${membership.city} • ` : ''}Academy Operations & Performance
           </p>
         </div>
       </div>
 
       <SuperAdminAcademyActions />
 
+      {/* 2. Compact Primary Stats Grid */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+        <KpiCard
+          title="Players"
+          value={analytics.totalPlayers}
+          icon={<Users className="text-primary h-4 w-4" />}
+        />
+        <KpiCard
+          title="Coaches"
+          value={analytics.totalCoaches}
+          icon={<UserCheck className="text-info h-4 w-4" />}
+        />
+        <KpiCard
+          title="Batches"
+          value={analytics.totalBatches}
+          icon={<Layers className="text-warning h-4 w-4" />}
+        />
+        <KpiCard
+          title="Attendance"
+          value={`${analytics.attendancePercentage}%`}
+          icon={<CalendarCheck className="text-success h-4 w-4" />}
+        />
+      </div>
+
+      {/* 3. Small Compact Player Join Code Card */}
       {academyId ? <JoinCodeCard academyId={academyId} /> : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <KpiCard title="Total Players" value={analytics.totalPlayers} />
-        <KpiCard title="Active Coaches" value={analytics.totalCoaches} />
-        <KpiCard title="Active Batches" value={analytics.totalBatches} />
-        <KpiCard title="Total Matches" value={analytics.totalMatches} />
-        <KpiCard title="Attendance %" value={`${analytics.attendancePercentage}%`} />
-        <KpiCard title="Sessions Week" value={analytics.sessionsThisWeek} />
-      </div>
-
+      {/* 4. Collapsed Quick Actions Button */}
       <DashboardQuickActions />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <LeaderboardCard
-          title="Top Run Scorers"
-          entries={
-            analytics.topBatters?.map((b) => ({
-              id: b.id,
-              name: b.name,
-              value: b.runs,
-              secondaryValue: `Avg: ${b.average}`,
-              href: b.href,
-            })) ?? []
-          }
-          secondaryLabel="Average"
-        />
-        <LeaderboardCard
-          title="Top Wicket Takers"
-          entries={
-            analytics.topBowlers?.map((b) => ({
-              id: b.id,
-              name: b.name,
-              value: b.wickets,
-              secondaryValue: `Econ: ${b.economy}`,
-              href: b.href,
-            })) ?? []
-          }
-          secondaryLabel="Economy"
-        />
-        <LeaderboardCard
-          title="Top Fielders"
-          entries={
-            analytics.topFielders?.map((f) => ({
-              id: f.id,
-              name: f.name,
-              value: f.catches,
-              secondaryValue: `Run outs: ${f.runOuts}`,
-              href: f.href,
-            })) ?? []
-          }
-          secondaryLabel="Run Outs"
-        />
-      </div>
+      {/* 5. Compact Performance Leaders Section (Runs | Wickets | Fielding) */}
+      <PerformanceLeadersCard
+        topBatters={
+          analytics.topBatters?.map((b) => ({
+            id: b.id,
+            name: b.name,
+            runs: Number(b.runs || 0),
+          })) ?? []
+        }
+        topBowlers={
+          analytics.topBowlers?.map((b) => ({
+            id: b.id,
+            name: b.name,
+            wickets: Number(b.wickets || 0),
+          })) ?? []
+        }
+        topFielders={
+          analytics.topFielders?.map((f) => ({
+            id: f.id,
+            name: f.name,
+            catches: Number(f.catches || 0),
+          })) ?? []
+        }
+      />
 
-      {analytics.academyRecords?.length > 0 && (
-        <Card>
-          <CardHeader title="Academy Records" />
-          <CardBody>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {analytics.academyRecords.map((record) => (
-                <Link
-                  key={record.id}
-                  to={record.href}
-                  className="border-border-subtle hover:border-primary/40 rounded-xl border p-4 transition"
-                >
-                  <p className="text-fg-muted text-xs uppercase">
-                    {record.recordType.replace(/_/g, ' ')}
-                  </p>
-                  <p className="text-fg text-lg font-semibold">{record.value}</p>
-                </Link>
-              ))}
+      {/* 6. Small Summary Cards */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {/* Attendance Summary Card */}
+        <Card className="hover:border-border p-3.5 transition-all">
+          <CardBody className="p-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-fg-muted flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase">
+                  <CalendarCheck className="text-success h-3.5 w-3.5" />
+                  <span>Attendance</span>
+                </div>
+                <p className="text-fg mt-1 text-lg font-bold">
+                  {analytics.attendancePercentage}%{' '}
+                  <span className="text-fg-muted text-xs font-normal">this week</span>
+                </p>
+              </div>
+              <Link
+                to="/attendance"
+                className="text-primary mt-0.5 flex shrink-0 items-center gap-1 text-xs font-bold hover:underline"
+              >
+                <span>View</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </CardBody>
         </Card>
-      )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Weekly Attendance" />
-          <CardBody>
-            {weeklyAttendanceData.some((d) => d.total > 0) ? (
-              <SimpleBarChart
-                data={weeklyAttendanceData.map((d) => ({
-                  label: d.day,
-                  value: d.total > 0 ? Math.round((d.attended / d.total) * 100) : 0,
-                }))}
-                height={200}
-              />
-            ) : (
-              <EmptyState
-                title="No attendance data yet"
-                description="Attendance records will appear here once training sessions are marked."
-              />
-            )}
+        {/* Next Session Summary Card */}
+        <Card className="hover:border-border p-3.5 transition-all">
+          <CardBody className="p-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-fg-muted flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase">
+                  <CalendarDays className="text-info h-3.5 w-3.5" />
+                  <span>Next Session</span>
+                </div>
+                <p className="text-fg mt-1 truncate text-sm font-bold">
+                  {nextSession ? nextSession.title : 'No upcoming session'}
+                </p>
+                <p className="text-fg-muted truncate text-xs">
+                  {nextSession
+                    ? `${formatDate(nextSession.sessionDate)} • ${nextSession.startAt || ''}`
+                    : 'Schedule new session'}
+                </p>
+              </div>
+              <Link
+                to="/sessions"
+                className="text-primary mt-0.5 flex shrink-0 items-center gap-1 text-xs font-bold hover:underline"
+              >
+                <span>View</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </CardBody>
         </Card>
-        <Card>
-          <CardHeader title="Monthly Attendance" />
-          <CardBody>
-            {monthlyAttendanceData.some((d) => d.value > 0) ? (
-              <SimpleBarChart data={monthlyAttendanceData} height={200} />
-            ) : (
-              <EmptyState
-                title="No attendance data yet"
-                description="Attendance records will appear here once training sessions are marked."
-              />
-            )}
+
+        {/* Latest Match Summary Card */}
+        <Card className="hover:border-border p-3.5 transition-all">
+          <CardBody className="p-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-fg-muted flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase">
+                  <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                  <span>Latest Match</span>
+                </div>
+                <p className="text-fg mt-1 truncate text-sm font-bold">
+                  {latestMatch
+                    ? `${latestMatch.matchName}${latestMatch.opponentName ? ` vs ${latestMatch.opponentName}` : ''}`
+                    : 'No matches yet'}
+                </p>
+                <p className="text-fg-muted truncate text-xs">
+                  {latestMatch
+                    ? latestMatch.result
+                      ? `Result: ${latestMatch.result}`
+                      : latestMatch.teamScore || 'Completed'
+                    : 'Add match scorecard'}
+                </p>
+              </div>
+              <Link
+                to="/matches"
+                className="text-primary mt-0.5 flex shrink-0 items-center gap-1 text-xs font-bold hover:underline"
+              >
+                <span>View</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </CardBody>
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader
-            title="Recent Matches"
-            action={
-              <Link to="/matches" className={buttonStyles('ghost', 'sm')}>
-                See all
-              </Link>
-            }
-          />
-          <CardBody>
-            {analytics.recentMatches?.length === 0 ? (
-              <p className="text-fg-muted">No matches yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {analytics.recentMatches.map((match) => (
-                  <Link
-                    key={match.id}
-                    to={`/matches/${match.id}`}
-                    className="border-border-subtle hover:border-primary/40 flex flex-wrap items-center justify-between rounded-xl border p-3 transition"
-                  >
-                    <div>
-                      <p className="text-fg font-medium">{match.matchName}</p>
-                      <p className="text-fg-muted text-sm">
-                        {formatDate(match.matchDate)}
-                        {match.opponentName ? ` · vs ${match.opponentName}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {match.teamScore && (
-                        <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
-                          {match.teamScore}
-                        </span>
-                      )}
-                      {match.result && (
-                        <Badge
-                          tone={
-                            match.result === 'won'
-                              ? 'success'
-                              : match.result === 'lost'
-                                ? 'danger'
-                                : 'warning'
-                          }
-                        >
-                          {match.result}
-                        </Badge>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Upcoming Sessions"
-            action={
-              <Link to="/sessions" className={buttonStyles('ghost', 'sm')}>
-                See all
-              </Link>
-            }
-          />
-          <CardBody>
-            {analytics.upcomingSessions?.length === 0 ? (
-              <p className="text-fg-muted">No upcoming sessions.</p>
-            ) : (
-              <div className="space-y-3">
-                {analytics.upcomingSessions.map((session) => (
-                  <SessionRow key={session.id} session={session} />
-                ))}
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      </div>
-
+      {/* 7. Recent Activity Feed */}
       <ActivityFeed title="Recent Activity" activities={activities} />
     </div>
   );

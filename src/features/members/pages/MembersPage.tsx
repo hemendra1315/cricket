@@ -272,11 +272,11 @@ function MemberTable({
               </div>
 
               {canManage && member.role !== 'academy_owner' && !isSelf ? (
-                <div className="border-border-subtle flex flex-wrap items-center justify-between gap-2 border-t pt-2">
-                  <div className="w-36">
+                <div className="border-border-subtle flex flex-col gap-2.5 border-t pt-3">
+                  <div className="w-full">
                     <Select
                       aria-label={`Role for ${member.email}`}
-                      className="h-9 text-xs"
+                      className="h-11 min-h-[44px] w-full text-sm"
                       value={member.role}
                       disabled={changeRole.isPending}
                       onChange={(event) =>
@@ -300,7 +300,7 @@ function MemberTable({
                     </Select>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex w-full items-center gap-2">
                     {member.status === 'suspended' ? (
                       <Button
                         variant="secondary"
@@ -309,6 +309,7 @@ function MemberTable({
                         onClick={() =>
                           changeStatus.mutate({ membershipId: member.id, status: 'active' })
                         }
+                        className="h-11 min-h-[44px] flex-1 text-sm font-semibold"
                       >
                         Reactivate
                       </Button>
@@ -320,6 +321,7 @@ function MemberTable({
                         onClick={() =>
                           changeStatus.mutate({ membershipId: member.id, status: 'suspended' })
                         }
+                        className="h-11 min-h-[44px] flex-1 text-sm font-semibold"
                       >
                         Suspend
                       </Button>
@@ -337,6 +339,7 @@ function MemberTable({
                           },
                         )
                       }
+                      className="h-11 min-h-[44px] flex-1 text-sm font-semibold"
                     >
                       Remove
                     </Button>

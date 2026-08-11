@@ -28,6 +28,9 @@ const TrainingSessionDetailPage = lazy(
 const AttendanceSessionPage = lazy(
   () => import('@/features/attendance/pages/AttendanceSessionPage'),
 );
+const AttendanceOverviewPage = lazy(
+  () => import('@/features/attendance/pages/AttendanceOverviewPage'),
+);
 const PlayerAttendancePage = lazy(() => import('@/features/attendance/pages/PlayerAttendancePage'));
 const BatchAttendancePage = lazy(() => import('@/features/attendance/pages/BatchAttendancePage'));
 const OwnerDashboardPage = lazy(() => import('@/features/dashboard/pages/OwnerDashboardPage'));
@@ -118,6 +121,7 @@ export const router = createBrowserRouter([
                   { path: '/batches', element: <BatchesPage /> },
                   { path: '/batches/:batchId', element: <BatchDetailPage /> },
                   { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
+                  { path: '/attendance', element: <AttendanceOverviewPage /> },
                   { path: '/matches', element: <MatchesPage /> },
                   { path: '/matches/new', element: <AddMatchPage /> },
                   { path: '/matches/:matchId', element: <MatchDetailPage /> },

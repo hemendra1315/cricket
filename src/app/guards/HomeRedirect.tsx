@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { LoadingScreen } from '@/components/feedback';
 import { useMemberships } from '@/features/academies';
 import { useAuth } from '@/features/auth';
+import { useTestModeStore } from '@/stores';
 import { ROLE_HOME } from '@/types/enums';
 
 /**
@@ -12,9 +13,17 @@ import { ROLE_HOME } from '@/types/enums';
 export function HomeRedirect() {
   const { profile } = useAuth();
   const { isLoading, active, hasAnyAcademy, isAwaitingApproval, current } = useMemberships();
+  const testModeRole = useTestModeStore((state) => state.activeRole);
 
   if (isLoading) return <LoadingScreen message="Setting things up…" />;
-  if (profile?.isSuperAdmin && !hasAnyAcademy) return <Navigate to="/admin" replace />;
+
+  if (testModeRole) {
+    if (testModeRole === 'student') return <Navigate to="/player" replace />;
+    if (testModeRole === 'coach') return <Navigate to="/coach" replace />;
+    if (testModeRole === 'academy_owner') return <Navigate to="/dashboard" replace />;
+  }
+
+  if (profile?.isSuperAdmin) return <Navigate to="/admin" replace />;
   if (isAwaitingApproval) return <Navigate to="/onboarding/pending" replace />;
   if (!hasAnyAcademy) return <Navigate to="/onboarding" replace />;
   if (!current) {

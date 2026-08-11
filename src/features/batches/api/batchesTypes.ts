@@ -6,11 +6,11 @@ export type Batch = {
   name: string;
   ageGroup: string;
   description: string | null;
-  trainingDays: string;
-  trainingTime: string;
-  coachId: UUID;
+  trainingDays: string | null;
+  trainingTime: string | null;
+  coachId: UUID | null;
   coach: {
-    id: UUID;
+    id: UUID | null;
     fullName: string | null;
     email: string;
     avatarUrl: string | null;
@@ -36,10 +36,10 @@ export type CreateBatchInput = {
   academyId: UUID;
   name: string;
   ageGroup: string;
-  description: string | null;
-  trainingDays: string;
-  trainingTime: string;
-  coachId: UUID;
+  description?: string | null;
+  trainingDays?: string | null;
+  trainingTime?: string | null;
+  coachId?: UUID | null;
   startTime?: string;
   endTime?: string;
 };

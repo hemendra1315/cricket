@@ -3,13 +3,17 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 
 import { Avatar, buttonStyles, Card, CardBody, CardHeader } from '@/components/ui';
 import { useActiveAcademy, useMemberships } from '@/features/academies';
+import { useAuthStore } from '@/stores';
 import { ROLE_LABELS } from '@/types/enums';
 
 /** Chooser shown when a user belongs to several academies and none is active. */
 export default function SelectAcademyPage() {
   const { active, isLoading } = useMemberships();
   const { switchAcademy } = useActiveAcademy();
+  const isSuperAdmin = useAuthStore((state) => state.profile?.isSuperAdmin === true);
   const navigate = useNavigate();
+
+  if (isSuperAdmin) return <Navigate to="/admin" replace />;
 
   if (!isLoading && active.length === 0) return <Navigate to="/onboarding" replace />;
 

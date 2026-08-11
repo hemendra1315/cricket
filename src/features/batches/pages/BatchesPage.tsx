@@ -11,6 +11,7 @@ import {
   CardFooter,
   CardHeader,
   Input,
+  Modal,
   Select,
   Textarea,
 } from '@/components/ui';
@@ -49,16 +50,20 @@ export default function BatchesPage() {
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
+  const [batchToDelete, setBatchToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const coaches = useMemo(
-    () => membersQuery.data?.filter((member) => member.role === 'coach') ?? [],
+    () =>
+      membersQuery.data?.filter(
+        (member) => member.role === 'coach' || member.role === 'academy_owner',
+      ) ?? [],
     [membersQuery.data],
   );
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors },
     reset,
   } = useForm<BatchFormValues>({ defaultValues: DEFAULT_BATCH_FORM });
 
@@ -70,13 +75,18 @@ export default function BatchesPage() {
 
   const handleCreate = handleSubmit(
     async (value) => {
-      if (!startTime || !endTime) {
-        pushToast({
-          title: 'Select training time',
-          variant: 'error',
-        });
-        return;
-      }
+      const formattedTime =
+        startTime && endTime
+          ? `${startTime.toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+            })} - ${endTime.toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit',
+            })}`
+          : '';
+
+      const formattedDays = selectedDays.length > 0 ? selectedDays.join(', ') : '';
 
       try {
         await createBatch.mutateAsync({
@@ -84,15 +94,9 @@ export default function BatchesPage() {
           name: value.name,
           ageGroup: value.ageGroup,
           description: value.description || null,
-          trainingDays: selectedDays.join(', '),
-          trainingTime: `${startTime.toLocaleTimeString([], {
-            hour: 'numeric',
-            minute: '2-digit',
-          })} - ${endTime.toLocaleTimeString([], {
-            hour: 'numeric',
-            minute: '2-digit',
-          })}`,
-          coachId: value.coachId,
+          trainingDays: formattedDays || null,
+          trainingTime: formattedTime || null,
+          coachId: value.coachId || null,
         });
 
         pushToast({
@@ -110,6 +114,7 @@ export default function BatchesPage() {
 
         pushToast({
           title: 'Failed to create batch',
+          description: error instanceof Error ? error.message : String(error),
           variant: 'error',
         });
       }
@@ -124,9 +129,11 @@ export default function BatchesPage() {
     },
   );
 
-  const handleDelete = async (batchId: string) => {
-    await deleteBatch.mutateAsync({ batchId });
-    pushToast({ title: 'Batch deleted', variant: 'success' });
+  const handleConfirmDelete = async () => {
+    if (!batchToDelete) return;
+    await deleteBatch.mutateAsync({ batchId: batchToDelete.id });
+    pushToast({ title: `${batchToDelete.name} deleted`, variant: 'success' });
+    setBatchToDelete(null);
   };
 
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening'>(
@@ -179,7 +186,7 @@ export default function BatchesPage() {
           primaryAction={
             canManage
               ? {
-                  label: showForm ? 'Hide' : 'New',
+                  label: showForm ? 'Cancel' : 'New Batch',
                   onClick: () => setShowForm((prev) => !prev),
                 }
               : undefined
@@ -202,12 +209,12 @@ export default function BatchesPage() {
       {/* Desktop Header */}
       <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
         <div>
-          <h1 className="text-fg text-xl font-semibold">Batches</h1>
-          <p className="text-fg-muted">Create and manage your academy training groups.</p>
+          <h1 className="text-fg text-xl font-bold">Batches</h1>
+          <p className="text-fg-muted text-sm">Create and manage your academy training groups.</p>
         </div>
         {canManage ? (
-          <Button onClick={() => setShowForm((open) => !open)}>
-            {showForm ? 'Hide form' : 'New batch'}
+          <Button onClick={() => setShowForm((open) => !open)} className="min-h-[44px]">
+            {showForm ? 'Cancel' : 'New Batch'}
           </Button>
         ) : null}
       </div>
@@ -215,64 +222,74 @@ export default function BatchesPage() {
       {showForm && canManage ? (
         <Card>
           <form onSubmit={handleCreate} noValidate>
-            <CardHeader title="Create batch" description="Set up a training group with a coach." />
+            <CardHeader
+              title="Create Batch"
+              description="Set up a new training group with schedule & coach."
+            />
             <CardBody className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-fg block text-sm font-medium">Batch name</label>
                   <Input
+                    className="h-12 min-h-[44px]"
                     {...register('name', { required: 'Batch name is required' })}
                     hasError={Boolean(errors.name)}
                   />
                   {errors.name ? (
-                    <p className="text-danger text-xs">{errors.name.message}</p>
+                    <p className="text-danger mt-1 text-xs">{errors.name.message}</p>
                   ) : null}
                 </div>
                 <div>
                   <label className="text-fg block text-sm font-medium">Age group</label>
                   <Input
+                    className="h-12 min-h-[44px]"
                     {...register('ageGroup', { required: 'Age group is required' })}
                     hasError={Boolean(errors.ageGroup)}
                   />
                   {errors.ageGroup ? (
-                    <p className="text-danger text-xs">{errors.ageGroup.message}</p>
+                    <p className="text-danger mt-1 text-xs">{errors.ageGroup.message}</p>
                   ) : null}
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-fg block text-sm font-medium">Training days</label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {DAYS.map((day) => (
-                      <Button
-                        key={day}
-                        type="button"
-                        variant={selectedDays.includes(day) ? 'primary' : 'secondary'}
-                        size="sm"
-                        onClick={() => toggleDay(day)}
-                      >
-                        {day}
-                      </Button>
-                    ))}
-                  </div>
+              <div className="space-y-2">
+                <label className="text-fg block text-sm font-medium">
+                  Training days{' '}
+                  <span className="text-fg-muted text-xs font-normal">(Optional)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {DAYS.map((day) => (
+                    <Button
+                      key={day}
+                      type="button"
+                      variant={selectedDays.includes(day) ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => toggleDay(day)}
+                      className="h-11 min-h-[44px] min-w-[44px] px-3 font-semibold"
+                    >
+                      {day}
+                    </Button>
+                  ))}
                 </div>
-                <div>
-                  <label className="text-fg block text-sm font-medium">Assign coach</label>
-                  <Select {...register('coachId', { required: 'Coach is required' })}>
-                    <option value="">Select coach</option>
-                    {coaches.map((coach) => (
-                      <option key={coach.id} value={coach.id}>
-                        {coach.fullName ?? coach.email}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-fg block text-sm font-medium">
+                  Assign coach <span className="text-fg-muted text-xs font-normal">(Optional)</span>
+                </label>
+                <Select className="h-12 min-h-[44px]" {...register('coachId')}>
+                  <option value="">Select coach (Optional)</option>
+                  {coaches.map((coach) => (
+                    <option key={coach.id} value={coach.id}>
+                      {coach.fullName ?? coach.email}
+                    </option>
+                  ))}
+                </Select>
               </div>
 
               <div>
                 <TimeRangePicker
-                  label="Training time"
+                  label="Training time (Optional)"
                   startTime={startTime}
                   endTime={endTime}
                   onStartTimeChange={setStartTime}
@@ -281,13 +298,19 @@ export default function BatchesPage() {
               </div>
 
               <div>
-                <label className="text-fg block text-sm font-medium">Description</label>
-                <Textarea {...register('description')} />
+                <label className="text-fg block text-sm font-medium">
+                  Description <span className="text-fg-muted text-xs font-normal">(Optional)</span>
+                </label>
+                <Textarea className="min-h-[80px]" {...register('description')} />
               </div>
             </CardBody>
-            <CardFooter>
-              <Button type="submit" isLoading={createBatch.isPending} disabled={!isDirty}>
-                Create batch
+            <CardFooter className="flex-col gap-2 sm:flex-row">
+              <Button
+                type="submit"
+                isLoading={createBatch.isPending}
+                className="h-12 min-h-[48px] w-full font-semibold sm:w-auto"
+              >
+                Create Batch
               </Button>
             </CardFooter>
           </form>
@@ -296,19 +319,19 @@ export default function BatchesPage() {
 
       <Card>
         <CardHeader
-          title="All batches"
+          title="All Batches"
           description="See every training group in this academy."
           className="hidden md:block"
         />
-        <CardBody className="p-4">
+        <CardBody className="p-3 sm:p-4">
           {batchesQuery.isPending ? (
-            <p className="text-fg-muted">Loading batches…</p>
+            <p className="text-fg-muted py-6 text-center">Loading batches…</p>
           ) : batchesQuery.isError ? (
             <ErrorState error={batchesQuery.error} onRetry={() => void batchesQuery.refetch()} />
           ) : filteredBatches.length === 0 ? (
             <MobileEmptyState
-              title="No batches"
-              description="Create your first batch to start organizing training."
+              title="No batches found"
+              description="Create your first training batch to organize players."
               action={
                 canManage ? { label: 'Create Batch', onClick: () => setShowForm(true) } : undefined
               }
@@ -318,51 +341,98 @@ export default function BatchesPage() {
               {filteredBatches.map((batch) => (
                 <div
                   key={batch.id}
-                  className="border-border-subtle bg-surface rounded-2xl border p-4 shadow-2xs"
+                  className="border-border-subtle bg-surface hover:border-border rounded-2xl border p-4 shadow-2xs transition-all"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
                       <Link
                         to={`/batches/${batch.id}`}
-                        className="text-fg text-base font-semibold hover:underline"
+                        className="text-fg block truncate text-base font-bold hover:underline"
                       >
                         {batch.name}
                       </Link>
-                      <p className="text-fg-muted mt-0.5 text-xs">{batch.ageGroup}</p>
+                      <span className="text-primary bg-primary/10 mt-1 inline-block rounded-md px-2 py-0.5 text-xs font-bold">
+                        {batch.ageGroup}
+                      </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="bg-surface-muted text-fg-muted rounded-full px-2.5 py-0.5 text-xs font-medium">
-                        {batch.playerCount ?? 0} players
-                      </span>
-                      <span className="bg-surface-muted text-fg-muted rounded-full px-2.5 py-0.5 text-xs font-medium">
-                        {batch.coach.fullName ?? batch.coach.email}
-                      </span>
+
+                    <span className="bg-surface-elevated text-fg border-border-subtle shrink-0 rounded-full border px-3 py-1 text-xs font-semibold">
+                      {batch.playerCount ?? 0} Players
+                    </span>
+                  </div>
+
+                  <div className="text-fg-muted mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+                    {batch.trainingDays ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-fg font-semibold">Schedule:</span>
+                        <span className="truncate">
+                          {batch.trainingDays} {batch.trainingTime ? `• ${batch.trainingTime}` : ''}
+                        </span>
+                      </div>
+                    ) : null}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-fg font-semibold">Coach:</span>
+                      <span className="truncate">{batch.coach.fullName ?? batch.coach.email}</span>
                     </div>
                   </div>
-                  {batch.trainingDays && (
-                    <p className="text-fg-muted mt-2 text-xs font-medium">
-                      {batch.trainingDays} • {batch.trainingTime}
-                    </p>
-                  )}
-                  {canManage ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
+
+                  <div className="border-border-subtle mt-4 flex items-center justify-between gap-2 border-t pt-3">
+                    <Link
+                      to={`/batches/${batch.id}`}
+                      className="text-primary inline-flex min-h-[44px] items-center text-xs font-bold hover:underline"
+                    >
+                      View Batch & Roster →
+                    </Link>
+
+                    {canManage ? (
                       <Button
-                        variant="secondary"
+                        variant="ghost"
                         size="sm"
-                        isLoading={deleteBatch.isPending}
-                        onClick={() => void handleDelete(batch.id)}
-                        className="text-danger hover:bg-danger/10"
+                        onClick={() => setBatchToDelete({ id: batch.id, name: batch.name })}
+                        className="text-danger hover:bg-danger/10 h-10 min-h-[44px] px-3 font-semibold"
                       >
                         Delete
                       </Button>
-                    </div>
-                  ) : null}
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardBody>
       </Card>
+
+      {/* Delete Batch Confirmation Dialog */}
+      <Modal
+        open={Boolean(batchToDelete)}
+        onClose={() => setBatchToDelete(null)}
+        title="Delete Training Batch"
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="secondary"
+              onClick={() => setBatchToDelete(null)}
+              className="h-12 min-h-[48px] w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              isLoading={deleteBatch.isPending}
+              onClick={() => void handleConfirmDelete()}
+              className="h-12 min-h-[48px] w-full font-semibold sm:w-auto"
+            >
+              Confirm Delete
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-fg text-sm">
+          Are you sure you want to delete{' '}
+          <strong className="text-fg font-bold">{batchToDelete?.name}</strong>? This action will
+          unassign all players from this batch.
+        </p>
+      </Modal>
     </div>
   );
 }

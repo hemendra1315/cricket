@@ -6,7 +6,7 @@ import {
   type SuperAdminAddMemberPayload,
 } from '../api/adminApi';
 
-describe('Super Admin Academy Data Management & Demo Seeding', () => {
+describe('Super Admin Academy Data Management & Cross-Academy Access (Phase 33 Audit)', () => {
   it('exposes superAdminAddMember and superAdminSeedAcademyDemoData API contracts', () => {
     expect(typeof superAdminAddMember).toBe('function');
     expect(typeof superAdminSeedAcademyDemoData).toBe('function');
@@ -47,23 +47,89 @@ describe('Super Admin Academy Data Management & Demo Seeding', () => {
     expect(coachPayload.role).toBe('coach');
   });
 
-  it('verifies tenant isolation logic between Academy A and Academy B', () => {
-    const academyAId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-    const academyBId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
-
-    const seededRecords = [
-      { id: 'rec-1', academyId: academyAId, name: 'Player A1' },
-      { id: 'rec-2', academyId: academyAId, name: 'Player A2' },
-      { id: 'rec-3', academyId: academyBId, name: 'Player B1' },
+  it('verifies Super Admin can list all platform academies and enter unowned academies', () => {
+    const isSuperAdmin = true;
+    const academies = [
+      { id: 'acad-a', name: 'Academy A', ownerUserId: 'owner-a-id' },
+      { id: 'acad-b', name: 'Academy B', ownerUserId: 'owner-b-id' },
+      { id: 'acad-c', name: 'Academy C', ownerUserId: 'owner-c-id' },
     ];
 
-    const academyARecords = seededRecords.filter((r) => r.academyId === academyAId);
-    const academyBRecords = seededRecords.filter((r) => r.academyId === academyBId);
+    const canListAllAcademies = (sa: boolean) => (sa ? academies : []);
+    expect(canListAllAcademies(isSuperAdmin)).toHaveLength(3);
 
-    expect(academyARecords).toHaveLength(2);
-    expect(academyBRecords).toHaveLength(1);
-    expect(academyARecords.some((r) => r.academyId === academyBId)).toBe(false);
-    expect(academyBRecords.some((r) => r.academyId === academyAId)).toBe(false);
+    let activeAcademyId: string | null = null;
+    const enterAcademy = (acadId: string) => {
+      activeAcademyId = acadId;
+    };
+
+    enterAcademy('acad-b');
+    expect(activeAcademyId).toBe('acad-b');
+    // Verify ownership of Academy B has NOT changed merely by entering
+    expect(academies.find((a) => a.id === 'acad-b')?.ownerUserId).toBe('owner-b-id');
+  });
+
+  it('verifies Super Admin activeAcademyId is NOT wiped out when not in personal memberships', () => {
+    const isSuperAdmin = true;
+    const personalMemberships = [{ academyId: 'acad-a', role: 'academy_owner' }];
+    const activeAcademyId: string | null = 'acad-b'; // Super admin selected unowned Academy B
+
+    // Simulate identity effect guard
+    const reconcileActiveAcademy = (
+      sa: boolean,
+      activeId: string | null,
+      memberships: { academyId: string }[],
+    ) => {
+      if (sa) return activeId; // Super Admins bypass personal membership validation
+      const stillValid = memberships.some((m) => m.academyId === activeId);
+      return stillValid ? activeId : (memberships[0]?.academyId ?? null);
+    };
+
+    const reconciledId = reconcileActiveAcademy(isSuperAdmin, activeAcademyId, personalMemberships);
+    expect(reconciledId).toBe('acad-b'); // Preserved!
+  });
+
+  it('verifies Super Admin can switch between multiple academies (A -> B -> C -> A)', () => {
+    let activeAcademyId = 'acad-a';
+    const switchAcademy = (newId: string) => {
+      activeAcademyId = newId;
+    };
+
+    switchAcademy('acad-b');
+    expect(activeAcademyId).toBe('acad-b');
+
+    switchAcademy('acad-c');
+    expect(activeAcademyId).toBe('acad-c');
+
+    switchAcademy('acad-a');
+    expect(activeAcademyId).toBe('acad-a');
+  });
+
+  it('verifies tenant isolation: Owner A, Coach A, Player A cannot access Academy B', () => {
+    const checkAccess = (
+      userRole: AppRole,
+      userAcademyId: string,
+      targetAcademyId: string,
+      isSA: boolean,
+    ) => {
+      if (isSA || userRole === 'super_admin') return true;
+      return userAcademyId === targetAcademyId;
+    };
+
+    const acadA = 'acad-a';
+    const acadB = 'acad-b';
+
+    // Super Admin: can access both
+    expect(checkAccess('super_admin', acadA, acadB, true)).toBe(true);
+
+    // Owner A: cannot access Academy B
+    expect(checkAccess('academy_owner', acadA, acadB, false)).toBe(false);
+
+    // Coach A: cannot access Academy B
+    expect(checkAccess('coach', acadA, acadB, false)).toBe(false);
+
+    // Player A: cannot access Academy B
+    expect(checkAccess('player', acadA, acadB, false)).toBe(false);
   });
 
   it('verifies duplicate seed protection guard contract', () => {

@@ -1,10 +1,23 @@
-import { UserPlus, UserCheck, Layers, CalendarCheck, CalendarDays, Trophy } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MobileQuickAction } from '@/components/mobile';
+import {
+  Plus,
+  UserPlus,
+  UserCheck,
+  Layers,
+  CalendarCheck,
+  CalendarDays,
+  Trophy,
+  FileSpreadsheet,
+} from 'lucide-react';
+
+import { Button, Modal } from '@/components/ui';
 import { useCan } from '@/lib/rbac';
 
 export function DashboardQuickActions() {
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+
   const canManagePlayers = useCan('players:manage');
   const canManageBatches = useCan('batches:manage');
   const canManageSessions = useCan('sessions:manage');
@@ -14,51 +27,93 @@ export function DashboardQuickActions() {
   const actions = [
     canManagePlayers && {
       label: 'Add Player',
-      icon: <UserPlus className="h-5 w-5" />,
+      icon: <UserPlus className="text-primary h-5 w-5" />,
       onClick: () => navigate('/members'),
+      description: 'Invite or create player profile',
     },
     canManagePlayers && {
       label: 'Add Coach',
-      icon: <UserCheck className="h-5 w-5" />,
+      icon: <UserCheck className="text-info h-5 w-5" />,
       onClick: () => navigate('/members'),
+      description: 'Assign coaching staff',
     },
     canManageBatches && {
       label: 'Create Batch',
-      icon: <Layers className="h-5 w-5" />,
+      icon: <Layers className="text-warning h-5 w-5" />,
       onClick: () => navigate('/batches'),
-    },
-    canMarkAttendance && {
-      label: 'Mark Attendance',
-      icon: <CalendarCheck className="h-5 w-5" />,
-      onClick: () => navigate('/sessions'),
+      description: 'Set up squad or training group',
     },
     canManageSessions && {
-      label: 'Create Session',
-      icon: <CalendarDays className="h-5 w-5" />,
+      label: 'Schedule Session',
+      icon: <CalendarDays className="text-success h-5 w-5" />,
       onClick: () => navigate('/sessions'),
+      description: 'Add training or net practice',
     },
     canManageMatches && {
       label: 'Add Match',
-      icon: <Trophy className="h-5 w-5" />,
-      onClick: () => navigate('/matches/add'),
+      icon: <Trophy className="h-5 w-5 text-amber-500" />,
+      onClick: () => navigate('/matches/new'),
+      description: 'Create match & scorecard',
     },
-  ].filter(Boolean);
+    canMarkAttendance && {
+      label: 'Mark Attendance',
+      icon: <CalendarCheck className="h-5 w-5 text-emerald-500" />,
+      onClick: () => navigate('/sessions'),
+      description: 'Update session roster attendance',
+    },
+    canManageMatches && {
+      label: 'Import CricHeroes',
+      icon: <FileSpreadsheet className="h-5 w-5 text-purple-500" />,
+      onClick: () => navigate('/matches/new'),
+      description: 'Import scorecards from PDF',
+    },
+  ].filter(Boolean) as Array<{
+    label: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+    description: string;
+  }>;
 
   if (actions.length === 0) return null;
 
+  const handleActionClick = (onClick: () => void) => {
+    setIsOpen(false);
+    onClick();
+  };
+
   return (
-    <div className="space-y-2">
-      <h3 className="text-fg-muted px-0.5 text-xs font-semibold tracking-wider uppercase">
-        Quick Actions
-      </h3>
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-        {actions.map((act, idx) => {
-          if (!act) return null;
-          return (
-            <MobileQuickAction key={idx} label={act.label} icon={act.icon} onClick={act.onClick} />
-          );
-        })}
-      </div>
-    </div>
+    <>
+      <Button
+        onClick={() => setIsOpen(true)}
+        className="flex h-12 min-h-[48px] w-full items-center justify-center gap-2 text-base font-bold shadow-xs"
+      >
+        <Plus className="h-5 w-5 stroke-[2.5]" />
+        <span>Quick Actions</span>
+      </Button>
+
+      <Modal open={isOpen} onClose={() => setIsOpen(false)} title="Quick Actions" size="md">
+        <div className="space-y-3 py-1">
+          <p className="text-fg-muted text-xs">Select an action to perform:</p>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {actions.map((act, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleActionClick(act.onClick)}
+                className="border-border-subtle hover:border-primary/50 hover:bg-primary/5 bg-surface flex min-h-[56px] items-center gap-3.5 rounded-xl border p-3.5 text-left transition-all select-none"
+              >
+                <div className="bg-surface-elevated border-border-subtle flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
+                  {act.icon}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-fg truncate text-sm font-bold">{act.label}</p>
+                  <p className="text-fg-muted truncate text-xs">{act.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }

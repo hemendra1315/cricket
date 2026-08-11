@@ -694,18 +694,93 @@ export async function saveMatchResult(
   academyId: UUID,
   payload: SaveMatchResultPayload,
 ): Promise<{ matchId: UUID; status: string }> {
-  const { data, error } = await (supabase as any).rpc('save_match_result', {
-    p_payload: {
-      ...payload,
-      academy_id: academyId,
+  const snakePayload = {
+    academy_id: academyId,
+    match: {
+      id: payload.match.id,
+      match_name: payload.match.matchName,
+      match_date: payload.match.matchDate,
+      venue: payload.match.venue || null,
+      opponent_name: payload.match.opponentName || null,
+      tournament: payload.match.tournament || null,
+      match_type: payload.match.matchType,
+      format: payload.match.format,
+      overs: payload.match.overs != null ? payload.match.overs : null,
+      team_score: payload.match.teamScore || null,
+      wickets_lost: payload.match.wicketsLost != null ? payload.match.wicketsLost : null,
+      overs_played: payload.match.oversPlayed != null ? payload.match.oversPlayed : null,
+      result: payload.match.result || null,
+      winning_margin: payload.match.winningMargin || null,
+      batch_id: payload.match.batchId || null,
     },
+    lineups: (payload.lineups ?? []).map((l) => ({
+      academy_member_id: l.academyMemberId || null,
+      batting_order: l.battingOrder != null ? l.battingOrder : 0,
+      is_captain: l.isCaptain ?? false,
+      is_vice_captain: l.isViceCaptain ?? false,
+      is_wicketkeeper: l.isWicketkeeper ?? false,
+      is_guest: l.isGuest ?? false,
+      guest_name: l.guestName || null,
+    })),
+    batting: (payload.batting ?? []).map((b) => ({
+      academy_member_id: b.academyMemberId || null,
+      runs: b.runs,
+      balls: b.balls,
+      fours: b.fours,
+      sixes: b.sixes,
+      is_out: b.isOut,
+      dismissal_type: b.dismissalType || null,
+      batting_order: b.battingOrder != null ? b.battingOrder : 0,
+      is_guest: b.isGuest ?? false,
+      guest_name: b.guestName || null,
+    })),
+    bowling: (payload.bowling ?? []).map((b) => ({
+      academy_member_id: b.academyMemberId || null,
+      overs: b.overs,
+      maidens: b.maidens,
+      runs_conceded: b.runsConceded,
+      wickets: b.wickets,
+      wides: b.wides,
+      no_balls: b.noBalls,
+      is_guest: b.isGuest ?? false,
+      guest_name: b.guestName || null,
+    })),
+    fielding: (payload.fielding ?? []).map((f) => ({
+      academy_member_id: f.academyMemberId || null,
+      catches: f.catches,
+      run_outs: f.runOuts,
+      stumpings: f.stumpings,
+      is_guest: f.isGuest ?? false,
+      guest_name: f.guestName || null,
+    })),
+    partnerships: (payload.partnerships ?? []).map((p) => ({
+      batter_1_id: p.batter1Id,
+      batter_2_id: p.batter2Id,
+      runs_added: p.runsAdded,
+      wicket_number: p.wicketNumber || null,
+    })),
+    awards: payload.awards
+      ? {
+          player_of_match_id: payload.awards.playerOfMatchId || null,
+          best_batter_id: payload.awards.bestBatterId || null,
+          best_bowler_id: payload.awards.bestBowlerId || null,
+          best_fielder_id: payload.awards.bestFielderId || null,
+        }
+      : {},
+  };
+
+  const { data, error } = await (supabase as any).rpc('save_match_result', {
+    p_payload: snakePayload,
   });
 
   if (error) {
     throw error;
   }
 
-  return data;
+  return {
+    matchId: (data as any)?.match_id ?? (data as any)?.id,
+    status: (data as any)?.status ?? 'completed',
+  };
 }
 
 // ============================================================

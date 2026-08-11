@@ -349,10 +349,10 @@ export function ScorecardStep({
 
           <div className="pt-2">
             <Select
+              value=""
               onChange={(e) => {
                 if (e.target.value) {
                   addBowler(e.target.value);
-                  e.target.value = '';
                 }
               }}
               className="w-full sm:w-64"
@@ -440,10 +440,10 @@ export function ScorecardStep({
 
           <div className="pt-2">
             <Select
+              value=""
               onChange={(e) => {
                 if (e.target.value) {
                   addFielder(e.target.value);
-                  e.target.value = '';
                 }
               }}
               className="w-full sm:w-64"

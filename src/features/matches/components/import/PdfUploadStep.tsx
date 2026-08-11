@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui';
 
 export function PdfUploadStep({
@@ -51,6 +51,8 @@ export function PdfUploadStep({
     }
   }
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragActive(false);
@@ -90,21 +92,28 @@ export function PdfUploadStep({
             <p className="text-fg-muted text-xs">or click to browse files (max 15MB)</p>
           </div>
 
-          <label className="cursor-pointer">
+          <div>
             <input
+              ref={fileInputRef}
               type="file"
               accept=".pdf"
-              className="sr-only"
+              className="hidden"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   void processFile(e.target.files[0]);
                 }
               }}
             />
-            <Button type="button" variant="secondary" size="sm" isLoading={isParsing}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              isLoading={isParsing}
+              onClick={() => fileInputRef.current?.click()}
+            >
               Choose PDF File
             </Button>
-          </label>
+          </div>
         </div>
       </div>
 

@@ -58,7 +58,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
     unwrap<any[]>(
       (supabase as any)
         .from('attendance')
-        .select('status, session:training_sessions!inner(session_date)')
+        .select('status, session:training_sessions(session_date)')
         .eq('academy_id', academyId)
         .gte(
           'training_sessions.session_date',
@@ -92,7 +92,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
       (supabase as any)
         .from('training_sessions')
         .select(
-          'id, title, session_date, start_at, end_at, batch_id, coach_id, batches!inner(name), academy_members!training_sessions_coach_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name))',
+          'id, title, session_date, start_at, end_at, batch_id, coach_id, batches(name), academy_members!training_sessions_coach_id_fkey(id, profiles!academy_members_user_id_fkey(full_name))',
         )
         .eq('academy_id', academyId)
         .eq('status', 'scheduled')
@@ -114,7 +114,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
       (supabase as any)
         .from('player_statistics')
         .select(
-          'player_id, batting_runs, batting_innings, batting_not_outs, academy_members!player_statistics_player_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name))',
+          'player_id, batting_runs, batting_innings, batting_not_outs, academy_members!player_statistics_player_id_fkey(id, profiles!academy_members_user_id_fkey(full_name))',
         )
         .eq('academy_id', academyId)
         .order('batting_runs', { ascending: false })
@@ -125,7 +125,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
       (supabase as any)
         .from('player_statistics')
         .select(
-          'player_id, bowling_wickets, bowling_runs_conceded, bowling_overs, academy_members!player_statistics_player_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name))',
+          'player_id, bowling_wickets, bowling_runs_conceded, bowling_overs, academy_members!player_statistics_player_id_fkey(id, profiles!academy_members_user_id_fkey(full_name))',
         )
         .eq('academy_id', academyId)
         .order('bowling_wickets', { ascending: false })
@@ -136,7 +136,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
       (supabase as any)
         .from('player_statistics')
         .select(
-          'player_id, fielding_catches, fielding_run_outs, academy_members!player_statistics_player_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name))',
+          'player_id, fielding_catches, fielding_run_outs, academy_members!player_statistics_player_id_fkey(id, profiles!academy_members_user_id_fkey(full_name))',
         )
         .eq('academy_id', academyId)
         .order('fielding_catches', { ascending: false })
@@ -310,7 +310,7 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
     unwrap<any[]>(
       (supabase as any)
         .from('training_sessions')
-        .select('id, title, start_at, end_at, batch_id, batches!inner(name)')
+        .select('id, title, start_at, end_at, batch_id, batches(name)')
         .eq('academy_id', academyId)
         .eq('coach_id', coachId)
         .eq('session_date', new Date().toISOString().split('T')[0])
@@ -343,7 +343,7 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
     unwrap<any[]>(
       (supabase as any)
         .from('academy_members')
-        .select('id, profiles!academy_members_user_id_fkey!inner(full_name, email)')
+        .select('id, profiles!academy_members_user_id_fkey(full_name, email)')
         .eq('academy_id', academyId)
         .eq('role', 'player')
         .eq('status', 'active'),
@@ -381,7 +381,7 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
       unwrap<any[]>(
         (supabase as any)
           .from('attendance')
-          .select('status, session:training_sessions!inner(session_date)')
+          .select('status, session:training_sessions(session_date)')
           .eq('academy_id', academyId)
           .eq('player_id', player.id)
           .gte(
@@ -400,7 +400,7 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
       unwrap<any[]>(
         (supabase as any)
           .from('match_coach_notes')
-          .select('id, match:matches!inner(academy_id)')
+          .select('id, match:matches(academy_id)')
           .eq('match.academy_id', academyId)
           .eq('academy_member_id', player.id)
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
@@ -467,7 +467,7 @@ export async function fetchPlayerDashboardAnalytics(academyId: UUID, playerId: U
         .select(
           `
           id, title, session_date, start_at, end_at,
-          academy_members!training_sessions_coach_id_fkey!inner(id, profiles!academy_members_user_id_fkey!inner(full_name))
+          academy_members!training_sessions_coach_id_fkey(id, profiles!academy_members_user_id_fkey(full_name))
         `,
         )
         .eq('academy_id', academyId)
