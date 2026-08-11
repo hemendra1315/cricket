@@ -197,4 +197,55 @@ describe('Phase 37 — Role-Accurate Test App As Mode Verification', () => {
     });
     expect(useTestModeStore.getState().activeRole).toBeNull();
   });
+
+  it('verifies Add Match capability is available for Coach and Owner but hidden for Student', () => {
+    // Student
+    act(() => {
+      useTestModeStore.getState().setTestMode('student', 'academy-123');
+    });
+    const { result: studentCanMatch } = renderHook(() => useCan('matches:manage'));
+    expect(studentCanMatch.current).toBe(false);
+
+    // Coach
+    act(() => {
+      useTestModeStore.getState().setTestMode('coach', 'academy-123');
+    });
+    const { result: coachCanMatch } = renderHook(() => useCan('matches:manage'));
+    expect(coachCanMatch.current).toBe(true);
+
+    // Owner
+    act(() => {
+      useTestModeStore.getState().setTestMode('academy_owner', 'academy-123');
+    });
+    const { result: ownerCanMatch } = renderHook(() => useCan('matches:manage'));
+    expect(ownerCanMatch.current).toBe(true);
+  });
+
+  it('verifies rapid sequential role transitions without residual role leakage', () => {
+    const store = useTestModeStore.getState();
+
+    // 1. Super Admin -> Student
+    act(() => store.setTestMode('student', 'academy-123'));
+    expect(useTestModeStore.getState().activeRole).toBe('student');
+    const { result: r1 } = renderHook(() => useActiveRoles());
+    expect(r1.current).toEqual(['player']);
+
+    // 2. Student -> Coach
+    act(() => store.setTestMode('coach', 'academy-123'));
+    expect(useTestModeStore.getState().activeRole).toBe('coach');
+    const { result: r2 } = renderHook(() => useActiveRoles());
+    expect(r2.current).toEqual(['coach']);
+
+    // 3. Coach -> Owner
+    act(() => store.setTestMode('academy_owner', 'academy-123'));
+    expect(useTestModeStore.getState().activeRole).toBe('academy_owner');
+    const { result: r3 } = renderHook(() => useActiveRoles());
+    expect(r3.current).toEqual(['academy_owner']);
+
+    // 4. Owner -> Exit
+    act(() => store.exitTestMode());
+    expect(useTestModeStore.getState().activeRole).toBeNull();
+    const { result: r4 } = renderHook(() => useActiveRoles());
+    expect(r4.current).toContain('super_admin');
+  });
 });
