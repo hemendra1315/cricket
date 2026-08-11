@@ -1,4 +1,4 @@
-import { Home, Users, CalendarDays, Layers, MoreHorizontal } from 'lucide-react';
+import { Home, Users, CalendarDays, Layers, MoreHorizontal, Trophy, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMemberships } from '@/features/academies';
 import { useCan } from '@/lib/rbac';
@@ -13,6 +13,7 @@ interface NavItemDef {
   icon: typeof Home;
   matchPrefixes: string[];
   requiresCapability?: Capability;
+  forRole?: AppRole;
 }
 
 export function MobileBottomNav() {
@@ -24,6 +25,7 @@ export function MobileBottomNav() {
   const canReadBatches = useCan('batches:read');
   const canManageMembers = useCan('members:manage');
   const canReadSessions = useCan('sessions:read');
+  const canReadMatches = useCan('matches:read');
 
   const role: AppRole = testModeRole
     ? testModeRole === 'student'
@@ -66,19 +68,37 @@ export function MobileBottomNav() {
       requiresCapability: 'sessions:read',
     },
     {
+      key: 'matches',
+      to: '/matches',
+      label: 'Matches',
+      icon: Trophy,
+      matchPrefixes: ['/matches'],
+      requiresCapability: 'matches:read',
+    },
+    {
+      key: 'profile',
+      to: '/profile',
+      label: 'Profile',
+      icon: User,
+      matchPrefixes: ['/profile'],
+      forRole: 'player',
+    },
+    {
       key: 'more',
       to: '/more',
       label: 'More',
       icon: MoreHorizontal,
-      matchPrefixes: ['/more', '/drills', '/matches', '/admin', '/profile'],
+      matchPrefixes: ['/more', '/drills', '/admin'],
     },
   ];
 
   const items = allItems.filter((item) => {
+    if (item.forRole && item.forRole !== role) return false;
     if (!item.requiresCapability) return true;
     if (item.requiresCapability === 'batches:read') return canReadBatches;
     if (item.requiresCapability === 'members:manage') return canManageMembers;
     if (item.requiresCapability === 'sessions:read') return canReadSessions;
+    if (item.requiresCapability === 'matches:read') return canReadMatches;
     return true;
   });
 

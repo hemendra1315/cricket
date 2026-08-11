@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
@@ -7,11 +8,35 @@ import { SuperAdminAcademyActions } from '@/features/admin';
 import { usePlayerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
 import { SimpleBarChart, SimpleLineChart } from '@/components/charts/SimpleBarChart';
 import { SessionRow } from '../components/SessionRow';
+import { useTestModeStore } from '@/stores';
+import { supabase } from '@/lib/supabase/client';
 
 export default function PlayerDashboardPage() {
   const { academyId, membership } = useActiveAcademy();
-  const playerId = membership?.id ?? null;
-  const isPlayer = membership?.role === 'player';
+  const testModeRole = useTestModeStore((s) => s.activeRole);
+
+  const isPlayer = membership?.role === 'player' || testModeRole === 'student';
+
+  // Query an active player ID if in Test Mode as student and membership is not a player
+  const activePlayerQuery = useQuery({
+    queryKey: ['active-academy-player', academyId],
+    enabled: Boolean(academyId) && testModeRole === 'student' && membership?.role !== 'player',
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('academy_members')
+        .select('id')
+        .eq('academy_id', academyId as string)
+        .eq('role', 'player')
+        .eq('status', 'active')
+        .limit(1);
+      return data?.[0]?.id ?? null;
+    },
+  });
+
+  const playerId =
+    (membership?.role === 'player' ? membership?.id : null) ??
+    activePlayerQuery.data ??
+    (testModeRole === 'student' ? 'demo-player-id' : null);
 
   const analyticsQuery = usePlayerDashboardAnalytics(academyId, isPlayer ? playerId : null);
 
