@@ -53,13 +53,34 @@ export function MorePage() {
     navigate('/signin');
   };
 
-  const academyItems: (MenuItem | false)[] = [
+  const managementItems: (MenuItem | false)[] = [
+    canUpdateAcademy && {
+      to: '/settings/academy',
+      label: 'Academy Settings',
+      desc: 'Academy profile, join code & details',
+      icon: Settings,
+    },
+    canManageMembers && {
+      to: '/members',
+      label: 'Players & Members',
+      desc: 'Players and staff directory',
+      icon: Users,
+    },
+    canManageMembers && {
+      to: '/batches',
+      label: 'Batches & Groups',
+      desc: 'Training batches and schedules',
+      icon: Building2,
+    },
     {
       to: '/stats',
       label: 'Stats & Performance',
       desc: 'Cricket statistics and analytics',
       icon: BarChart2,
     },
+  ];
+
+  const activityItems: (MenuItem | false)[] = [
     canReadAttendance && {
       to: '/sessions',
       label: 'Attendance & Sessions',
@@ -78,12 +99,6 @@ export function MorePage() {
       desc: 'Drill bank and skill logs',
       icon: Activity,
     },
-    canManageMembers && {
-      to: '/members',
-      label: 'Members & Roster',
-      desc: 'Players and staff directory',
-      icon: Users,
-    },
   ];
 
   const accountItems: (MenuItem | false)[] = [
@@ -92,12 +107,6 @@ export function MorePage() {
       label: 'My Profile',
       desc: profile?.fullName ?? profile?.email ?? 'User Account',
       icon: User,
-    },
-    canUpdateAcademy && {
-      to: '/settings/academy',
-      label: 'Academy Settings',
-      desc: membership?.academyName ?? 'Manage academy options',
-      icon: Settings,
     },
     isSuperAdmin && {
       to: '/admin',
@@ -110,11 +119,15 @@ export function MorePage() {
 
   const sections = [
     {
-      title: 'Academy Management',
-      items: academyItems.filter((x): x is MenuItem => Boolean(x)),
+      title: canUpdateAcademy || canManageMembers ? 'Academy Management' : 'Cricket & Stats',
+      items: managementItems.filter((x): x is MenuItem => Boolean(x)),
     },
     {
-      title: 'Account & Settings',
+      title: 'Activity & Sessions',
+      items: activityItems.filter((x): x is MenuItem => Boolean(x)),
+    },
+    {
+      title: 'Account',
       items: accountItems.filter((x): x is MenuItem => Boolean(x)),
     },
   ];

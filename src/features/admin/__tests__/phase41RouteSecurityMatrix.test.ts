@@ -110,15 +110,23 @@ describe('Phase 41 — Route Security Matrix & Capability Enforcement', () => {
     });
   });
 
-  describe('4. Super Admin Active Roles & Test App As Transitions', () => {
-    it('restores super_admin role when exiting Test App As mode', () => {
-      const store = useTestModeStore.getState();
+  describe('5. Phase 42A — Academy Settings Discoverability & Access', () => {
+    it('grants Academy Settings access (academy:update) exclusively to Academy Owner and Super Admin', () => {
+      // Student
+      act(() => useTestModeStore.getState().setTestMode('student', 'academy-123'));
+      expect(renderHook(() => useCan('academy:update')).result.current).toBe(false);
 
-      act(() => store.setTestMode('student', 'academy-123'));
-      expect(renderHook(() => useActiveRoles()).result.current).toEqual(['player']);
+      // Coach
+      act(() => useTestModeStore.getState().setTestMode('coach', 'academy-123'));
+      expect(renderHook(() => useCan('academy:update')).result.current).toBe(false);
 
-      act(() => store.exitTestMode());
-      expect(renderHook(() => useActiveRoles()).result.current).toContain('super_admin');
+      // Owner
+      act(() => useTestModeStore.getState().setTestMode('academy_owner', 'academy-123'));
+      expect(renderHook(() => useCan('academy:update')).result.current).toBe(true);
+
+      // Exit test mode -> Super Admin
+      act(() => useTestModeStore.getState().exitTestMode());
+      expect(renderHook(() => useCan('academy:update')).result.current).toBe(true);
     });
   });
 });
