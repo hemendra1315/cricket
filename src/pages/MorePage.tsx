@@ -54,12 +54,6 @@ export function MorePage() {
   };
 
   const managementItems: (MenuItem | false)[] = [
-    canUpdateAcademy && {
-      to: '/settings/academy',
-      label: 'Academy Settings',
-      desc: 'Academy profile, join code & details',
-      icon: Settings,
-    },
     canManageMembers && {
       to: '/members',
       label: 'Players & Members',
@@ -136,11 +130,32 @@ export function MorePage() {
     <div className="bg-bg min-h-screen pb-24 md:pb-6">
       <MobilePageHeader title="More" subtitle={membership?.academyName ?? 'Academy Navigation'} />
 
-      <div className="space-y-4 px-4 pt-1">
-        {/* User Card */}
-        <Card className="bg-surface border-border-subtle flex items-center justify-between p-4 shadow-2xs">
+      <div className="space-y-3 px-4 pt-1">
+        {/* 1. Top-Level Prominent Academy Settings Card (Absolute Top for Owners/Admins) */}
+        {canUpdateAcademy && (
+          <button
+            onClick={() => navigate('/settings/academy')}
+            className="bg-primary/5 border-primary/30 hover:bg-primary/10 active:bg-primary/15 flex min-h-[56px] w-full items-center justify-between rounded-2xl border p-3.5 text-left shadow-2xs transition active:scale-[0.99]"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="bg-primary text-primary-fg flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-bold shadow-xs">
+                <Settings className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-fg truncate text-sm font-bold">Academy Settings</span>
+                <p className="text-fg-muted truncate text-xs">
+                  Academy profile, join code & details
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="text-primary h-5 w-5 shrink-0" />
+          </button>
+        )}
+
+        {/* 2. User Card */}
+        <Card className="bg-surface border-border-subtle flex items-center justify-between p-3.5 shadow-2xs">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="bg-primary/10 text-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-bold">
+            <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold">
               {profile?.fullName?.[0] ?? profile?.email?.[0] ?? 'U'}
             </div>
             <div className="min-w-0">
@@ -149,7 +164,7 @@ export function MorePage() {
               </p>
               <p className="text-fg-muted truncate text-xs">{profile?.email}</p>
               {displayRole && (
-                <span className="bg-surface-muted text-fg-muted mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                <span className="bg-surface-muted text-fg-muted mt-0.5 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
                   {displayRole.replace(/_/g, ' ')}
                 </span>
               )}

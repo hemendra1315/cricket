@@ -110,8 +110,8 @@ describe('Phase 41 — Route Security Matrix & Capability Enforcement', () => {
     });
   });
 
-  describe('5. Phase 42A — Academy Settings Discoverability & Access', () => {
-    it('grants Academy Settings access (academy:update) exclusively to Academy Owner and Super Admin', () => {
+  describe('5. Phase 42A & 42B — Academy Settings Absolute Top Prominence & Access', () => {
+    it('grants Academy Settings access (academy:update) exclusively to Academy Owner and Super Admin at absolute top priority', () => {
       // Student
       act(() => useTestModeStore.getState().setTestMode('student', 'academy-123'));
       expect(renderHook(() => useCan('academy:update')).result.current).toBe(false);
