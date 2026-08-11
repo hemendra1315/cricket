@@ -53,7 +53,8 @@ export function useActiveAcademy(): {
   const { current } = useMemberships();
   const activeAcademyId = useAcademyStore((state) => state.activeAcademyId);
   const setActiveAcademy = useAcademyStore((state) => state.setActiveAcademy);
-  const isSuperAdmin = useAuthStore((state) => state.profile?.isSuperAdmin === true);
+  const profile = useAuthStore((state) => state.profile);
+  const isSuperAdmin = profile?.isSuperAdmin === true;
   const queryClient = useQueryClient();
 
   const academyQuery = useAcademy(isSuperAdmin && !current ? activeAcademyId : null);
@@ -72,9 +73,10 @@ export function useActiveAcademy(): {
   const effectiveMembership = useMemo(() => {
     if (current) return current;
     if (isSuperAdmin && activeAcademyId) {
+      const validMembershipId = profile?.id ?? activeAcademyId;
       return {
-        id: `super-admin-virtual-${activeAcademyId}`,
-        userId: '',
+        id: validMembershipId,
+        userId: profile?.id ?? '',
         academyId: activeAcademyId,
         role: 'academy_owner' as const,
         status: 'active' as const,
@@ -88,7 +90,7 @@ export function useActiveAcademy(): {
       };
     }
     return null;
-  }, [current, isSuperAdmin, activeAcademyId, academyQuery.data]);
+  }, [current, isSuperAdmin, activeAcademyId, academyQuery.data, profile]);
 
   return {
     academyId: activeAcademyId ?? current?.academyId ?? null,

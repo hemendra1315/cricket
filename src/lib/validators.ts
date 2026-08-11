@@ -3,6 +3,11 @@ import { z } from 'zod';
 /** Reusable Zod primitives so validation rules stay consistent across forms. */
 export const uuidSchema = z.string().uuid();
 
+export function isUUID(val: unknown): val is string {
+  if (typeof val !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+}
+
 export const emailSchema = z.string().trim().toLowerCase().email('Enter a valid email address.');
 
 export const indianPhoneSchema = z

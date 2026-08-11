@@ -1,6 +1,11 @@
+import React from 'react';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { useAcademyStore, useAuthStore, useTestModeStore } from '@/stores';
 import { useActiveRoles, useCan } from '@/lib/rbac';
+import { useActiveAcademy } from '@/features/academies';
+import { isUUID } from '@/lib/validators';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createQueryClient } from '@/lib/query/queryClient';
 import { renderHook, act } from '@testing-library/react';
 
 describe('Phase 37 — Role-Accurate Test App As Mode Verification', () => {
@@ -258,5 +263,32 @@ describe('Phase 37 — Role-Accurate Test App As Mode Verification', () => {
     act(() => useTestModeStore.getState().setTestMode('academy_owner', 'academy-123'));
     const { result: ownerCanUpdate } = renderHook(() => useCan('academy:update'));
     expect(ownerCanUpdate.current).toBe(true);
+  });
+
+  it('guarantees effectiveMembership ID is always a valid UUID and never contains super-admin-virtual-', () => {
+    act(() => {
+      useAuthStore.setState({
+        profile: {
+          id: '11111111-2222-3333-4444-555555555555',
+          email: 'admin@cricket.app',
+          fullName: 'Super Admin',
+          phone: null,
+          avatarUrl: null,
+          dateOfBirth: null,
+          locale: 'en-US',
+          timezone: 'UTC',
+          isSuperAdmin: true,
+        },
+        memberships: [],
+      });
+      useAcademyStore.getState().setActiveAcademy('99999999-8888-7777-6666-555555555555');
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: createQueryClient() }, children);
+
+    const { result } = renderHook(() => useActiveAcademy(), { wrapper });
+    expect(result.current.membership?.id).not.toContain('super-admin-virtual');
+    expect(isUUID(result.current.membership?.id)).toBe(true);
   });
 });
