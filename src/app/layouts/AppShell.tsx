@@ -21,7 +21,7 @@ import { AcademySwitcher, useActiveAcademy } from '@/features/academies';
 import { useAuth } from '@/features/auth';
 import { InstallAppButton } from '@/features/pwa/components/InstallAppButton';
 import { useOnlineStatus } from '@/hooks';
-import { hasCapability, useActiveRoles, type Capability } from '@/lib/rbac';
+import { hasCapability, useActiveRoles, useCan, type Capability } from '@/lib/rbac';
 import { useAcademyStore, useTestModeStore } from '@/stores';
 import { cn } from '@/lib/utils/cn';
 import { MobileBottomNav, MobileFab } from '@/components/mobile';
@@ -134,6 +134,9 @@ export function AppShell() {
     return item.requiresCapability === null || hasCapability(roles, item.requiresCapability);
   });
 
+  const canUpdateAcademy = useCan('academy:update');
+  const targetSettingsRoute = canUpdateAcademy ? '/settings/academy' : '/profile';
+
   return (
     <div className="bg-bg min-h-screen">
       {/* HEADER: Compact & Responsive */}
@@ -152,6 +155,13 @@ export function AppShell() {
             </span>
           ) : null}
           <ThemeToggle />
+          <button
+            onClick={() => navigate(targetSettingsRoute)}
+            aria-label="Settings"
+            className="text-fg-muted hover:bg-surface-muted hover:text-fg flex h-9 w-9 items-center justify-center rounded-xl transition active:scale-95"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
           <NavLink to="/profile" aria-label="View Profile">
             <Avatar name={displayName} src={profile?.avatarUrl} size="sm" />
           </NavLink>

@@ -1,7 +1,8 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui';
+import { useCan } from '@/lib/rbac';
 
 type MobilePageHeaderProps = {
   title: string;
@@ -13,6 +14,7 @@ type MobilePageHeaderProps = {
     onClick: () => void;
   };
   showBack?: boolean;
+  showSettingsAction?: boolean;
   onBack?: () => void;
   className?: string;
 };
@@ -23,10 +25,13 @@ export function MobilePageHeader({
   count,
   primaryAction,
   showBack = false,
+  showSettingsAction = true,
   onBack,
   className = '',
 }: MobilePageHeaderProps) {
   const navigate = useNavigate();
+  const canUpdateAcademy = useCan('academy:update');
+  const targetSettingsRoute = canUpdateAcademy ? '/settings/academy' : '/profile';
 
   const handleBack = () => {
     if (onBack) {
@@ -66,16 +71,27 @@ export function MobilePageHeader({
           </div>
         </div>
 
-        {primaryAction && (
-          <Button
-            onClick={primaryAction.onClick}
-            variant="secondary"
-            className="text-primary min-h-[44px] shrink-0 border-0 bg-white px-3.5 font-semibold shadow-2xs hover:bg-white/90"
-          >
-            {primaryAction.icon && <span className="mr-1.5">{primaryAction.icon}</span>}
-            {primaryAction.label}
-          </Button>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {primaryAction && (
+            <Button
+              onClick={primaryAction.onClick}
+              variant="secondary"
+              className="text-primary min-h-[44px] shrink-0 border-0 bg-white px-3.5 font-semibold shadow-2xs hover:bg-white/90"
+            >
+              {primaryAction.icon && <span className="mr-1.5">{primaryAction.icon}</span>}
+              {primaryAction.label}
+            </Button>
+          )}
+          {showSettingsAction && (
+            <button
+              onClick={() => navigate(targetSettingsRoute)}
+              aria-label="Settings"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 active:scale-95"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
