@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { MobilePageHeader } from '../MobilePageHeader';
+import { MobileBottomNav } from '../MobileBottomNav';
 import { useAuthStore, useTestModeStore, useAcademyStore } from '@/stores';
 import { useCan } from '@/lib/rbac';
 import { renderHook, act } from '@testing-library/react';
@@ -120,5 +121,125 @@ describe('Phase 47 — Mobile Settings Navigation Fix Verification', () => {
 
     const canUpdate = renderHook(() => useCan('academy:update')).result.current;
     expect(canUpdate).toBe(false);
+  });
+
+  describe('MobileBottomNav Primary Settings Navigation', () => {
+    it('renders Settings in primary bottom navigation for Academy Owner', () => {
+      render(
+        <BrowserRouter>
+          <MobileBottomNav />
+        </BrowserRouter>,
+      );
+
+      const settingsNavItem = screen.getByRole('button', { name: /settings/i });
+      expect(settingsNavItem).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+    });
+
+    it('renders Settings in primary bottom navigation for Super Admin', () => {
+      act(() => {
+        useAuthStore.setState({
+          profile: {
+            id: 'admin-id',
+            email: 'admin@cricket.app',
+            fullName: 'Super Admin',
+            phone: null,
+            avatarUrl: null,
+            dateOfBirth: null,
+            locale: 'en-US',
+            timezone: 'UTC',
+            isSuperAdmin: true,
+          },
+          memberships: [],
+        });
+      });
+
+      render(
+        <BrowserRouter>
+          <MobileBottomNav />
+        </BrowserRouter>,
+      );
+
+      const settingsNavItem = screen.getByRole('button', { name: /settings/i });
+      expect(settingsNavItem).toBeInTheDocument();
+    });
+
+    it('does NOT expose Academy Settings in primary bottom navigation for Coach', () => {
+      act(() => {
+        useAuthStore.setState({
+          profile: {
+            id: 'coach-id',
+            email: 'coach@cricket.app',
+            fullName: 'Academy Coach',
+            phone: null,
+            avatarUrl: null,
+            dateOfBirth: null,
+            locale: 'en-US',
+            timezone: 'UTC',
+            isSuperAdmin: false,
+          },
+          memberships: [
+            {
+              id: 'mem-3',
+              academyId: 'academy-47',
+              role: 'coach',
+              status: 'active',
+              academyName: 'Mobile Test Academy',
+              academySlug: 'mobile-test',
+              logoUrl: null,
+              city: 'London',
+              timezone: 'UTC',
+            },
+          ],
+        });
+      });
+
+      render(
+        <BrowserRouter>
+          <MobileBottomNav />
+        </BrowserRouter>,
+      );
+
+      expect(screen.queryByRole('button', { name: /^settings$/i })).not.toBeInTheDocument();
+    });
+
+    it('does NOT expose Academy Settings in primary bottom navigation for Student', () => {
+      act(() => {
+        useAuthStore.setState({
+          profile: {
+            id: 'student-id',
+            email: 'student@cricket.app',
+            fullName: 'Student Player',
+            phone: null,
+            avatarUrl: null,
+            dateOfBirth: null,
+            locale: 'en-US',
+            timezone: 'UTC',
+            isSuperAdmin: false,
+          },
+          memberships: [
+            {
+              id: 'mem-4',
+              academyId: 'academy-47',
+              role: 'player',
+              status: 'active',
+              academyName: 'Mobile Test Academy',
+              academySlug: 'mobile-test',
+              logoUrl: null,
+              city: 'London',
+              timezone: 'UTC',
+            },
+          ],
+        });
+      });
+
+      render(
+        <BrowserRouter>
+          <MobileBottomNav />
+        </BrowserRouter>,
+      );
+
+      expect(screen.queryByRole('button', { name: /^settings$/i })).not.toBeInTheDocument();
+    });
   });
 });

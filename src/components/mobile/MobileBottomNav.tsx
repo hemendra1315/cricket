@@ -1,10 +1,20 @@
-import { Home, Users, CalendarDays, Layers, MoreHorizontal, Trophy, User } from 'lucide-react';
+import {
+  Home,
+  Users,
+  CalendarDays,
+  Layers,
+  MoreHorizontal,
+  Trophy,
+  User,
+  Settings,
+  ShieldCheck,
+} from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMemberships } from '@/features/academies';
+import { useAuth } from '@/features/auth';
 import { useCan } from '@/lib/rbac';
-import { useTestModeStore } from '@/stores';
+import { useAcademyStore, useTestModeStore } from '@/stores';
 import { ROLE_HOME, type AppRole } from '@/types/enums';
-import type { Capability } from '@/lib/rbac/permissions';
 
 interface NavItemDef {
   key: string;
@@ -12,20 +22,18 @@ interface NavItemDef {
   label: string;
   icon: typeof Home;
   matchPrefixes: string[];
-  requiresCapability?: Capability;
-  forRole?: AppRole;
 }
 
 export function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { current } = useMemberships();
+  const { profile } = useAuth();
   const testModeRole = useTestModeStore((s) => s.activeRole);
+  const activeAcademyId = useAcademyStore((s) => s.activeAcademyId);
 
-  const canReadBatches = useCan('batches:read');
-  const canManageMembers = useCan('members:manage');
-  const canReadSessions = useCan('sessions:read');
-  const canReadMatches = useCan('matches:read');
+  const canUpdateAcademy = useCan('academy:update');
+  const isSuperAdmin = profile?.isSuperAdmin === true;
 
   const role: AppRole = testModeRole
     ? testModeRole === 'student'
@@ -33,76 +41,134 @@ export function MobileBottomNav() {
       : testModeRole
     : (current?.role ?? 'player');
 
-  const homePath = ROLE_HOME[role] ?? '/dashboard';
+  const homePath = testModeRole
+    ? (ROLE_HOME[role] ?? '/dashboard')
+    : isSuperAdmin && !activeAcademyId
+      ? '/admin'
+      : (ROLE_HOME[role] ?? '/dashboard');
 
-  const allItems: NavItemDef[] = [
-    {
-      key: 'home',
-      to: homePath,
-      label: 'Home',
-      icon: Home,
-      matchPrefixes: ['/dashboard', '/owner', '/coach', '/player', '/me'],
-    },
-    {
-      key: 'players',
-      to: '/members',
-      label: 'Players',
-      icon: Users,
-      matchPrefixes: ['/members'],
-      requiresCapability: 'members:manage',
-    },
-    {
-      key: 'batches',
-      to: '/batches',
-      label: 'Batches',
-      icon: Layers,
-      matchPrefixes: ['/batches'],
-      requiresCapability: 'batches:read',
-    },
-    {
-      key: 'sessions',
-      to: '/sessions',
-      label: 'Sessions',
-      icon: CalendarDays,
-      matchPrefixes: ['/sessions'],
-      requiresCapability: 'sessions:read',
-    },
-    {
-      key: 'matches',
-      to: '/matches',
-      label: 'Matches',
-      icon: Trophy,
-      matchPrefixes: ['/matches'],
-      requiresCapability: 'matches:read',
-    },
-    {
-      key: 'profile',
-      to: '/profile',
-      label: 'Profile',
-      icon: User,
-      matchPrefixes: ['/profile'],
-      forRole: 'player',
-    },
-    {
-      key: 'more',
-      to: '/more',
-      label: 'More',
-      icon: MoreHorizontal,
-      matchPrefixes: ['/more', '/drills', '/admin'],
-    },
-  ];
+  let items: NavItemDef[] = [];
 
-  const items = allItems.filter((item) => {
-    if (item.forRole && item.forRole !== role) return false;
-    if (!item.requiresCapability) return true;
-    if (item.requiresCapability === 'batches:read') return canReadBatches;
-    if (item.requiresCapability === 'members:manage') return canManageMembers;
-    if (item.requiresCapability === 'sessions:read') return canReadSessions;
-    if (item.requiresCapability === 'matches:read') return canReadMatches;
-    return true;
-  });
+  if (canUpdateAcademy) {
+    // Owner & Super Admin: Home | Players | Sessions | Settings | More
+    items = [
+      {
+        key: 'home',
+        to: homePath,
+        label: isSuperAdmin && location.pathname === '/admin' ? 'Admin' : 'Home',
+        icon: isSuperAdmin && location.pathname === '/admin' ? ShieldCheck : Home,
+        matchPrefixes: ['/dashboard', '/owner', '/admin', '/me'],
+      },
+      {
+        key: 'players',
+        to: '/members',
+        label: 'Players',
+        icon: Users,
+        matchPrefixes: ['/members'],
+      },
+      {
+        key: 'sessions',
+        to: '/sessions',
+        label: 'Sessions',
+        icon: CalendarDays,
+        matchPrefixes: ['/sessions'],
+      },
+      {
+        key: 'settings',
+        to: '/settings/academy',
+        label: 'Settings',
+        icon: Settings,
+        matchPrefixes: ['/settings'],
+      },
+      {
+        key: 'more',
+        to: '/more',
+        label: 'More',
+        icon: MoreHorizontal,
+        matchPrefixes: ['/more', '/drills', '/stats', '/batches', '/matches'],
+      },
+    ];
+  } else if (role === 'coach') {
+    // Coach: Home | Players | Batches | Sessions | More
+    items = [
+      {
+        key: 'home',
+        to: homePath,
+        label: 'Home',
+        icon: Home,
+        matchPrefixes: ['/dashboard', '/coach', '/me'],
+      },
+      {
+        key: 'players',
+        to: '/members',
+        label: 'Players',
+        icon: Users,
+        matchPrefixes: ['/members'],
+      },
+      {
+        key: 'batches',
+        to: '/batches',
+        label: 'Batches',
+        icon: Layers,
+        matchPrefixes: ['/batches'],
+      },
+      {
+        key: 'sessions',
+        to: '/sessions',
+        label: 'Sessions',
+        icon: CalendarDays,
+        matchPrefixes: ['/sessions'],
+      },
+      {
+        key: 'more',
+        to: '/more',
+        label: 'More',
+        icon: MoreHorizontal,
+        matchPrefixes: ['/more', '/drills', '/matches', '/stats', '/profile'],
+      },
+    ];
+  } else {
+    // Student / Player: Home | Sessions | Matches | Profile | More
+    items = [
+      {
+        key: 'home',
+        to: homePath,
+        label: 'Home',
+        icon: Home,
+        matchPrefixes: ['/player', '/dashboard', '/me'],
+      },
+      {
+        key: 'sessions',
+        to: '/sessions',
+        label: 'Sessions',
+        icon: CalendarDays,
+        matchPrefixes: ['/sessions'],
+      },
+      {
+        key: 'matches',
+        to: '/matches',
+        label: 'Matches',
+        icon: Trophy,
+        matchPrefixes: ['/matches'],
+      },
+      {
+        key: 'profile',
+        to: '/profile',
+        label: 'Profile',
+        icon: User,
+        matchPrefixes: ['/profile'],
+      },
+      {
+        key: 'more',
+        to: '/more',
+        label: 'More',
+        icon: MoreHorizontal,
+        matchPrefixes: ['/more', '/stats', '/drills'],
+      },
+    ];
+  }
 
-  const isItemActive = (item: (typeof items)[number]) => {
+  const isItemActive = (item: NavItemDef) => {
     return item.matchPrefixes.some(
       (prefix) => location.pathname === prefix || location.pathname.startsWith(prefix + '/'),
     );
