@@ -56,6 +56,7 @@ const COACH: Capability[] = [
   'coaches:read',
   'batches:read',
   'matches:read',
+  'matches:manage',
   'sessions:read',
   'sessions:manage',
   'attendance:read',

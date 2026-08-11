@@ -4,6 +4,7 @@ import {
   Plus,
   UserPlus,
   UserCheck,
+  Users,
   Layers,
   CalendarCheck,
   CalendarDays,
@@ -19,7 +20,9 @@ export function DashboardQuickActions() {
   const [isOpen, setIsOpen] = useState(false);
 
   const canManagePlayers = useCan('players:manage');
+  const canReadPlayers = useCan('players:read');
   const canManageBatches = useCan('batches:manage');
+  const canReadBatches = useCan('batches:read');
   const canManageSessions = useCan('sessions:manage');
   const canManageMatches = useCan('matches:manage');
   const canMarkAttendance = useCan('attendance:mark');
@@ -60,6 +63,18 @@ export function DashboardQuickActions() {
       icon: <CalendarCheck className="h-5 w-5 text-emerald-500" />,
       onClick: () => navigate('/sessions'),
       description: 'Update session roster attendance',
+    },
+    canReadBatches && {
+      label: 'View Batches',
+      icon: <Layers className="h-5 w-5 text-sky-500" />,
+      onClick: () => navigate('/batches'),
+      description: 'View training groups and rosters',
+    },
+    canReadPlayers && {
+      label: 'View Players',
+      icon: <Users className="h-5 w-5 text-indigo-500" />,
+      onClick: () => navigate('/members'),
+      description: 'View player directory & profiles',
     },
     canManageMatches && {
       label: 'Import CricHeroes',

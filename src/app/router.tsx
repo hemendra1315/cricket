@@ -110,6 +110,8 @@ export const router = createBrowserRouter([
                   { path: '/more', element: <MorePage /> },
                   { path: '/drills', element: <DrillsPage /> },
                   { path: '/drills/:drillId', element: <DrillDetailPage /> },
+                  { path: '/matches', element: <MatchesPage /> },
+                  { path: '/matches/:matchId', element: <MatchDetailPage /> },
                 ],
               },
               {
@@ -122,9 +124,7 @@ export const router = createBrowserRouter([
                   { path: '/batches/:batchId', element: <BatchDetailPage /> },
                   { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
                   { path: '/attendance', element: <AttendanceOverviewPage /> },
-                  { path: '/matches', element: <MatchesPage /> },
                   { path: '/matches/new', element: <AddMatchPage /> },
-                  { path: '/matches/:matchId', element: <MatchDetailPage /> },
                   { path: '/sessions', element: <TrainingSessionsPage /> },
                   { path: '/sessions/:sessionId', element: <TrainingSessionDetailPage /> },
                   { path: '/sessions/:sessionId/attendance', element: <AttendanceSessionPage /> },

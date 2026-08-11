@@ -87,16 +87,18 @@ describe('Phase 37 — Role-Accurate Test App As Mode Verification', () => {
     expect(canReadSessions.current).toBe(true);
     expect(canReadMatches.current).toBe(true);
 
-    // Student CANNOT manage members, create batches, manage academy, or manage drills
+    // Student CANNOT manage members, create batches, manage academy, manage drills, or manage matches
     const { result: canManageMembers } = renderHook(() => useCan('members:manage'));
     const { result: canManageBatches } = renderHook(() => useCan('batches:manage'));
     const { result: canUpdateAcademy } = renderHook(() => useCan('academy:update'));
     const { result: canManageDrills } = renderHook(() => useCan('drills:manage'));
+    const { result: canManageMatches } = renderHook(() => useCan('matches:manage'));
 
     expect(canManageMembers.current).toBe(false);
     expect(canManageBatches.current).toBe(false);
     expect(canUpdateAcademy.current).toBe(false);
     expect(canManageDrills.current).toBe(false);
+    expect(canManageMatches.current).toBe(false);
   });
 
   it('strictly restricts capabilities according to simulated Coach role', () => {
@@ -107,14 +109,16 @@ describe('Phase 37 — Role-Accurate Test App As Mode Verification', () => {
     const { result: roles } = renderHook(() => useActiveRoles());
     expect(roles.current).toEqual(['coach']);
 
-    // Coach can read & manage sessions, mark attendance, read matches, manage drills
+    // Coach can read & manage sessions, mark attendance, read matches, manage matches, manage drills
     const { result: canManageSessions } = renderHook(() => useCan('sessions:manage'));
     const { result: canMarkAttendance } = renderHook(() => useCan('attendance:mark'));
     const { result: canManageDrills } = renderHook(() => useCan('drills:manage'));
+    const { result: canManageMatches } = renderHook(() => useCan('matches:manage'));
 
     expect(canManageSessions.current).toBe(true);
     expect(canMarkAttendance.current).toBe(true);
     expect(canManageDrills.current).toBe(true);
+    expect(canManageMatches.current).toBe(true);
 
     // Coach CANNOT manage academy settings or regenerate join codes
     const { result: canUpdateAcademy } = renderHook(() => useCan('academy:update'));
@@ -137,10 +141,12 @@ describe('Phase 37 — Role-Accurate Test App As Mode Verification', () => {
     const { result: canUpdateAcademy } = renderHook(() => useCan('academy:update'));
     const { result: canManageMembers } = renderHook(() => useCan('members:manage'));
     const { result: canManageBatches } = renderHook(() => useCan('batches:manage'));
+    const { result: canManageMatches } = renderHook(() => useCan('matches:manage'));
 
     expect(canUpdateAcademy.current).toBe(true);
     expect(canManageMembers.current).toBe(true);
     expect(canManageBatches.current).toBe(true);
+    expect(canManageMatches.current).toBe(true);
   });
 
   it('prevents non-Super Admin users from utilizing Test App As mode activeRole in RBAC', () => {
