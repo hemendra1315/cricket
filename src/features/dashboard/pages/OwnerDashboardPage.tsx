@@ -15,7 +15,6 @@ import { formatDate } from '@/lib/utils/date';
 import { useActiveAcademy } from '@/features/academies';
 import { useOwnerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
 import { KpiCard } from '../components/KpiCard';
-import { PerformanceLeadersCard } from '../components/PerformanceLeadersCard';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { JoinCodeCard } from '@/features/academies';
 import { SuperAdminAcademyActions } from '@/features/admin';
@@ -94,31 +93,6 @@ export default function OwnerDashboardPage() {
 
       {/* 4. Collapsed Quick Actions Button */}
       <DashboardQuickActions />
-
-      {/* 5. Compact Performance Leaders Section (Runs | Wickets | Fielding) */}
-      <PerformanceLeadersCard
-        topBatters={
-          analytics.topBatters?.map((b) => ({
-            id: b.id,
-            name: b.name,
-            runs: Number(b.runs || 0),
-          })) ?? []
-        }
-        topBowlers={
-          analytics.topBowlers?.map((b) => ({
-            id: b.id,
-            name: b.name,
-            wickets: Number(b.wickets || 0),
-          })) ?? []
-        }
-        topFielders={
-          analytics.topFielders?.map((f) => ({
-            id: f.id,
-            name: f.name,
-            catches: Number(f.catches || 0),
-          })) ?? []
-        }
-      />
 
       {/* 6. Small Summary Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

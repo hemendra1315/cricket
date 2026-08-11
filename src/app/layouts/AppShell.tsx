@@ -9,6 +9,8 @@ import {
   User,
   Users,
   WifiOff,
+  BarChart2,
+  Settings,
 } from 'lucide-react';
 import { Suspense, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -81,6 +83,18 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
     label: 'Matches',
     icon: <Trophy className="h-4 w-4" aria-hidden />,
     requiresCapability: 'matches:read',
+  },
+  {
+    to: '/stats',
+    label: 'Stats & Performance',
+    icon: <BarChart2 className="h-4 w-4" aria-hidden />,
+    requiresCapability: null,
+  },
+  {
+    to: '/settings/academy',
+    label: 'Academy Settings',
+    icon: <Settings className="h-4 w-4" aria-hidden />,
+    requiresCapability: 'academy:update',
   },
   {
     to: '/profile',

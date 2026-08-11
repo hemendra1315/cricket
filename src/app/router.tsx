@@ -39,6 +39,8 @@ const PlayerDashboardPage = lazy(() => import('@/features/dashboard/pages/Player
 const PlatformDashboardPage = lazy(() => import('@/features/admin/pages/PlatformDashboardPage'));
 const DrillsPage = lazy(() => import('@/features/drills/pages/DrillsPage'));
 const DrillDetailPage = lazy(() => import('@/features/drills/pages/DrillDetailPage'));
+const StatsPage = lazy(() => import('@/features/stats/pages/StatsPage'));
+const AcademySettingsPage = lazy(() => import('@/features/academies/pages/AcademySettingsPage'));
 const ForbiddenPage = lazy(() => import('@/pages/ForbiddenPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
@@ -89,6 +91,8 @@ export const router = createBrowserRouter([
                 children: [
                   { path: '/dashboard', element: <OwnerDashboardPage /> },
                   { path: '/owner', element: <OwnerDashboardPage /> },
+                  { path: '/settings', element: <AcademySettingsPage /> },
+                  { path: '/settings/academy', element: <AcademySettingsPage /> },
                 ],
               },
               {
@@ -108,6 +112,7 @@ export const router = createBrowserRouter([
                 ),
                 children: [
                   { path: '/more', element: <MorePage /> },
+                  { path: '/stats', element: <StatsPage /> },
                   { path: '/drills', element: <DrillsPage /> },
                   { path: '/drills/:drillId', element: <DrillDetailPage /> },
                   { path: '/matches', element: <MatchesPage /> },

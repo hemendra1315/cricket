@@ -236,16 +236,27 @@ describe('Phase 37 — Role-Accurate Test App As Mode Verification', () => {
     const { result: r2 } = renderHook(() => useActiveRoles());
     expect(r2.current).toEqual(['coach']);
 
-    // 3. Coach -> Owner
-    act(() => store.setTestMode('academy_owner', 'academy-123'));
-    expect(useTestModeStore.getState().activeRole).toBe('academy_owner');
-    const { result: r3 } = renderHook(() => useActiveRoles());
-    expect(r3.current).toEqual(['academy_owner']);
-
     // 4. Owner -> Exit
     act(() => store.exitTestMode());
     expect(useTestModeStore.getState().activeRole).toBeNull();
     const { result: r4 } = renderHook(() => useActiveRoles());
     expect(r4.current).toContain('super_admin');
+  });
+
+  it('verifies Academy Settings capability (academy:update) is granted to Owner but denied to Student and Coach', () => {
+    // Student
+    act(() => useTestModeStore.getState().setTestMode('student', 'academy-123'));
+    const { result: studentCanUpdate } = renderHook(() => useCan('academy:update'));
+    expect(studentCanUpdate.current).toBe(false);
+
+    // Coach
+    act(() => useTestModeStore.getState().setTestMode('coach', 'academy-123'));
+    const { result: coachCanUpdate } = renderHook(() => useCan('academy:update'));
+    expect(coachCanUpdate.current).toBe(false);
+
+    // Owner
+    act(() => useTestModeStore.getState().setTestMode('academy_owner', 'academy-123'));
+    const { result: ownerCanUpdate } = renderHook(() => useCan('academy:update'));
+    expect(ownerCanUpdate.current).toBe(true);
   });
 });

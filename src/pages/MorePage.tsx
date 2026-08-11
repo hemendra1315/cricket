@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronRight,
   Building2,
+  BarChart2,
 } from 'lucide-react';
 import { MobilePageHeader } from '@/components/mobile';
 import { Card, Badge } from '@/components/ui';
@@ -53,6 +54,12 @@ export function MorePage() {
   };
 
   const academyItems: (MenuItem | false)[] = [
+    {
+      to: '/stats',
+      label: 'Stats & Performance',
+      desc: 'Cricket statistics and analytics',
+      icon: BarChart2,
+    },
     canReadAttendance && {
       to: '/sessions',
       label: 'Attendance & Sessions',
@@ -87,7 +94,7 @@ export function MorePage() {
       icon: User,
     },
     canUpdateAcademy && {
-      to: '/settings',
+      to: '/settings/academy',
       label: 'Academy Settings',
       desc: membership?.academyName ?? 'Manage academy options',
       icon: Settings,
