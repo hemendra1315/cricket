@@ -10,11 +10,12 @@ import {
   useOwnerDashboardAnalytics,
 } from '@/features/dashboard/hooks/useDashboardAnalytics';
 import { SimpleBarChart } from '@/components/charts/SimpleBarChart';
-import { useTestModeStore } from '@/stores';
+import { useAuthStore, useTestModeStore } from '@/stores';
 import { supabase } from '@/lib/supabase/client';
 
 export default function StatsPage() {
   const { academyId, membership } = useActiveAcademy();
+  const profile = useAuthStore((s) => s.profile);
   const testModeRole = useTestModeStore((s) => s.activeRole);
 
   const role = testModeRole
@@ -42,10 +43,12 @@ export default function StatsPage() {
     },
   });
 
+  const fallbackPlayerId = membership?.id ?? profile?.id ?? academyId;
+
   const playerId =
     (membership?.role === 'player' ? membership?.id : null) ??
     activePlayerQuery.data ??
-    (isPlayer ? 'demo-player-id' : null);
+    (isPlayer ? fallbackPlayerId : null);
 
   const playerAnalyticsQuery = usePlayerDashboardAnalytics(academyId, isPlayer ? playerId : null);
   const ownerAnalyticsQuery = useOwnerDashboardAnalytics(isOwnerOrCoach ? academyId : null);

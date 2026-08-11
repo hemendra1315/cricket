@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
-import { ErrorState } from '@/components/feedback';
+import { Card, CardBody, CardHeader, Badge, Button } from '@/components/ui';
 import { MobilePageHeader } from '@/components/mobile';
 import { useActiveAcademy } from '@/features/academies';
 import {
@@ -169,7 +168,19 @@ export default function PlayerProfilePage() {
       {profileQuery.isPending ? (
         <p className="text-fg-muted">Loading profile…</p>
       ) : profileQuery.isError || !profileQuery.data ? (
-        <ErrorState error={profileQuery.error} onRetry={() => void profileQuery.refetch()} />
+        <Card className="p-6 text-center">
+          <CardBody className="space-y-3">
+            <h3 className="text-fg text-lg font-bold">Student profile unavailable</h3>
+            <p className="text-fg-muted text-sm">
+              We could not locate the requested player record for this academy.
+            </p>
+            <div className="pt-2">
+              <Link to="/members">
+                <Button variant="primary">View Roster</Button>
+              </Link>
+            </div>
+          </CardBody>
+        </Card>
       ) : (
         <>
           <Card className="hidden md:block">
