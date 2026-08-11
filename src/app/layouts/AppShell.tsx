@@ -62,7 +62,7 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
     to: '/members',
     label: 'Members',
     icon: <Users className="h-4 w-4" aria-hidden />,
-    requiresCapability: 'players:read',
+    requiresCapability: 'members:manage',
   },
   {
     to: '/batches',

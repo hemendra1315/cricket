@@ -331,12 +331,21 @@ export default function TrainingSessionsPage() {
                         </p>
                       )}
                     </div>
-                    <Link
-                      to={`/sessions/${session.id}/attendance`}
-                      className="bg-primary/10 text-primary hover:bg-primary/20 shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
-                    >
-                      Attendance
-                    </Link>
+                    {canManage ? (
+                      <Link
+                        to={`/sessions/${session.id}/attendance`}
+                        className="bg-primary/10 text-primary hover:bg-primary/20 shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+                      >
+                        Attendance
+                      </Link>
+                    ) : (
+                      <Link
+                        to={`/sessions/${session.id}`}
+                        className="bg-surface-elevated text-fg-muted hover:text-fg shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+                      >
+                        View Session
+                      </Link>
+                    )}
                   </div>
                 </div>
               ))}
