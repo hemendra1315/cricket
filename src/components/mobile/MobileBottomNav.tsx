@@ -1,17 +1,39 @@
 import { Home, Users, CalendarDays, Layers, MoreHorizontal } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMemberships } from '@/features/academies';
-import { ROLE_HOME } from '@/types/enums';
+import { useCan } from '@/lib/rbac';
+import { useTestModeStore } from '@/stores';
+import { ROLE_HOME, type AppRole } from '@/types/enums';
+import type { Capability } from '@/lib/rbac/permissions';
+
+interface NavItemDef {
+  key: string;
+  to: string;
+  label: string;
+  icon: typeof Home;
+  matchPrefixes: string[];
+  requiresCapability?: Capability;
+}
 
 export function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { current } = useMemberships();
+  const testModeRole = useTestModeStore((s) => s.activeRole);
 
-  const role = current?.role ?? 'player';
+  const canReadBatches = useCan('batches:read');
+  const canManageMembers = useCan('members:manage');
+  const canReadSessions = useCan('sessions:read');
+
+  const role: AppRole = testModeRole
+    ? testModeRole === 'student'
+      ? 'player'
+      : testModeRole
+    : (current?.role ?? 'player');
+
   const homePath = ROLE_HOME[role] ?? '/dashboard';
 
-  const items = [
+  const allItems: NavItemDef[] = [
     {
       key: 'home',
       to: homePath,
@@ -19,14 +41,29 @@ export function MobileBottomNav() {
       icon: Home,
       matchPrefixes: ['/dashboard', '/owner', '/coach', '/player', '/me'],
     },
-    { key: 'batches', to: '/batches', label: 'Batches', icon: Layers, matchPrefixes: ['/batches'] },
-    { key: 'players', to: '/members', label: 'Players', icon: Users, matchPrefixes: ['/members'] },
+    {
+      key: 'players',
+      to: '/members',
+      label: 'Players',
+      icon: Users,
+      matchPrefixes: ['/members'],
+      requiresCapability: 'members:manage',
+    },
+    {
+      key: 'batches',
+      to: '/batches',
+      label: 'Batches',
+      icon: Layers,
+      matchPrefixes: ['/batches'],
+      requiresCapability: 'batches:read',
+    },
     {
       key: 'sessions',
       to: '/sessions',
       label: 'Sessions',
       icon: CalendarDays,
       matchPrefixes: ['/sessions'],
+      requiresCapability: 'sessions:read',
     },
     {
       key: 'more',
@@ -36,6 +73,14 @@ export function MobileBottomNav() {
       matchPrefixes: ['/more', '/drills', '/matches', '/admin', '/profile'],
     },
   ];
+
+  const items = allItems.filter((item) => {
+    if (!item.requiresCapability) return true;
+    if (item.requiresCapability === 'batches:read') return canReadBatches;
+    if (item.requiresCapability === 'members:manage') return canManageMembers;
+    if (item.requiresCapability === 'sessions:read') return canReadSessions;
+    return true;
+  });
 
   const isItemActive = (item: (typeof items)[number]) => {
     return item.matchPrefixes.some(

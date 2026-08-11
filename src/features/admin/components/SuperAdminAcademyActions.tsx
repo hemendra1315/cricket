@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { UserPlus, Sparkles, UserCheck, Settings, Building2, FlaskConical } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
-import { useAcademyStore, useAuthStore } from '@/stores';
+import { useAcademyStore, useAuthStore, useTestModeStore } from '@/stores';
 import { AddMemberModal } from './AddMemberModal';
 import { AddCoachModal } from './AddCoachModal';
 import { SeedDemoDataModal } from './SeedDemoDataModal';
@@ -10,6 +10,7 @@ import { TestAppAsModal } from './TestAppAsModal';
 export function SuperAdminAcademyActions() {
   const isSuperAdmin = useAuthStore((s) => s.profile?.isSuperAdmin === true);
   const activeAcademyId = useAcademyStore((s) => s.activeAcademyId);
+  const testModeRole = useTestModeStore((s) => s.activeRole);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
@@ -17,7 +18,7 @@ export function SuperAdminAcademyActions() {
   const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
   const [isTestAppAsModalOpen, setIsTestAppAsModalOpen] = useState(false);
 
-  if (!isSuperAdmin || !activeAcademyId) return null;
+  if (!isSuperAdmin || !activeAcademyId || testModeRole !== null) return null;
 
   return (
     <>

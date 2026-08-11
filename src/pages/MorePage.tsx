@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { MobilePageHeader } from '@/components/mobile';
 import { Card, Badge } from '@/components/ui';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useTestModeStore } from '@/stores';
 import { useActiveAcademy, useMemberships } from '@/features/academies';
 import { useCan } from '@/lib/rbac';
 import { supabase } from '@/lib/supabase/client';
@@ -32,13 +32,20 @@ export function MorePage() {
   const profile = useAuthStore((s) => s.profile);
   const { membership } = useActiveAcademy();
   const { current } = useMemberships();
+  const testModeRole = useTestModeStore((s) => s.activeRole);
 
   const canReadAttendance = useCan('attendance:read');
   const canReadMatches = useCan('matches:read');
   const canReadDrills = useCan('drills:read');
-  const canReadMembers = useCan('players:read');
+  const canManageMembers = useCan('members:manage');
   const canUpdateAcademy = useCan('academy:update');
-  const isSuperAdmin = profile?.isSuperAdmin === true;
+  const isSuperAdmin = profile?.isSuperAdmin === true && !testModeRole;
+
+  const displayRole = testModeRole
+    ? testModeRole === 'student'
+      ? 'student'
+      : testModeRole
+    : (current?.role ?? 'player');
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -64,7 +71,7 @@ export function MorePage() {
       desc: 'Drill bank and skill logs',
       icon: Activity,
     },
-    canReadMembers && {
+    canManageMembers && {
       to: '/members',
       label: 'Members & Roster',
       desc: 'Players and staff directory',
@@ -121,9 +128,9 @@ export function MorePage() {
                 {profile?.fullName ?? 'User Profile'}
               </p>
               <p className="text-fg-muted truncate text-xs">{profile?.email}</p>
-              {current?.role && (
+              {displayRole && (
                 <span className="bg-surface-muted text-fg-muted mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
-                  {current.role.replace(/_/g, ' ')}
+                  {displayRole.replace(/_/g, ' ')}
                 </span>
               )}
             </div>

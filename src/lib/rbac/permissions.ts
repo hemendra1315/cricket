@@ -43,6 +43,7 @@ const PLAYER: Capability[] = [
   'sessions:read',
   'attendance:read',
   'drills:read',
+  'matches:read',
   'feedback:read_own',
   'stats:read_own',
   'billing:read_own',
