@@ -66,15 +66,35 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
   }
 
   body {
     @apply bg-bg text-fg font-sans antialiased;
+    touch-action: manipulation;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
   }
 
   *:focus-visible {
     @apply ring-primary ring-2 ring-offset-2 ring-offset-[var(--bg)] outline-none;
   }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 @media print {
