@@ -7,6 +7,7 @@ type ProfileRow = {
   full_name: string | null;
   email: string;
   phone: string | null;
+  phone_verified?: boolean;
   avatar_url: string | null;
   date_of_birth: string | null;
   locale: string;
@@ -15,7 +16,7 @@ type ProfileRow = {
 };
 
 const PROFILE_COLUMNS =
-  'id, full_name, email, phone, avatar_url, date_of_birth, locale, timezone, is_super_admin';
+  'id, full_name, email, phone, phone_verified, avatar_url, date_of_birth, locale, timezone, is_super_admin';
 
 export function toProfile(row: ProfileRow): Profile {
   return {
@@ -23,6 +24,7 @@ export function toProfile(row: ProfileRow): Profile {
     fullName: row.full_name,
     email: row.email,
     phone: row.phone,
+    phoneVerified: row.phone_verified ?? Boolean(row.phone && row.phone.trim().length > 0),
     avatarUrl: row.avatar_url,
     dateOfBirth: row.date_of_birth,
     locale: row.locale,
@@ -68,6 +70,8 @@ export async function ensureMyProfile(
 export type UpdateProfileInput = {
   fullName?: string;
   phone?: string | null;
+  phoneVerified?: boolean;
+  avatarUrl?: string | null;
   dateOfBirth?: string | null;
   timezone?: string;
   locale?: string;
@@ -75,11 +79,14 @@ export type UpdateProfileInput = {
 
 export async function updateMyProfile(userId: UUID, input: UpdateProfileInput): Promise<Profile> {
   const row = await unwrap<ProfileRow>(
-    supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
       .from('profiles')
       .update({
         ...(input.fullName === undefined ? null : { full_name: input.fullName }),
         ...(input.phone === undefined ? null : { phone: input.phone || null }),
+        ...(input.phoneVerified === undefined ? null : { phone_verified: input.phoneVerified }),
+        ...(input.avatarUrl === undefined ? null : { avatar_url: input.avatarUrl || null }),
         ...(input.dateOfBirth === undefined ? null : { date_of_birth: input.dateOfBirth || null }),
         ...(input.timezone === undefined ? null : { timezone: input.timezone }),
         ...(input.locale === undefined ? null : { locale: input.locale }),

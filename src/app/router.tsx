@@ -1,13 +1,22 @@
 import { lazy } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
-import { HomeRedirect, RequireAcademy, RequireAuth, RequireRole } from './guards';
+import {
+  HomeRedirect,
+  RequireAcademy,
+  RequireAuth,
+  RequireProfileOnboarding,
+  RequireRole,
+} from './guards';
 import { AppShell, AuthLayout, OnboardingLayout, PrintLayout } from './layouts';
 
 /** Route-level code splitting keeps the initial bundle small. */
 const SignInPage = lazy(() => import('@/features/auth/pages/SignInPage'));
 const AuthCallbackPage = lazy(() => import('@/features/auth/pages/AuthCallbackPage'));
 const ProfilePage = lazy(() => import('@/features/auth/pages/ProfilePage'));
+const ProfileOnboardingPage = lazy(
+  () => import('@/features/onboarding/pages/ProfileOnboardingPage'),
+);
 const OnboardingStartPage = lazy(() => import('@/features/onboarding/pages/OnboardingStartPage'));
 const CreateAcademyPage = lazy(() => import('@/features/onboarding/pages/CreateAcademyPage'));
 const JoinAcademyPage = lazy(() => import('@/features/onboarding/pages/JoinAcademyPage'));
@@ -66,73 +75,87 @@ export const router = createBrowserRouter([
       {
         element: <OnboardingLayout />,
         children: [
-          { path: '/onboarding', element: <OnboardingStartPage /> },
-          { path: '/onboarding/create-academy', element: <CreateAcademyPage /> },
-          { path: '/onboarding/join-academy', element: <JoinAcademyPage /> },
-          { path: '/onboarding/pending', element: <PendingApprovalPage /> },
-          { path: '/onboarding/select-academy', element: <SelectAcademyPage /> },
+          { path: '/onboarding/profile', element: <ProfileOnboardingPage /> },
+          {
+            element: <RequireProfileOnboarding />,
+            children: [
+              { path: '/onboarding', element: <OnboardingStartPage /> },
+              { path: '/onboarding/create-academy', element: <CreateAcademyPage /> },
+              { path: '/onboarding/join-academy', element: <JoinAcademyPage /> },
+              { path: '/onboarding/pending', element: <PendingApprovalPage /> },
+              { path: '/onboarding/select-academy', element: <SelectAcademyPage /> },
+            ],
+          },
         ],
       },
       {
-        element: <AppShell />,
+        element: <RequireProfileOnboarding />,
         children: [
-          { path: '/forbidden', element: <ForbiddenPage /> },
-          { path: '/profile', element: <ProfilePage /> },
           {
-            // Platform administration is not academy-scoped.
-            element: <RequireRole allow={['super_admin']} />,
-            children: [{ path: '/admin', element: <PlatformDashboardPage /> }],
-          },
-          {
-            element: <RequireAcademy />,
+            element: <AppShell />,
             children: [
+              { path: '/forbidden', element: <ForbiddenPage /> },
+              { path: '/profile', element: <ProfilePage /> },
               {
-                element: <RequireRole allow={['academy_owner', 'super_admin']} />,
-                children: [
-                  { path: '/dashboard', element: <OwnerDashboardPage /> },
-                  { path: '/owner', element: <OwnerDashboardPage /> },
-                  { path: '/settings', element: <AcademySettingsPage /> },
-                  { path: '/settings/academy', element: <AcademySettingsPage /> },
-                ],
+                // Platform administration is not academy-scoped.
+                element: <RequireRole allow={['super_admin']} />,
+                children: [{ path: '/admin', element: <PlatformDashboardPage /> }],
               },
               {
-                element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
-                children: [{ path: '/coach', element: <CoachDashboardPage /> }],
-              },
-              {
-                element: <RequireRole allow={['player', 'super_admin']} />,
+                element: <RequireAcademy />,
                 children: [
-                  { path: '/me', element: <PlayerDashboardPage /> },
-                  { path: '/player', element: <PlayerDashboardPage /> },
-                ],
-              },
-              {
-                element: (
-                  <RequireRole allow={['player', 'coach', 'academy_owner', 'super_admin']} />
-                ),
-                children: [
-                  { path: '/more', element: <MorePage /> },
-                  { path: '/stats', element: <StatsPage /> },
-                  { path: '/drills', element: <DrillsPage /> },
-                  { path: '/drills/:drillId', element: <DrillDetailPage /> },
-                  { path: '/matches', element: <MatchesPage /> },
-                  { path: '/matches/:matchId', element: <MatchDetailPage /> },
-                  { path: '/sessions', element: <TrainingSessionsPage /> },
-                  { path: '/sessions/:sessionId', element: <TrainingSessionDetailPage /> },
-                ],
-              },
-              {
-                element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
-                children: [
-                  { path: '/members', element: <MembersPage /> },
-                  { path: '/members/:memberId', element: <PlayerProfilePage /> },
-                  { path: '/members/:memberId/attendance', element: <PlayerAttendancePage /> },
-                  { path: '/batches', element: <BatchesPage /> },
-                  { path: '/batches/:batchId', element: <BatchDetailPage /> },
-                  { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
-                  { path: '/attendance', element: <AttendanceOverviewPage /> },
-                  { path: '/matches/new', element: <AddMatchPage /> },
-                  { path: '/sessions/:sessionId/attendance', element: <AttendanceSessionPage /> },
+                  {
+                    element: <RequireRole allow={['academy_owner', 'super_admin']} />,
+                    children: [
+                      { path: '/dashboard', element: <OwnerDashboardPage /> },
+                      { path: '/owner', element: <OwnerDashboardPage /> },
+                      { path: '/settings', element: <AcademySettingsPage /> },
+                      { path: '/settings/academy', element: <AcademySettingsPage /> },
+                    ],
+                  },
+                  {
+                    element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
+                    children: [{ path: '/coach', element: <CoachDashboardPage /> }],
+                  },
+                  {
+                    element: <RequireRole allow={['player', 'super_admin']} />,
+                    children: [
+                      { path: '/me', element: <PlayerDashboardPage /> },
+                      { path: '/player', element: <PlayerDashboardPage /> },
+                    ],
+                  },
+                  {
+                    element: (
+                      <RequireRole allow={['player', 'coach', 'academy_owner', 'super_admin']} />
+                    ),
+                    children: [
+                      { path: '/more', element: <MorePage /> },
+                      { path: '/stats', element: <StatsPage /> },
+                      { path: '/drills', element: <DrillsPage /> },
+                      { path: '/drills/:drillId', element: <DrillDetailPage /> },
+                      { path: '/matches', element: <MatchesPage /> },
+                      { path: '/matches/:matchId', element: <MatchDetailPage /> },
+                      { path: '/sessions', element: <TrainingSessionsPage /> },
+                      { path: '/sessions/:sessionId', element: <TrainingSessionDetailPage /> },
+                    ],
+                  },
+                  {
+                    element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
+                    children: [
+                      { path: '/members', element: <MembersPage /> },
+                      { path: '/members/:memberId', element: <PlayerProfilePage /> },
+                      { path: '/members/:memberId/attendance', element: <PlayerAttendancePage /> },
+                      { path: '/batches', element: <BatchesPage /> },
+                      { path: '/batches/:batchId', element: <BatchDetailPage /> },
+                      { path: '/batches/:batchId/attendance', element: <BatchAttendancePage /> },
+                      { path: '/attendance', element: <AttendanceOverviewPage /> },
+                      { path: '/matches/new', element: <AddMatchPage /> },
+                      {
+                        path: '/sessions/:sessionId/attendance',
+                        element: <AttendanceSessionPage />,
+                      },
+                    ],
+                  },
                 ],
               },
             ],

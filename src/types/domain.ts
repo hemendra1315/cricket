@@ -12,6 +12,7 @@ export type Profile = {
   email: string;
   avatarUrl: string | null;
   phone: string | null;
+  phoneVerified?: boolean;
   dateOfBirth: string | null;
   locale: string;
   timezone: string;

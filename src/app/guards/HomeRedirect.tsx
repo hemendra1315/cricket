@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { LoadingScreen } from '@/components/feedback';
 import { useMemberships } from '@/features/academies';
 import { useAuth } from '@/features/auth';
+import { isProfileComplete } from '@/features/auth/utils/profileCompletion';
 import { useTestModeStore } from '@/stores';
 import { ROLE_HOME } from '@/types/enums';
 
@@ -21,6 +22,11 @@ export function HomeRedirect() {
     if (testModeRole === 'student') return <Navigate to="/player" replace />;
     if (testModeRole === 'coach') return <Navigate to="/coach" replace />;
     if (testModeRole === 'academy_owner') return <Navigate to="/dashboard" replace />;
+  }
+
+  // General Profile & Phone OTP Onboarding check
+  if (!testModeRole && profile && !isProfileComplete(profile)) {
+    return <Navigate to="/onboarding/profile" replace />;
   }
 
   if (profile?.isSuperAdmin) return <Navigate to="/admin" replace />;
