@@ -295,11 +295,24 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
   };
 }
 
+import { isUUID } from '@/lib/validators';
+
 // ============================================================
 // COACH DASHBOARD ANALYTICS
 // ============================================================
 
 export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUID) {
+  if (!isUUID(academyId) || !isUUID(coachId)) {
+    return {
+      todaySession: null,
+      recentMatches: [],
+      assignedBatches: [],
+      wins: 0,
+      losses: 0,
+      playersNeedingAttention: [],
+    };
+  }
+
   const [
     todaySessionResult,
     recentMatchesResult,
@@ -444,6 +457,10 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
 // ============================================================
 
 export async function fetchPlayerDashboardAnalytics(academyId: UUID, playerId: UUID) {
+  if (!isUUID(academyId) || !isUUID(playerId)) {
+    return null;
+  }
+
   const [
     statistics,
     matches,

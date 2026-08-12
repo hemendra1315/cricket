@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CalendarDays, Users, ChevronRight, ArrowRight, Clock, MapPin, Layers } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 import { Card, CardBody, CardHeader, Button, Badge } from '@/components/ui';
 import { ErrorState } from '@/components/feedback';
@@ -11,13 +12,38 @@ import { SuperAdminAcademyActions } from '@/features/admin';
 import { DashboardQuickActions } from '../components/DashboardQuickActions';
 import { ActivityFeed } from '../components/ActivityFeed';
 import type { ActivityItem } from '../components/ActivityFeed';
+import { useTestModeStore } from '@/stores';
+import { supabase } from '@/lib/supabase/client';
+import { isUUID } from '@/lib/validators';
 
 export default function CoachDashboardPage() {
   const navigate = useNavigate();
   const { academyId, membership } = useActiveAcademy();
-  const coachId = membership?.id ?? null;
-  const analyticsQuery = useCoachDashboardAnalytics(academyId, coachId);
+  const testModeRole = useTestModeStore((s) => s.activeRole);
 
+  // Query an active coach member ID when in Test App As mode or if current membership is not a coach
+  const activeCoachQuery = useQuery({
+    queryKey: ['active-academy-coach', academyId],
+    enabled: Boolean(academyId) && (testModeRole === 'coach' || membership?.role !== 'coach'),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('academy_members')
+        .select('id, user_id')
+        .eq('academy_id', academyId as string)
+        .eq('role', 'coach')
+        .eq('status', 'active')
+        .limit(1);
+      return data?.[0]?.id ?? data?.[0]?.user_id ?? null;
+    },
+  });
+
+  const resolvedCoachId =
+    (membership?.role === 'coach' ? membership?.id : null) ??
+    (activeCoachQuery.data && isUUID(activeCoachQuery.data) ? activeCoachQuery.data : null);
+
+  const coachId = resolvedCoachId && isUUID(resolvedCoachId) ? resolvedCoachId : null;
+
+  const analyticsQuery = useCoachDashboardAnalytics(academyId, coachId);
   const analytics = analyticsQuery.data;
 
   const getTimeOfDayGreeting = () => {
@@ -42,6 +68,42 @@ export default function CoachDashboardPage() {
   const topBatches = useMemo(() => {
     return analytics?.assignedBatches?.slice(0, 3) ?? [];
   }, [analytics]);
+
+  if (!coachId) {
+    return (
+      <div className="space-y-4 pb-20 md:pb-6">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-fg text-xl font-bold tracking-tight md:text-2xl">
+            {getTimeOfDayGreeting()}, Coach
+          </h1>
+          <p className="text-fg-muted text-xs font-medium">
+            {membership?.academyName ?? 'Academy'} • Daily Training & Squad Overview
+          </p>
+        </div>
+
+        <SuperAdminAcademyActions />
+
+        <Card className="border-border-subtle bg-surface p-8 text-center shadow-2xs">
+          <CardBody className="space-y-4">
+            <div className="bg-primary/10 text-primary mx-auto flex h-14 w-14 items-center justify-center rounded-2xl">
+              <Users className="h-7 w-7" />
+            </div>
+            <div>
+              <h2 className="text-fg text-lg font-bold">No Coach Available</h2>
+              <p className="text-fg-muted mt-1 text-sm">
+                There are no active coach members registered in this academy yet.
+              </p>
+            </div>
+            <div className="flex justify-center gap-3 pt-2">
+              <Button onClick={() => navigate('/members')} className="font-bold">
+                + Add Coach
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
 
   if (analyticsQuery.isPending) {
     return <p className="text-fg-muted py-8 text-center text-sm">Loading dashboard…</p>;
