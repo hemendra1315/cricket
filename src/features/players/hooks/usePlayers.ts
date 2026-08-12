@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
 import { supabase } from '@/lib/supabase/client';
+import { isUUID } from '@/lib/validators';
 import type { UUID } from '@/types';
 import type {
   PlayerCareerHighlight,
@@ -36,7 +37,8 @@ import {
 export function usePlayerProfile(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerProfile>({
     queryKey: queryKeys.academy.member(academyId ?? 'none', playerId ?? 'none'),
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerProfile(academyId as UUID, playerId as UUID),
   });
 }

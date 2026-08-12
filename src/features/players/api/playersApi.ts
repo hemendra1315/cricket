@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { unwrap } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
+import { isUUID } from '@/lib/validators';
 import type { UUID } from '@/types';
 import type {
   PlayerAward,
@@ -20,6 +21,9 @@ import type {
 // ============================================================
 
 export async function fetchPlayerProfile(academyId: UUID, playerId: UUID): Promise<PlayerProfile> {
+  if (!isUUID(academyId) || !isUUID(playerId)) {
+    throw new Error('Player not found');
+  }
   const row = await unwrap<any>(
     (supabase as any)
       .from('academy_members')
