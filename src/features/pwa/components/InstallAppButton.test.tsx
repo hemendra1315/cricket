@@ -38,7 +38,7 @@ describe('<InstallAppButton />', () => {
 
   it('shows an Install App button when beforeinstallprompt is available', async () => {
     const install = mockInstallState({ canInstall: true, isIOS: false });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
 
     render(<InstallAppButton />);
     const button = screen.getByRole('button', { name: 'Install App' });
@@ -49,7 +49,7 @@ describe('<InstallAppButton />', () => {
 
   it('opens iOS instructions instead of the native prompt on iOS', async () => {
     mockInstallState({ canInstall: false, isIOS: true });
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
 
     render(<InstallAppButton />);
     await user.click(screen.getByRole('button', { name: 'Install App' }));
