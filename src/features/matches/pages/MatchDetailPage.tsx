@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
 import { Card, CardBody, CardHeader } from '@/components/ui';
-import { ErrorState } from '@/components/feedback';
+import { ErrorState, EmptyState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
+import { isUUID } from '@/lib/validators';
 import {
   useMatch,
   useMatchLineups,
@@ -37,7 +38,18 @@ export default function MatchDetailPage() {
     [lineupsQuery.data],
   );
 
-  if (!matchId) return null;
+  if (!matchId || !isUUID(matchId)) {
+    return (
+      <EmptyState
+        title={!matchId ? 'No match selected' : 'Invalid match link'}
+        description={
+          !matchId
+            ? 'Select a match from the matches list to view its details.'
+            : 'The match link you followed is not valid. Please return to the matches list.'
+        }
+      />
+    );
+  }
   if (matchQuery.isPending) return <p className="text-fg-muted">Loading match…</p>;
   if (matchQuery.isError || !matchQuery.data)
     return <ErrorState error={matchQuery.error} onRetry={() => void matchQuery.refetch()} />;

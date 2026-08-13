@@ -20,6 +20,7 @@ import { EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
 import { useCan } from '@/lib/rbac';
+import { isUUID } from '@/lib/validators';
 import { useUiStore } from '@/stores';
 import type { Batch } from '../api/batchesTypes';
 import { AddBatchPlayersModal } from '../components/AddBatchPlayersModal';
@@ -93,7 +94,18 @@ export default function BatchDetailPage() {
     void batchPlayersQuery.refetch();
   };
 
-  if (!academyId || !batchId) return null;
+  if (!academyId || !batchId || !isUUID(batchId)) {
+    return (
+      <EmptyState
+        title={!batchId || !academyId ? 'No batch selected' : 'Invalid batch link'}
+        description={
+          !batchId || !academyId
+            ? 'Select a batch from the batches list to view its details.'
+            : 'The batch link you followed is not valid. Please return to the batches list.'
+        }
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 pb-12 sm:pb-6">

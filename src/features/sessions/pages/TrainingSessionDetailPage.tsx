@@ -18,6 +18,7 @@ import { useAcademyMembers } from '@/features/members';
 import { useBatches } from '@/features/batches';
 import { useCan } from '@/lib/rbac';
 import { useUiStore } from '@/stores';
+import { isUUID } from '@/lib/validators';
 import type { TrainingSession } from '../api/sessionsTypes';
 import {
   useDeleteTrainingSession,
@@ -78,7 +79,18 @@ export default function TrainingSessionDetailPage() {
     });
   };
 
-  if (!academyId || !sessionId) return null;
+  if (!academyId || !sessionId || !isUUID(sessionId)) {
+    return (
+      <EmptyState
+        title={!sessionId || !academyId ? 'No session selected' : 'Invalid session link'}
+        description={
+          !sessionId || !academyId
+            ? 'Select a session from the sessions list to view its details.'
+            : 'The session link you followed is not valid. Please return to the sessions list.'
+        }
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
