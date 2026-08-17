@@ -18,6 +18,7 @@ function createMockBuilder(response: { data: unknown; error: unknown }) {
     neq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     gte: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
     then: (onfulfilled?: (val: unknown) => unknown, onrejected?: (reason: unknown) => unknown) =>
