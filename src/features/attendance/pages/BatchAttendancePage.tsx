@@ -11,7 +11,14 @@ export default function BatchAttendancePage() {
   const { academyId } = useActiveAcademy();
   const attendanceQuery = useBatchAttendance(batchId ?? null, academyId);
 
-  if (!batchId || !academyId) return null;
+  if (!batchId || !academyId) {
+    return (
+      <EmptyState
+        title="No batch selected"
+        description="Select a batch from the batches list to view its attendance."
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

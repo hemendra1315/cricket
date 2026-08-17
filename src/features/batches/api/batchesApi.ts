@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { unwrap } from '@/lib/api';
+import { unwrap, unwrapVoid } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { AcademyMember, UUID } from '@/types';
 import type { Batch, BatchPlayer, CreateBatchInput, UpdateBatchInput } from './batchesTypes';
@@ -212,7 +212,7 @@ export async function updateBatch(batchId: UUID, input: UpdateBatchInput): Promi
 }
 
 export async function deleteBatch(batchId: UUID): Promise<void> {
-  await unwrap((supabase as any).from('batches').delete().eq('id', batchId));
+  await unwrapVoid((supabase as any).from('batches').delete().eq('id', batchId));
 }
 
 export async function fetchBatchAvailablePlayers(academyId: UUID): Promise<AcademyMember[]> {
@@ -251,5 +251,5 @@ export async function addPlayerToBatch(batchId: UUID, academyMemberId: UUID): Pr
 }
 
 export async function removePlayerFromBatch(batchMemberId: UUID): Promise<void> {
-  await unwrap((supabase as any).from('batch_members').delete().eq('id', batchMemberId));
+  await unwrapVoid((supabase as any).from('batch_members').delete().eq('id', batchMemberId));
 }

@@ -107,8 +107,11 @@ export async function fetchAcademyMember(memberId: UUID): Promise<AcademyMember>
   return toMember(row);
 }
 
-export async function approveJoinRequest(requestId: UUID): Promise<void> {
-  await rpc<void>('approve_join_request', { p_request_id: requestId, p_batch_ids: null });
+export async function approveJoinRequest(requestId: UUID, batchIds?: UUID[] | null): Promise<void> {
+  await rpc<void>('approve_join_request', {
+    p_request_id: requestId,
+    p_batch_ids: batchIds ?? null,
+  });
 }
 
 export async function rejectJoinRequest(requestId: UUID): Promise<void> {

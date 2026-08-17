@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui';
+import { extractPdfText } from '../../import/extractPdfText';
 
 export function PdfUploadStep({
   onFileLoaded,
@@ -26,25 +27,16 @@ export function PdfUploadStep({
     setIsParsing(true);
 
     try {
-      // Read text contents from PDF using browser FileReader
-      // Supports plain text PDF stream parsing / text layer fallback
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setIsParsing(false);
-        if (!result || result.trim().length === 0) {
-          setError(
-            "We couldn't identify a CricHeroes scorecard in this PDF. Please export the match scorecard from CricHeroes and try again.",
-          );
-          return;
-        }
-        onFileLoaded(result, file.name);
-      };
-      reader.onerror = () => {
-        setIsParsing(false);
-        setError('Error reading PDF file. Please try again.');
-      };
-      reader.readAsText(file);
+      // Extract text from the PDF (decodes binary PDF streams via pdf.js).
+      const result = await extractPdfText(file);
+      setIsParsing(false);
+      if (!result || result.trim().length === 0) {
+        setError(
+          "We couldn't identify a CricHeroes scorecard in this PDF. Please export the match scorecard from CricHeroes and try again.",
+        );
+        return;
+      }
+      onFileLoaded(result, file.name);
     } catch {
       setIsParsing(false);
       setError('Failed to process PDF. Please check the file and try again.');

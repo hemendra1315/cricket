@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { queryClient } from '@/lib/query/queryClient';
+import { logger } from '@/lib/logger';
 import { useAcademyStore, useAuthStore, useTestModeStore } from '@/stores';
 
 import { signInWithGoogle, signOut } from '../api/authApi';
@@ -15,16 +16,36 @@ export function useAuth() {
   const memberships = useAuthStore((state) => state.memberships);
   const joinRequests = useAuthStore((state) => state.joinRequests);
   const reset = useAuthStore((state) => state.reset);
+  const setSigningOut = useAuthStore((state) => state.setSigningOut);
   const setActiveAcademy = useAcademyStore((state) => state.setActiveAcademy);
   const exitTestMode = useTestModeStore((state) => state.exitTestMode);
 
   const logout = useCallback(async () => {
-    await signOut();
-    exitTestMode();
-    reset();
-    setActiveAcademy(null);
-    queryClient.clear();
-  }, [reset, setActiveAcademy, exitTestMode]);
+    // Set identityStatus to 'ready' so the onAuthStateChange listener skips
+    // any events that fire during the signOut call itself.
+    useAuthStore.getState().setIdentityStatus('ready');
+    // Set signingOut so the listener also skips any *delayed* events that
+    // fire after reset() (which sets identityStatus back to 'idle').
+    setSigningOut(true);
+
+    try {
+      await signOut();
+    } catch (error) {
+      logger.warn('logout_signout_failed', { error: String(error) });
+    } finally {
+      // Clear E2E auth from sessionStorage so a stale mock session can't
+      // resurrect an authenticated state.
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('cam.e2e_auth');
+      }
+      exitTestMode();
+      reset();
+      setActiveAcademy(null);
+      queryClient.clear();
+      // Re-enable the onAuthStateChange listener now that everything is cleared.
+      setSigningOut(false);
+    }
+  }, [reset, setSigningOut, setActiveAcademy, exitTestMode]);
 
   return {
     status,

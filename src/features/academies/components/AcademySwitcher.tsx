@@ -57,16 +57,16 @@ export function AcademySwitcher({ className }: { className?: string }) {
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="min-h-[38px]"
+        className="min-h-[38px] max-w-[140px] sm:max-w-none"
       >
         <Avatar name={currentName} src={membership?.logoUrl} size="xs" />
-        <span className="max-w-44 truncate">{currentName}</span>
+        <span className="max-w-20 truncate sm:max-w-44">{currentName}</span>
         {isSuperAdmin && !active.some((m) => m.academyId === activeAcademyId) ? (
-          <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+          <span className="hidden rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 sm:inline-block dark:text-amber-400">
             Super Admin
           </span>
         ) : null}
-        <ChevronDown className="h-4 w-4" aria-hidden />
+        <ChevronDown className="h-4 w-4 shrink-0" aria-hidden />
       </Button>
 
       {open ? (

@@ -19,11 +19,18 @@ type AuthState = {
   profile: Profile | null;
   memberships: Membership[];
   joinRequests: JoinRequest[];
+  /**
+   * Guards the `onAuthStateChange` listener during logout so a delayed
+   * SIGNED_IN event (e.g. from a token-refresh race) cannot resurrect
+   * an authenticated state after the user has already signed out.
+   */
+  signingOut: boolean;
   setSession: (session: Session | null) => void;
   setIdentityStatus: (identityStatus: AuthState['identityStatus']) => void;
   setProfile: (profile: Profile | null) => void;
   setMemberships: (memberships: Membership[]) => void;
   setJoinRequests: (joinRequests: JoinRequest[]) => void;
+  setSigningOut: (signingOut: boolean) => void;
   reset: () => void;
 };
 
@@ -35,6 +42,7 @@ const signedOutState = {
   profile: null,
   memberships: [],
   joinRequests: [],
+  signingOut: false,
 } satisfies Partial<AuthState>;
 
 const getInitialState = (): Partial<AuthState> => {
@@ -93,6 +101,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setProfile: (profile) => set({ profile }),
   setMemberships: (memberships) => set({ memberships }),
   setJoinRequests: (joinRequests) => set({ joinRequests }),
+  setSigningOut: (signingOut) => set({ signingOut }),
   reset: () => set(signedOutState),
 }));
 

@@ -17,8 +17,8 @@ import { MobilePageHeader } from '@/components/mobile';
 import { Card, Badge } from '@/components/ui';
 import { useAuthStore, useTestModeStore } from '@/stores';
 import { useActiveAcademy, useMemberships } from '@/features/academies';
+import { useAuth } from '@/features/auth';
 import { useCan } from '@/lib/rbac';
-import { supabase } from '@/lib/supabase/client';
 
 interface MenuItem {
   to: string;
@@ -48,9 +48,11 @@ export function MorePage() {
       : testModeRole
     : (current?.role ?? 'player');
 
+  const { logout } = useAuth();
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/signin');
+    await logout();
+    navigate('/sign-in', { replace: true });
   };
 
   const managementItems: (MenuItem | false)[] = [

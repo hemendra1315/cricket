@@ -298,7 +298,7 @@ begin
     select
       match_record.id,
       academy_member_id,
-      (random() * 8 + 2)::numeric(4,1),
+      (floor(random() * 8 + 2) + (floor(random() * 6) / 10.0))::numeric(4,1),
       (random() * 2)::int,
       (random() * 50 + 20)::int,
       (random() * 5)::int,

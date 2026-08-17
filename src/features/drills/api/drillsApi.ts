@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { unwrap } from '@/lib/api';
+import { unwrap, unwrapVoid } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { UUID } from '@/types';
 import type {
@@ -136,7 +136,7 @@ export async function updateDrill(drillId: UUID, input: UpdateDrillInput): Promi
 }
 
 export async function deleteDrill(drillId: UUID): Promise<void> {
-  await unwrap((supabase as any).from('drills').delete().eq('id', drillId).select('id').single());
+  await unwrapVoid((supabase as any).from('drills').delete().eq('id', drillId));
 }
 
 export async function fetchDrillAssignments(academyId: UUID): Promise<DrillAssignment[]> {
@@ -203,12 +203,5 @@ export async function updateDrillAssignment(
 }
 
 export async function deleteDrillAssignment(assignmentId: UUID): Promise<void> {
-  await unwrap(
-    (supabase as any)
-      .from('drill_assignments')
-      .delete()
-      .eq('id', assignmentId)
-      .select('id')
-      .single(),
-  );
+  await unwrapVoid((supabase as any).from('drill_assignments').delete().eq('id', assignmentId));
 }

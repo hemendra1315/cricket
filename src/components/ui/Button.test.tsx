@@ -1,18 +1,17 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Button } from './Button';
 
 describe('<Button />', () => {
-  it('calls the handler on click', async () => {
+  it('calls the handler on click', () => {
     const onClick = vi.fn();
     render(<Button onClick={onClick}>Save</Button>);
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(onClick).toHaveBeenCalledOnce();
   });
 
-  it('is disabled and busy while loading', async () => {
+  it('is disabled and busy while loading', () => {
     const onClick = vi.fn();
     render(
       <Button isLoading onClick={onClick}>
@@ -22,7 +21,7 @@ describe('<Button />', () => {
     const button = screen.getByRole('button', { name: 'Save' });
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('aria-busy', 'true');
-    await userEvent.click(button);
+    fireEvent.click(button);
     expect(onClick).not.toHaveBeenCalled();
   });
 });

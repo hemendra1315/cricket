@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
+import { isUUID } from '@/lib/validators';
 import type { UUID } from '@/types';
 import type {
   AttendanceRecord,
@@ -19,7 +20,11 @@ import {
 export function useSessionAttendance(sessionId: UUID | null, academyId: UUID | null) {
   return useQuery<AttendanceRecord[]>({
     queryKey: queryKeys.academy.sessionAttendance(academyId ?? 'none', sessionId ?? 'none'),
-    enabled: Boolean(sessionId) && Boolean(academyId),
+    enabled:
+      Boolean(sessionId) &&
+      Boolean(academyId) &&
+      isUUID(sessionId ?? '') &&
+      isUUID(academyId ?? ''),
     queryFn: () => fetchSessionAttendance(sessionId as UUID),
   });
 }
@@ -63,7 +68,8 @@ export function useMarkAllPresent(academyId: UUID) {
 export function usePlayerAttendance(playerId: UUID | null, academyId: UUID | null) {
   return useQuery<PlayerAttendanceRecord[]>({
     queryKey: queryKeys.academy.playerAttendance(academyId ?? 'none', playerId ?? 'none'),
-    enabled: Boolean(playerId) && Boolean(academyId),
+    enabled:
+      Boolean(playerId) && Boolean(academyId) && isUUID(playerId ?? '') && isUUID(academyId ?? ''),
     queryFn: () => fetchPlayerAttendance(playerId as UUID),
   });
 }
@@ -71,7 +77,8 @@ export function usePlayerAttendance(playerId: UUID | null, academyId: UUID | nul
 export function useBatchAttendance(batchId: UUID | null, academyId: UUID | null) {
   return useQuery<BatchAttendanceSession[]>({
     queryKey: queryKeys.academy.batchAttendance(academyId ?? 'none', batchId ?? 'none'),
-    enabled: Boolean(batchId) && Boolean(academyId),
+    enabled:
+      Boolean(batchId) && Boolean(academyId) && isUUID(batchId ?? '') && isUUID(academyId ?? ''),
     queryFn: () => fetchBatchAttendance(batchId as UUID),
   });
 }

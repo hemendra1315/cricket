@@ -274,8 +274,14 @@ export function ScorecardStep({
                     <Input
                       type="text"
                       value={entry.overs}
+                      hasError={Boolean(entry.overs) && !/^\d+(\.[0-5])?$/.test(entry.overs.trim())}
                       onChange={(e) => updateBowling(entry.memberId, { overs: e.target.value })}
                     />
+                    {Boolean(entry.overs) && !/^\d+(\.[0-5])?$/.test(entry.overs.trim()) && (
+                      <p className="text-danger-500 mt-1 text-xs" role="alert">
+                        Invalid overs (e.g. 4.0 - 4.5)
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="text-fg-muted block text-xs">Maidens</label>
@@ -469,6 +475,13 @@ export function ScorecardStep({
           type="button"
           id="scorecard-next-btn"
           onClick={() => {
+            const hasInvalidOvers = bowling.some(
+              (b) => Boolean(b.overs) && !/^\d+(\.[0-5])?$/.test(b.overs.trim()),
+            );
+            if (hasInvalidOvers) {
+              setSubTab('bowling');
+              return;
+            }
             // Save state if initialized locally
             onChange({ batting, bowling, fielding });
             onNext();

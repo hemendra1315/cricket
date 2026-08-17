@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
+import { isUUID } from '@/lib/validators';
 import type { AcademyMember, Batch, BatchPlayer, UUID } from '@/types';
 import type { CreateBatchInput, UpdateBatchInput } from '../api/batchesTypes';
 
@@ -26,7 +27,8 @@ export function useBatches(academyId: UUID | null) {
 export function useBatchPlayers(batchId: UUID | null, academyId: UUID | null) {
   return useQuery<BatchPlayer[]>({
     queryKey: queryKeys.academy.batchPlayers(academyId ?? 'none', batchId ?? 'none'),
-    enabled: Boolean(batchId) && Boolean(academyId),
+    enabled:
+      Boolean(batchId) && Boolean(academyId) && isUUID(batchId ?? '') && isUUID(academyId ?? ''),
     queryFn: () => fetchBatchPlayers(batchId as UUID),
   });
 }

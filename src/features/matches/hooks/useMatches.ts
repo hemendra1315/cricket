@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
+import { isUUID } from '@/lib/validators';
 import type { UUID } from '@/types';
 import type {
   AcademyRecord,
@@ -54,7 +55,8 @@ export function useAcademyMatches(academyId: UUID | null) {
 export function useMatch(matchId: UUID | null, academyId: UUID | null) {
   return useQuery<Match>({
     queryKey: queryKeys.academy.match(academyId ?? 'none', matchId ?? 'none'),
-    enabled: Boolean(matchId) && Boolean(academyId),
+    enabled:
+      Boolean(matchId) && Boolean(academyId) && isUUID(matchId ?? '') && isUUID(academyId ?? ''),
     queryFn: () => fetchMatch(matchId as UUID),
   });
 }
@@ -94,7 +96,7 @@ export function useDeleteMatch(academyId: UUID) {
 export function useMatchLineups(matchId: UUID | null) {
   return useQuery<MatchLineup[]>({
     queryKey: queryKeys.academy.matchLineups(matchId ?? 'none'),
-    enabled: Boolean(matchId),
+    enabled: Boolean(matchId) && isUUID(matchId ?? ''),
     queryFn: () => fetchMatchLineups(matchId as UUID),
   });
 }
@@ -102,7 +104,7 @@ export function useMatchLineups(matchId: UUID | null) {
 export function useMatchBatting(matchId: UUID | null) {
   return useQuery<MatchBatting[]>({
     queryKey: queryKeys.academy.matchBatting(matchId ?? 'none'),
-    enabled: Boolean(matchId),
+    enabled: Boolean(matchId) && isUUID(matchId ?? ''),
     queryFn: () => fetchMatchBatting(matchId as UUID),
   });
 }
@@ -110,7 +112,7 @@ export function useMatchBatting(matchId: UUID | null) {
 export function useMatchBowling(matchId: UUID | null) {
   return useQuery<MatchBowling[]>({
     queryKey: queryKeys.academy.matchBowling(matchId ?? 'none'),
-    enabled: Boolean(matchId),
+    enabled: Boolean(matchId) && isUUID(matchId ?? ''),
     queryFn: () => fetchMatchBowling(matchId as UUID),
   });
 }
@@ -118,7 +120,7 @@ export function useMatchBowling(matchId: UUID | null) {
 export function useMatchFielding(matchId: UUID | null) {
   return useQuery<MatchFielding[]>({
     queryKey: queryKeys.academy.matchFielding(matchId ?? 'none'),
-    enabled: Boolean(matchId),
+    enabled: Boolean(matchId) && isUUID(matchId ?? ''),
     queryFn: () => fetchMatchFielding(matchId as UUID),
   });
 }
@@ -126,7 +128,7 @@ export function useMatchFielding(matchId: UUID | null) {
 export function useMatchPartnerships(matchId: UUID | null) {
   return useQuery<MatchPartnership[]>({
     queryKey: queryKeys.academy.matchPartnerships(matchId ?? 'none'),
-    enabled: Boolean(matchId),
+    enabled: Boolean(matchId) && isUUID(matchId ?? ''),
     queryFn: () => fetchMatchPartnerships(matchId as UUID),
   });
 }
@@ -134,7 +136,7 @@ export function useMatchPartnerships(matchId: UUID | null) {
 export function useMatchAwards(matchId: UUID | null) {
   return useQuery<MatchAwards | null>({
     queryKey: queryKeys.academy.matchAwards(matchId ?? 'none'),
-    enabled: Boolean(matchId),
+    enabled: Boolean(matchId) && isUUID(matchId ?? ''),
     queryFn: () => fetchMatchAwards(matchId as UUID),
   });
 }
@@ -142,7 +144,7 @@ export function useMatchAwards(matchId: UUID | null) {
 export function useMatchCoachNotes(matchId: UUID | null) {
   return useQuery<MatchCoachNote[]>({
     queryKey: queryKeys.academy.matchCoachNotes(matchId ?? 'none'),
-    enabled: Boolean(matchId),
+    enabled: Boolean(matchId) && isUUID(matchId ?? ''),
     queryFn: () => fetchMatchCoachNotes(matchId as UUID),
   });
 }

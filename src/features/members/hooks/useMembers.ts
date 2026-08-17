@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
+import { isUUID } from '@/lib/validators';
 import type { AcademyMember, PendingJoinRequest, UUID } from '@/types';
 import type { AppRole, JoinableRole, MemberStatus } from '@/types/enums';
 
@@ -30,7 +31,7 @@ export function useAcademyMembers(academyId: UUID | null, filters: Filters = {})
 export function useAcademyMember(memberId: UUID | null) {
   return useQuery<AcademyMember>({
     queryKey: queryKeys.academy.member('none', memberId ?? 'none'),
-    enabled: Boolean(memberId),
+    enabled: Boolean(memberId) && isUUID(memberId ?? ''),
     queryFn: () => fetchAcademyMember(memberId as UUID),
   });
 }
@@ -76,7 +77,8 @@ export function useUpdateMember(academyId: UUID) {
   });
 
   const approveRequest = useMutation({
-    mutationFn: ({ requestId }: { requestId: UUID }) => approveJoinRequest(requestId),
+    mutationFn: ({ requestId, batchIds }: { requestId: UUID; batchIds?: UUID[] | null }) =>
+      approveJoinRequest(requestId, batchIds),
     onSuccess: () => {
       invalidate();
       invalidatePendingRequests();

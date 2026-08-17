@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { UUID } from '@/types';
-import type { ExtractedMatchData, MappedPlayer } from '../import/cricheroesPdfTypes';
+import {
+  type ExtractedMatchData,
+  type MappedPlayer,
+  getDefaultOversForFormat,
+} from '../import/cricheroesPdfTypes';
 import type { WizardState } from '../components/wizard/types';
 
 describe('CricHeroes PDF Import to WizardState Preservation', () => {
@@ -159,5 +163,14 @@ describe('CricHeroes PDF Import to WizardState Preservation', () => {
     expect(bowl0?.isGuest).toBe(true);
     expect(bowl0?.guestName).toBe('Guest Bowler');
     expect(bowl0?.wickets).toBe(3);
+  });
+
+  it('infers correct default overs for match formats', () => {
+    expect(getDefaultOversForFormat('t20')).toBe('20.0');
+    expect(getDefaultOversForFormat('odi')).toBe('50.0');
+    expect(getDefaultOversForFormat('t10')).toBe('10.0');
+    expect(getDefaultOversForFormat('test')).toBe('');
+    expect(getDefaultOversForFormat('custom')).toBe('');
+    expect(getDefaultOversForFormat(undefined)).toBe('');
   });
 });

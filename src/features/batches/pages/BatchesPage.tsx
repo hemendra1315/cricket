@@ -20,6 +20,7 @@ import { MobilePageHeader, MobileFilterChips, MobileEmptyState } from '@/compone
 import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
 import { useCan } from '@/lib/rbac';
+import { errorMessage } from '@/lib/api/errors';
 import { useUiStore } from '@/stores';
 import type { CreateBatchInput } from '../api/batchesTypes';
 import { useBatches, useCreateBatch, useDeleteBatch } from '../hooks/useBatches';
@@ -110,11 +111,9 @@ export default function BatchesPage() {
         setSelectedDays([]);
         setShowForm(false);
       } catch (error) {
-        console.error('Create batch failed:', error);
-
         pushToast({
           title: 'Failed to create batch',
-          description: error instanceof Error ? error.message : String(error),
+          description: errorMessage(error),
           variant: 'error',
         });
       }

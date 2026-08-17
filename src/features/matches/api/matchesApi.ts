@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { unwrap } from '@/lib/api';
+import { unwrap, unwrapVoid } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { UUID } from '@/types';
 import type {
@@ -397,7 +397,7 @@ export async function updateMatch(matchId: UUID, input: UpdateMatchInput): Promi
 }
 
 export async function deleteMatch(matchId: UUID): Promise<void> {
-  await unwrap((supabase as any).from('matches').delete().eq('id', matchId));
+  await unwrapVoid((supabase as any).from('matches').delete().eq('id', matchId));
 }
 
 // ============================================================

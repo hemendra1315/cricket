@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { unwrap } from '@/lib/api';
+import { unwrap, unwrapVoid } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { UUID } from '@/types';
 import type {
@@ -115,5 +115,5 @@ export async function updateTrainingSession(
 }
 
 export async function deleteTrainingSession(sessionId: UUID): Promise<void> {
-  await unwrap((supabase as any).from('training_sessions').delete().eq('id', sessionId));
+  await unwrapVoid((supabase as any).from('training_sessions').delete().eq('id', sessionId));
 }

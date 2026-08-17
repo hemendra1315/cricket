@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 
 import { Card, CardBody, CardHeader, Badge, Button } from '@/components/ui';
 import { MobilePageHeader } from '@/components/mobile';
+import { EmptyState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
+import { isUUID } from '@/lib/validators';
 import {
   usePlayerProfile,
   usePlayerStatistics,
@@ -68,7 +70,29 @@ export default function PlayerProfilePage() {
   const chartDataQuery = usePlayerChartData(academyId, memberId ?? null);
   const sessionsQuery = usePlayerUpcomingSessions(memberId ?? null, academyId);
 
-  if (!memberId || !academyId) return null;
+  if (!memberId || !academyId) {
+    return (
+      <div className="space-y-4">
+        <MobilePageHeader title="Player profile" />
+        <EmptyState
+          title="No player selected"
+          description="Select a player from the members list to view their full profile."
+        />
+      </div>
+    );
+  }
+
+  if (!isUUID(memberId) || !isUUID(academyId)) {
+    return (
+      <div className="space-y-4">
+        <MobilePageHeader title="Player profile" />
+        <EmptyState
+          title="Invalid player link"
+          description="The player link you followed is not valid. Please return to the members list."
+        />
+      </div>
+    );
+  }
 
   const isLoading =
     profileQuery.isPending ||

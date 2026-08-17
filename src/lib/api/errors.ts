@@ -119,6 +119,9 @@ export function errorMessage(error: unknown): string {
     case ApiErrorCode.RATE_LIMITED:
       return 'Too many attempts. Please try again in a few minutes.';
     default:
-      return apiError.message || 'Something went wrong.';
+      // Never surface raw database/provider text to the user. Domain errors are
+      // already translated above via `domainMessage` (E_*) or the explicit case
+      // branches; everything else falls back to a safe, generic message.
+      return 'Something went wrong. Please try again.';
   }
 }

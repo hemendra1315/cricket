@@ -4,7 +4,11 @@ import { Button, Card, CardBody } from '@/components/ui';
 import { useAcademyMembers } from '@/features/members';
 import { useAcademyMatches } from '../../hooks/useMatches';
 import type { UUID } from '@/types';
-import type { ExtractedMatchData, MappedPlayer } from '../../import/cricheroesPdfTypes';
+import {
+  type ExtractedMatchData,
+  type MappedPlayer,
+  getDefaultOversForFormat,
+} from '../../import/cricheroesPdfTypes';
 import { parseCricHeroesText } from '../../import/cricheroesPdfParser';
 import { matchPlayers } from '../../import/playerNameMatcher';
 import { checkDuplicateMatch } from '../../import/duplicateMatchChecker';
@@ -181,7 +185,7 @@ export function CricHeroesImportModal({
       format: extracted.format,
       result: extracted.result,
       teamScore: extracted.teamA.score,
-      overs: '20.0',
+      overs: getDefaultOversForFormat(extracted.format),
       tournament: extracted.tournament,
       selectedPlayerIds: lineup.map((l) => l.memberId),
       lineup,

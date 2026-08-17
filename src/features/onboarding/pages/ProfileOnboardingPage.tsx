@@ -6,6 +6,7 @@ import { Avatar, Button, Card, CardBody, Input } from '@/components/ui';
 import { useAuth, updateMyProfile } from '@/features/auth';
 import { isProfileComplete } from '@/features/auth/utils/profileCompletion';
 import { supabase } from '@/lib/supabase/client';
+import { errorMessage as errorMessageText } from '@/lib/api/errors';
 import { useAuthStore, useUiStore } from '@/stores';
 
 const COUNTRY_CODES = [
@@ -239,8 +240,7 @@ export default function ProfileOnboardingPage() {
       // Navigate to Home Redirect
       navigate('/', { replace: true });
     } catch (err: unknown) {
-      const errorText = err instanceof Error ? err.message : 'Failed to verify OTP code.';
-      setErrorMessage(errorText);
+      setErrorMessage(errorMessageText(err));
     } finally {
       setIsVerifyingOtp(false);
     }

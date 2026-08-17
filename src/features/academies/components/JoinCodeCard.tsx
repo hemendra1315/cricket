@@ -48,7 +48,7 @@ export function JoinCodeCard({
   }
 
   return (
-    <div className="border-border-subtle bg-surface flex h-12 min-h-[44px] items-center justify-between gap-2.5 rounded-xl border px-3.5 py-1.5 shadow-2xs">
+    <div className="border-border-subtle bg-surface flex min-h-[44px] flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 shadow-2xs">
       <div className="flex min-w-0 items-center gap-2">
         <span className="text-fg-muted shrink-0 text-xs font-bold tracking-wider uppercase">
           {role === 'coach' ? 'Coach Code:' : 'Join Code:'}

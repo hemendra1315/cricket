@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
+import { isUUID } from '@/lib/validators';
 import type { UUID } from '@/types';
 import type {
   CreateTrainingSessionInput,
@@ -26,7 +27,11 @@ export function useTrainingSessions(academyId: UUID | null) {
 export function useTrainingSession(sessionId: UUID | null, academyId: UUID | null) {
   return useQuery<TrainingSession>({
     queryKey: queryKeys.academy.session(academyId ?? 'none', sessionId ?? 'none'),
-    enabled: Boolean(sessionId) && Boolean(academyId),
+    enabled:
+      Boolean(sessionId) &&
+      Boolean(academyId) &&
+      isUUID(sessionId ?? '') &&
+      isUUID(academyId ?? ''),
     queryFn: () => fetchTrainingSession(sessionId as UUID),
   });
 }

@@ -94,4 +94,30 @@ describe('Match Wizard Validation Logic', () => {
     expect(hasDuplicateNumbered(lineup, 'p1', 3)).toBe(false);
     expect(hasDuplicateNumbered(lineup, 'p2', 4)).toBe(false);
   });
+
+  describe('Cricket Overs Notation Validation', () => {
+    const isOversValid = (overs: string) => /^\d+(\.[0-5])?$/.test(overs.trim());
+
+    it('accepts valid base-6 overs notation', () => {
+      expect(isOversValid('0')).toBe(true);
+      expect(isOversValid('0.0')).toBe(true);
+      expect(isOversValid('4')).toBe(true);
+      expect(isOversValid('4.0')).toBe(true);
+      expect(isOversValid('4.1')).toBe(true);
+      expect(isOversValid('4.5')).toBe(true);
+      expect(isOversValid('10.5')).toBe(true);
+      expect(isOversValid('20.0')).toBe(true);
+      expect(isOversValid('50.0')).toBe(true);
+    });
+
+    it('rejects invalid base-6 overs notation', () => {
+      expect(isOversValid('4.6')).toBe(false);
+      expect(isOversValid('4.7')).toBe(false);
+      expect(isOversValid('4.8')).toBe(false);
+      expect(isOversValid('4.9')).toBe(false);
+      expect(isOversValid('-1')).toBe(false);
+      expect(isOversValid('4.5.1')).toBe(false);
+      expect(isOversValid('abc')).toBe(false);
+    });
+  });
 });

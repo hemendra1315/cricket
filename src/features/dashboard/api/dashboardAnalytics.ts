@@ -387,58 +387,90 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
   const wins = recentMatches.filter((m) => m.result === 'won').length;
   const losses = recentMatches.filter((m) => m.result === 'lost').length;
 
-  // Get players needing attention
+  // Get players needing attention (batched queries to eliminate N+1 roundtrips)
   const playersNeedingAttention = [];
-  for (const player of playersNeedingAttentionResult ?? []) {
-    const [attendanceResult, drillsResult, feedbackResult] = await Promise.all([
+  const activePlayers = playersNeedingAttentionResult ?? [];
+  const allPlayerIds = activePlayers.map((p: any) => p.id);
+
+  if (allPlayerIds.length > 0) {
+    const thirtyDaysAgoStr = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0];
+    const thirtyDaysAgoIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [attendanceBatch, drillsBatch, feedbackBatch] = await Promise.all([
       unwrap<any[]>(
         (supabase as any)
           .from('attendance')
-          .select('status, session:training_sessions(session_date)')
+          .select('player_id, status, session:training_sessions!inner(session_date)')
           .eq('academy_id', academyId)
-          .eq('player_id', player.id)
-          .gte(
-            'training_sessions.session_date',
-            new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          ),
+          .in('player_id', allPlayerIds)
+          .gte('session.session_date', thirtyDaysAgoStr),
       ),
       unwrap<any[]>(
         (supabase as any)
           .from('drill_assignments')
-          .select('status')
+          .select('player_id, status')
           .eq('academy_id', academyId)
-          .eq('player_id', player.id)
+          .in('player_id', allPlayerIds)
           .eq('status', 'assigned'),
       ),
       unwrap<any[]>(
         (supabase as any)
           .from('match_coach_notes')
-          .select('id, match:matches(academy_id)')
+          .select('id, academy_member_id, match:matches!inner(academy_id)')
           .eq('match.academy_id', academyId)
-          .eq('academy_member_id', player.id)
-          .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+          .in('academy_member_id', allPlayerIds)
+          .gte('created_at', thirtyDaysAgoIso),
       ),
     ]);
 
-    const attendanceRate =
-      attendanceResult.length > 0
-        ? (attendanceResult.filter((a: any) => a.status === 'present').length /
-            attendanceResult.length) *
-          100
-        : 0;
+    const attendanceByPlayer = new Map<string, any[]>();
+    for (const record of attendanceBatch ?? []) {
+      const list = attendanceByPlayer.get(record.player_id) || [];
+      list.push(record);
+      attendanceByPlayer.set(record.player_id, list);
+    }
 
-    const issues: string[] = [];
-    if (attendanceRate < 70) issues.push('Low attendance');
-    if (drillsResult.length > 0) issues.push('Pending drills');
-    if (feedbackResult.length === 0) issues.push('No recent feedback');
+    const drillsByPlayer = new Map<string, any[]>();
+    for (const record of drillsBatch ?? []) {
+      const list = drillsByPlayer.get(record.player_id) || [];
+      list.push(record);
+      drillsByPlayer.set(record.player_id, list);
+    }
 
-    if (issues.length > 0) {
-      playersNeedingAttention.push({
-        id: player.id,
-        name: player.profiles?.full_name ?? 'Unknown',
-        issues,
-        attendanceRate: Math.round(attendanceRate),
-      });
+    const feedbackByPlayer = new Map<string, any[]>();
+    for (const record of feedbackBatch ?? []) {
+      const list = feedbackByPlayer.get(record.academy_member_id) || [];
+      list.push(record);
+      feedbackByPlayer.set(record.academy_member_id, list);
+    }
+
+    for (const player of activePlayers) {
+      const playerAttendance = attendanceByPlayer.get(player.id) || [];
+      const playerDrills = drillsByPlayer.get(player.id) || [];
+      const playerFeedback = feedbackByPlayer.get(player.id) || [];
+
+      const attendanceRate =
+        playerAttendance.length > 0
+          ? (playerAttendance.filter((a: any) => a.status === 'present').length /
+              playerAttendance.length) *
+            100
+          : 0;
+
+      const issues: string[] = [];
+      if (attendanceRate < 70) issues.push('Low attendance');
+      if (playerDrills.length > 0) issues.push('Pending drills');
+      if (playerFeedback.length === 0) issues.push('No recent feedback');
+
+      if (issues.length > 0) {
+        playersNeedingAttention.push({
+          id: player.id,
+          name: player.profiles?.full_name ?? 'Unknown',
+          issues,
+          attendanceRate: Math.round(attendanceRate),
+        });
+      }
     }
   }
 

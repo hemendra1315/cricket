@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import {
   HomeRedirect,
@@ -65,6 +65,8 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: '/sign-in', element: <SignInPage /> },
+      { path: '/signin', element: <Navigate to="/sign-in" replace /> },
+      { path: '/login', element: <Navigate to="/sign-in" replace /> },
       { path: '/auth/callback', element: <AuthCallbackPage /> },
     ],
   },

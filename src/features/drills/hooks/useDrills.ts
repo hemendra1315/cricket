@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
+import { isUUID } from '@/lib/validators';
 import type { UUID } from '@/types';
 import type {
   CreateDrillAssignmentInput,
@@ -41,7 +42,8 @@ export function useDrillAssignments(academyId: UUID | null) {
 export function usePlayerDrillAssignments(playerId: UUID | null, academyId: UUID | null) {
   return useQuery<DrillAssignment[]>({
     queryKey: queryKeys.academy.playerDrillAssignments(academyId ?? 'none', playerId ?? 'none'),
-    enabled: Boolean(playerId) && Boolean(academyId),
+    enabled:
+      Boolean(playerId) && Boolean(academyId) && isUUID(playerId ?? '') && isUUID(academyId ?? ''),
     queryFn: () => fetchPlayerDrillAssignments(playerId as UUID, academyId as UUID),
   });
 }

@@ -50,7 +50,8 @@ export function usePlayerProfile(academyId: UUID | null, playerId: UUID | null) 
 export function usePlayerStatistics(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerStatistics | null>({
     queryKey: ['player-statistics', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerStatistics(academyId as UUID, playerId as UUID),
   });
 }
@@ -62,7 +63,8 @@ export function usePlayerStatistics(academyId: UUID | null, playerId: UUID | nul
 export function usePlayerMatches(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerMatch[]>({
     queryKey: ['player-matches', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerMatches(academyId as UUID, playerId as UUID),
   });
 }
@@ -74,7 +76,8 @@ export function usePlayerMatches(academyId: UUID | null, playerId: UUID | null) 
 export function usePlayerAwards(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerAward[]>({
     queryKey: ['player-awards', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerAwards(academyId as UUID, playerId as UUID),
   });
 }
@@ -86,7 +89,8 @@ export function usePlayerAwards(academyId: UUID | null, playerId: UUID | null) {
 export function usePlayerMilestones(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerMilestone[]>({
     queryKey: ['player-milestones', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerMilestones(academyId as UUID, playerId as UUID),
   });
 }
@@ -98,7 +102,8 @@ export function usePlayerMilestones(academyId: UUID | null, playerId: UUID | nul
 export function usePlayerCoachNotes(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerCoachNote[]>({
     queryKey: ['player-coach-notes', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerCoachNotes(academyId as UUID, playerId as UUID),
   });
 }
@@ -110,7 +115,8 @@ export function usePlayerCoachNotes(academyId: UUID | null, playerId: UUID | nul
 export function usePlayerAttendanceSummary(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerAttendanceSummary>({
     queryKey: ['player-attendance-summary', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerAttendanceSummary(academyId as UUID, playerId as UUID),
   });
 }
@@ -122,7 +128,8 @@ export function usePlayerAttendanceSummary(academyId: UUID | null, playerId: UUI
 export function usePlayerDrillSummary(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerDrillSummary>({
     queryKey: ['player-drill-summary', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerDrillSummary(academyId as UUID, playerId as UUID),
   });
 }
@@ -134,7 +141,8 @@ export function usePlayerDrillSummary(academyId: UUID | null, playerId: UUID | n
 export function usePlayerCareerHighlights(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerCareerHighlight[]>({
     queryKey: ['player-career-highlights', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerCareerHighlights(academyId as UUID, playerId as UUID),
   });
 }
@@ -146,7 +154,8 @@ export function usePlayerCareerHighlights(academyId: UUID | null, playerId: UUID
 export function usePlayerChartData(academyId: UUID | null, playerId: UUID | null) {
   return useQuery<PlayerChartData>({
     queryKey: ['player-chart-data', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerChartData(academyId as UUID, playerId as UUID),
   });
 }
@@ -168,7 +177,8 @@ export function usePlayerUpcomingSessions(playerId: UUID | null, academyId: UUID
     }>
   >({
     queryKey: ['player-upcoming-sessions', academyId, playerId],
-    enabled: Boolean(academyId) && Boolean(playerId),
+    enabled:
+      Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('training_sessions')

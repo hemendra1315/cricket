@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { unwrap } from '@/lib/api';
+import { unwrap, unwrapVoid } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { UUID } from '@/types';
 import type {
@@ -36,7 +36,7 @@ export async function markAllPresent(
   academyId: UUID,
 ): Promise<void> {
   if (playerIds.length === 0) return;
-  await unwrap(
+  await unwrapVoid(
     (supabase as any)
       .from('attendance')
       .upsert(

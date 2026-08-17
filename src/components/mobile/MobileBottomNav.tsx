@@ -45,50 +45,13 @@ export function MobileBottomNav() {
     ? (ROLE_HOME[role] ?? '/dashboard')
     : isSuperAdmin && !activeAcademyId
       ? '/admin'
-      : (ROLE_HOME[role] ?? '/dashboard');
+      : isSuperAdmin && activeAcademyId
+        ? '/dashboard'
+        : (ROLE_HOME[role] ?? '/dashboard');
 
   let items: NavItemDef[] = [];
 
-  if (canUpdateAcademy) {
-    // Owner & Super Admin: Home | Players | Sessions | Settings | More
-    items = [
-      {
-        key: 'home',
-        to: homePath,
-        label: isSuperAdmin && location.pathname === '/admin' ? 'Admin' : 'Home',
-        icon: isSuperAdmin && location.pathname === '/admin' ? ShieldCheck : Home,
-        matchPrefixes: ['/dashboard', '/owner', '/admin', '/me'],
-      },
-      {
-        key: 'players',
-        to: '/members',
-        label: 'Players',
-        icon: Users,
-        matchPrefixes: ['/members'],
-      },
-      {
-        key: 'sessions',
-        to: '/sessions',
-        label: 'Sessions',
-        icon: CalendarDays,
-        matchPrefixes: ['/sessions'],
-      },
-      {
-        key: 'settings',
-        to: '/settings/academy',
-        label: 'Settings',
-        icon: Settings,
-        matchPrefixes: ['/settings'],
-      },
-      {
-        key: 'more',
-        to: '/more',
-        label: 'More',
-        icon: MoreHorizontal,
-        matchPrefixes: ['/more', '/drills', '/stats', '/batches', '/matches'],
-      },
-    ];
-  } else if (role === 'coach') {
+  if (testModeRole === 'coach' || (!testModeRole && !canUpdateAcademy && role === 'coach')) {
     // Coach: Home | Players | Batches | Sessions | More
     items = [
       {
@@ -127,7 +90,10 @@ export function MobileBottomNav() {
         matchPrefixes: ['/more', '/drills', '/matches', '/stats', '/profile'],
       },
     ];
-  } else {
+  } else if (
+    testModeRole === 'student' ||
+    (!testModeRole && !canUpdateAcademy && role === 'player')
+  ) {
     // Student / Player: Home | Sessions | Matches | Profile | More
     items = [
       {
@@ -164,6 +130,45 @@ export function MobileBottomNav() {
         label: 'More',
         icon: MoreHorizontal,
         matchPrefixes: ['/more', '/stats', '/drills'],
+      },
+    ];
+  } else if (canUpdateAcademy) {
+    // Owner & Super Admin: Home | Players | Sessions | Settings | More
+    items = [
+      {
+        key: 'home',
+        to: homePath,
+        label: isSuperAdmin && location.pathname === '/admin' ? 'Admin' : 'Home',
+        icon: isSuperAdmin && location.pathname === '/admin' ? ShieldCheck : Home,
+        matchPrefixes: ['/dashboard', '/owner', '/admin', '/me'],
+      },
+      {
+        key: 'players',
+        to: '/members',
+        label: 'Players',
+        icon: Users,
+        matchPrefixes: ['/members'],
+      },
+      {
+        key: 'sessions',
+        to: '/sessions',
+        label: 'Sessions',
+        icon: CalendarDays,
+        matchPrefixes: ['/sessions'],
+      },
+      {
+        key: 'settings',
+        to: '/settings/academy',
+        label: 'Settings',
+        icon: Settings,
+        matchPrefixes: ['/settings'],
+      },
+      {
+        key: 'more',
+        to: '/more',
+        label: 'More',
+        icon: MoreHorizontal,
+        matchPrefixes: ['/more', '/drills', '/stats', '/batches', '/matches'],
       },
     ];
   }

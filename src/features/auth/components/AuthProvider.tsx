@@ -1,8 +1,10 @@
 import { useEffect, type ReactNode } from 'react';
 
 import { logger } from '@/lib/logger';
+import { requestPersistentStorage } from '@/lib/offline/indexedDb';
 import { supabase } from '@/lib/supabase/client';
-import { useAcademyStore, useAuthStore } from '@/stores';
+import { useAcademyStore, useAuthStore, useTestModeStore } from '@/stores';
+import type { TestModeRole } from '@/stores/testModeStore';
 
 import { useIdentity } from '../hooks/useIdentity';
 
@@ -18,6 +20,7 @@ declare global {
       memberships?: unknown[];
       joinRequests?: unknown[];
       activeAcademyId?: string | null;
+      testModeRole?: TestModeRole;
     }) => void;
   }
 }
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .getState()
           .setJoinRequests((joinRequests as import('@/types').JoinRequest[]) ?? []);
         useAuthStore.getState().setIdentityStatus('ready');
+        void requestPersistentStorage();
         if (activeAcademyId !== undefined) {
           useAcademyStore.getState().setActiveAcademy(activeAcademyId);
           if (typeof localStorage !== 'undefined' && activeAcademyId) {
@@ -66,6 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               JSON.stringify({ state: { activeAcademyId }, version: 0 }),
             );
           }
+        }
+        if (data.testModeRole !== undefined) {
+          useTestModeStore.getState().setTestMode(data.testModeRole, activeAcademyId ?? null);
         }
       };
 
@@ -86,8 +93,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isE2E = Boolean(
           typeof window !== 'undefined' && sessionStorage.getItem('cam.e2e_auth'),
         );
-        if (active && !isE2E && useAuthStore.getState().identityStatus !== 'ready') {
+        if (
+          active &&
+          !isE2E &&
+          !useAuthStore.getState().signingOut &&
+          useAuthStore.getState().identityStatus !== 'ready'
+        ) {
           setSession(data.session);
+          if (data.session) {
+            void requestPersistentStorage();
+          }
         }
       })
       .catch((error: unknown) => {
@@ -95,7 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isE2E = Boolean(
           typeof window !== 'undefined' && sessionStorage.getItem('cam.e2e_auth'),
         );
-        if (active && !isE2E && useAuthStore.getState().identityStatus !== 'ready') {
+        if (
+          active &&
+          !isE2E &&
+          !useAuthStore.getState().signingOut &&
+          useAuthStore.getState().identityStatus !== 'ready'
+        ) {
           setSession(null);
         }
       });
@@ -105,7 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const isE2E = Boolean(
         typeof window !== 'undefined' && sessionStorage.getItem('cam.e2e_auth'),
       );
-      if (!isE2E && useAuthStore.getState().identityStatus !== 'ready') {
+      if (
+        !isE2E &&
+        !useAuthStore.getState().signingOut &&
+        useAuthStore.getState().identityStatus !== 'ready'
+      ) {
         setSession(session);
       }
     });

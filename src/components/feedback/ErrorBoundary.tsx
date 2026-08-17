@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
         <h1 className="text-fg text-xl font-semibold">The app hit an unexpected error</h1>
-        <p className="text-fg-muted max-w-md text-sm">{error.message}</p>
+        <p className="text-fg-muted max-w-md text-sm">Something went wrong. Please try again.</p>
         <div className="flex gap-2">
           <Button onClick={this.reset}>Try again</Button>
           <Button variant="secondary" onClick={() => window.location.assign('/')}>

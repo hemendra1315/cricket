@@ -168,7 +168,10 @@ export function AppShell() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => void logout()}
+            onClick={async () => {
+              await logout();
+              navigate('/sign-in', { replace: true });
+            }}
             className="hidden min-h-[40px] px-3 text-xs sm:inline-flex"
           >
             Sign out
@@ -178,8 +181,8 @@ export function AppShell() {
 
       {/* TEST MODE BANNER */}
       {testModeRole ? (
-        <div className="relative z-30 flex min-h-[36px] items-center justify-between border-b border-purple-500/30 bg-purple-500/15 px-3 py-1.5 text-xs font-medium text-purple-700 md:text-sm dark:text-purple-300">
-          <div className="flex min-w-0 items-center gap-2">
+        <div className="relative z-30 flex min-h-[36px] flex-wrap items-center justify-between gap-1.5 border-b border-purple-500/30 bg-purple-500/15 px-3 py-1.5 text-xs font-medium text-purple-700 md:text-sm dark:text-purple-300">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
             <FlaskConical className="h-4 w-4 shrink-0 text-purple-500" />
             <span className="truncate">
               <strong className="font-bold">TEST MODE</strong> · Viewing as{' '}
@@ -195,7 +198,7 @@ export function AppShell() {
           <Button
             size="sm"
             variant="secondary"
-            className="h-7 shrink-0 border-purple-500/40 bg-purple-500/20 px-2.5 text-xs font-semibold text-purple-700 hover:bg-purple-500/30 dark:text-purple-200"
+            className="h-7 shrink-0 border-purple-500/40 bg-purple-500/20 px-2 text-xs font-semibold text-purple-700 hover:bg-purple-500/30 dark:text-purple-200"
             onClick={() => {
               exitTestMode();
               navigate('/admin');
@@ -205,21 +208,21 @@ export function AppShell() {
           </Button>
         </div>
       ) : isSuperAdminMode ? (
-        <div className="relative z-30 flex items-center justify-between border-b border-amber-500/30 bg-amber-500/15 px-4 py-2 text-xs font-medium text-amber-700 md:text-sm dark:text-amber-300">
-          <div className="flex min-w-0 items-center gap-2">
+        <div className="relative z-30 flex min-h-[36px] flex-wrap items-center justify-between gap-1.5 border-b border-amber-500/30 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-700 md:text-sm dark:text-amber-300">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
             <ShieldCheck className="h-4 w-4 shrink-0 text-amber-500" />
             <span className="truncate">
-              <strong className="font-bold">SUPER ADMIN MODE</strong> — Viewing:{' '}
+              <strong className="font-bold">SUPER ADMIN</strong> · Viewing:{' '}
               <span className="font-semibold">{membership?.academyName || 'Academy'}</span>
             </span>
           </div>
           <Button
             size="sm"
             variant="secondary"
-            className="h-8 shrink-0 border-amber-500/40 bg-amber-500/20 px-2.5 text-xs font-medium text-amber-700 hover:bg-amber-500/30 dark:text-amber-200"
+            className="h-7 shrink-0 border-amber-500/40 bg-amber-500/20 px-2 text-xs font-medium text-amber-700 hover:bg-amber-500/30 dark:text-amber-200"
             onClick={() => navigate('/admin')}
           >
-            Back to Platform Admin
+            Admin
           </Button>
         </div>
       ) : null}
@@ -368,9 +371,10 @@ export function AppShell() {
             <Button
               variant="secondary"
               className="min-h-[48px] w-full justify-start gap-3 text-red-500 hover:text-red-600"
-              onClick={() => {
+              onClick={async () => {
                 setIsMoreMenuOpen(false);
-                void logout();
+                await logout();
+                navigate('/sign-in', { replace: true });
               }}
             >
               <LogOut className="h-5 w-5" /> Sign out

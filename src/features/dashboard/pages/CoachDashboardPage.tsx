@@ -16,6 +16,33 @@ import { useTestModeStore } from '@/stores';
 import { supabase } from '@/lib/supabase/client';
 import { isUUID } from '@/lib/validators';
 
+function formatTimePart(timeStr?: string | null): string {
+  if (!timeStr) return '';
+  if (timeStr.includes('T')) {
+    const d = new Date(timeStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+  }
+  if (/^\d{1,2}:\d{2}/.test(timeStr)) {
+    const parts = timeStr.split(':').map(Number);
+    const h = parts[0] ?? 0;
+    const m = parts[1] ?? 0;
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h % 12 || 12;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(hour12)}:${pad(m)} ${period}`;
+  }
+  return timeStr;
+}
+
+function formatSessionTimeRange(startAt?: string | null, endAt?: string | null): string {
+  const start = formatTimePart(startAt);
+  const end = formatTimePart(endAt);
+  if (start && end) return `${start} - ${end}`;
+  return start || end || 'Scheduled';
+}
+
 export default function CoachDashboardPage() {
   const navigate = useNavigate();
   const { academyId, membership } = useActiveAcademy();
@@ -59,7 +86,7 @@ export default function CoachDashboardPage() {
       id: analytics.todaySession.id,
       title: analytics.todaySession.title,
       date: 'Today',
-      time: `${analytics.todaySession.start_at || ''} - ${analytics.todaySession.end_at || ''}`,
+      time: formatSessionTimeRange(analytics.todaySession.start_at, analytics.todaySession.end_at),
       batchName: analytics.todaySession.batches?.name || 'Academy Squad',
       isToday: true,
     };

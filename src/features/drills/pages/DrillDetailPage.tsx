@@ -51,7 +51,14 @@ export default function DrillDetailPage() {
     navigate('/drills');
   });
 
-  if (!academyId || !drillId) return null;
+  if (!academyId || !drillId) {
+    return (
+      <EmptyState
+        title="No drill selected"
+        description="Select a drill from the drills list to view its details."
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

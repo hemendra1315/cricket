@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { unwrap } from '@/lib/api';
+import { unwrap, unwrapMaybe } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import { isUUID } from '@/lib/validators';
 import type { UUID } from '@/types';
@@ -24,7 +24,7 @@ export async function fetchPlayerProfile(academyId: UUID, playerId: UUID): Promi
   if (!isUUID(academyId) || !isUUID(playerId)) {
     throw new Error('Player not found');
   }
-  const row = await unwrap<any>(
+  const row = await unwrapMaybe<any>(
     (supabase as any)
       .from('academy_members')
       .select(
@@ -73,7 +73,7 @@ export async function fetchPlayerStatistics(
   academyId: UUID,
   playerId: UUID,
 ): Promise<PlayerStatistics | null> {
-  const row = await unwrap<any>(
+  const row = await unwrapMaybe<any>(
     (supabase as any)
       .from('player_statistics')
       .select('*')

@@ -89,3 +89,18 @@ export type MatchImportState = {
   isPossibleDuplicate: boolean;
   duplicateMatchName?: string;
 };
+
+export function getDefaultOversForFormat(format?: MatchFormat): string {
+  switch (format) {
+    case 't20':
+      return '20.0';
+    case 'odi':
+      return '50.0';
+    case 't10':
+      return '10.0';
+    case 'test':
+    case 'custom':
+    default:
+      return '';
+  }
+}

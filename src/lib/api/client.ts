@@ -9,6 +9,8 @@ import { ApiError, ApiErrorCode, toApiError } from './errors';
  *
  * - `unwrap` turns a Supabase response into data-or-throw so TanStack Query can
  *   handle errors uniformly.
+ * - `unwrapMaybe` unwraps queries using `.maybeSingle()`, returning null when no row is found.
+ * - `unwrapVoid` executes void mutations without expecting returning data.
  * - `rpc` / `invoke` wrap Postgres functions and Edge Functions with the same
  *   error normalization and (for Edge Functions) idempotency-key support.
  */
@@ -17,6 +19,19 @@ export async function unwrap<T>(promise: PromiseLike<PostgrestSingleResponse<T>>
   if (error) throw toApiError(error);
   if (data === null) throw new ApiError(ApiErrorCode.NOT_FOUND, 'No data returned.');
   return data;
+}
+
+export async function unwrapMaybe<T>(
+  promise: PromiseLike<PostgrestSingleResponse<T>>,
+): Promise<T | null> {
+  const { data, error } = await promise;
+  if (error) throw toApiError(error);
+  return data ?? null;
+}
+
+export async function unwrapVoid(promise: PromiseLike<{ error: unknown }>): Promise<void> {
+  const { error } = await promise;
+  if (error) throw toApiError(error);
 }
 
 export async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {

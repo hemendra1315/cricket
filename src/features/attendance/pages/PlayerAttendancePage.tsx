@@ -11,7 +11,14 @@ export default function PlayerAttendancePage() {
   const { academyId } = useActiveAcademy();
   const attendanceQuery = usePlayerAttendance(playerId ?? null, academyId);
 
-  if (!playerId || !academyId) return null;
+  if (!playerId || !academyId) {
+    return (
+      <EmptyState
+        title="No player selected"
+        description="Select a player from the members list to view their attendance."
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

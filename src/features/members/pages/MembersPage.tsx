@@ -27,7 +27,7 @@ import { useBatches } from '@/features/batches';
 import { useCan } from '@/lib/rbac';
 import { formatDate } from '@/lib/utils/date';
 import { useUiStore } from '@/stores';
-import type { AcademyMember } from '@/types';
+import type { AcademyMember, PendingJoinRequest, UUID } from '@/types';
 import { JOINABLE_ROLES, ROLE_LABELS, type JoinableRole, type MemberStatus } from '@/types/enums';
 
 import { useAcademyMembers, usePendingJoinRequests, useUpdateMember } from '../hooks/useMembers';
@@ -89,14 +89,40 @@ export default function MembersPage() {
     [members],
   );
 
+  const [approvingRequest, setApprovingRequest] = useState<PendingJoinRequest | null>(null);
+  const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
+
   const { approveRequest, rejectRequest } = useUpdateMember(academyId as string);
   const pushToast = useUiStore((state) => state.pushToast);
 
-  const handleApprove = (requestId: string) => {
+  const handleApproveClick = (request: PendingJoinRequest) => {
+    const batches = batchesQuery.data ?? [];
+    if (batches.length > 0) {
+      setApprovingRequest(request);
+      setSelectedBatchIds([]);
+    } else {
+      approveRequest.mutate(
+        { requestId: request.id, batchIds: null },
+        {
+          onSuccess: () => pushToast({ title: 'Request approved', variant: 'success' }),
+        },
+      );
+    }
+  };
+
+  const handleConfirmApprovalWithBatches = () => {
+    if (!approvingRequest) return;
     approveRequest.mutate(
-      { requestId },
       {
-        onSuccess: () => pushToast({ title: 'Request approved', variant: 'success' }),
+        requestId: approvingRequest.id,
+        batchIds: selectedBatchIds.length > 0 ? (selectedBatchIds as UUID[]) : null,
+      },
+      {
+        onSuccess: () => {
+          pushToast({ title: 'Request approved & batches assigned', variant: 'success' });
+          setApprovingRequest(null);
+          setSelectedBatchIds([]);
+        },
       },
     );
   };
@@ -210,10 +236,11 @@ export default function MembersPage() {
                     <Avatar name={request.fullName ?? request.email} size="sm" />
                     <div>
                       <p className="text-fg text-sm font-semibold">
-                        {request.fullName ?? request.email}
+                        {request.fullName ?? request.email ?? 'Applicant'}
                       </p>
                       <p className="text-fg-muted text-xs">
-                        {request.email} • {ROLE_LABELS[request.requestedRole]}
+                        {request.email ? `${request.email} • ` : ''}
+                        {ROLE_LABELS[request.requestedRole]}
                       </p>
                     </div>
                   </div>
@@ -222,7 +249,7 @@ export default function MembersPage() {
                       size="sm"
                       variant="primary"
                       isLoading={approveRequest.isPending}
-                      onClick={() => handleApprove(request.id)}
+                      onClick={() => handleApproveClick(request)}
                     >
                       <UserCheck className="mr-1.5 h-3.5 w-3.5" /> Approve
                     </Button>
@@ -345,6 +372,92 @@ export default function MembersPage() {
           )}
         </CardBody>
       </Card>
+
+      {/* APPROVE JOIN REQUEST & ASSIGN BATCHES MODAL */}
+      {approvingRequest && (
+        <Modal
+          open={Boolean(approvingRequest)}
+          onClose={() => {
+            setApprovingRequest(null);
+            setSelectedBatchIds([]);
+          }}
+          title="Approve Join Request"
+        >
+          <div className="space-y-4 p-1">
+            <div className="bg-surface-muted border-border-subtle rounded-xl border p-3">
+              <p className="text-fg text-sm font-semibold">
+                {approvingRequest.fullName ?? approvingRequest.email}
+              </p>
+              <p className="text-fg-muted text-xs">
+                {approvingRequest.email} • Role:{' '}
+                {ROLE_LABELS[approvingRequest.requestedRole as JoinableRole] ??
+                  approvingRequest.requestedRole}
+              </p>
+            </div>
+
+            <div>
+              <label className="text-fg-muted mb-2 block text-xs font-semibold uppercase">
+                Assign to Batches (Optional)
+              </label>
+              {batchesQuery.data && batchesQuery.data.length > 0 ? (
+                <div className="max-h-48 space-y-2 overflow-y-auto">
+                  {batchesQuery.data.map((batch) => {
+                    const isChecked = selectedBatchIds.includes(batch.id);
+                    return (
+                      <label
+                        key={batch.id}
+                        className="bg-surface border-border-subtle hover:bg-surface-muted flex cursor-pointer items-center justify-between rounded-xl border p-3 text-sm transition"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedBatchIds((prev) => [...prev, batch.id]);
+                              } else {
+                                setSelectedBatchIds((prev) => prev.filter((id) => id !== batch.id));
+                              }
+                            }}
+                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          />
+                          <span className="text-fg font-medium">{batch.name}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-fg-muted text-xs">No batches available in this academy.</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setApprovingRequest(null);
+                  setSelectedBatchIds([]);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                isLoading={approveRequest.isPending}
+                onClick={handleConfirmApprovalWithBatches}
+              >
+                <UserCheck className="mr-1.5 h-3.5 w-3.5" />
+                {selectedBatchIds.length > 0
+                  ? `Approve & Assign (${selectedBatchIds.length})`
+                  : 'Approve without Batches'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* ADD PLAYER / JOIN CODE MODAL */}
       {isAddModalOpen && (

@@ -12,6 +12,7 @@ const MOCK_PROFILE = {
   fullName: 'Academy Owner',
   avatarUrl: null,
   phone: '+919876543210',
+  phoneVerified: true,
   dateOfBirth: '1990-01-01',
   gender: 'male',
   locale: 'en',
@@ -158,7 +159,7 @@ test.describe('5. Session Management UI', () => {
     );
 
     await page.goto('/sessions');
-    await expect(page.getByRole('heading', { name: 'Training sessions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /sessions/i }).first()).toBeVisible();
   });
 });
 
@@ -183,7 +184,7 @@ test.describe('6. Attendance Session UI', () => {
     );
 
     await page.goto('/sessions/session-1/attendance');
-    await expect(page.getByRole('heading', { name: /attendance/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /mark attendance/i })).toBeVisible();
   });
 });
 
