@@ -4,7 +4,7 @@ import { queryClient } from '@/lib/query/queryClient';
 import { logger } from '@/lib/logger';
 import { useAcademyStore, useAuthStore, useTestModeStore } from '@/stores';
 
-import { signInWithGoogle, signOut } from '../api/authApi';
+import { signInWithGoogle, signInWithPassword, signOut } from '../api/authApi';
 
 /** Read-only view of auth state plus the two actions the UI needs. */
 export function useAuth() {
@@ -61,6 +61,7 @@ export function useAuth() {
     /** Signed in *and* profile/memberships resolved — routing waits for this. */
     isIdentityReady: status === 'authenticated' && identityStatus === 'ready',
     login: signInWithGoogle,
+    loginWithPassword: signInWithPassword,
     logout,
   };
 }

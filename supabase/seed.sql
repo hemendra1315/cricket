@@ -86,6 +86,29 @@ begin
   )
   select array_agg(id order by id) into v_player_ids from ins;
 
+  -- Ensure all auth users have full GoTrue metadata and identities populated for email/password auth
+  insert into auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
+  select id, id, json_build_object('sub', id::text, 'email', email), 'email', id::text, now(), now(), now()
+  from auth.users
+  on conflict do nothing;
+
+  update auth.users
+  set
+    instance_id = '00000000-0000-0000-0000-000000000000',
+    raw_app_meta_data = json_build_object('provider', 'email', 'providers', json_build_array('email')),
+    is_sso_user = false,
+    confirmation_token = coalesce(confirmation_token, ''),
+    recovery_token = coalesce(recovery_token, ''),
+    email_change_token_new = coalesce(email_change_token_new, ''),
+    email_change = coalesce(email_change, ''),
+    phone_change = coalesce(phone_change, ''),
+    phone_change_token = coalesce(phone_change_token, ''),
+    email_change_token_current = coalesce(email_change_token_current, ''),
+    reauthentication_token = coalesce(reauthentication_token, ''),
+    created_at = coalesce(created_at, now()),
+    updated_at = coalesce(updated_at, now()),
+    confirmation_sent_at = coalesce(confirmation_sent_at, now());
+
   -- ============================================================
   -- 2. ACADEMY (no join_code column; owner + slug required)
   -- ============================================================
@@ -98,6 +121,10 @@ begin
     'IN',
     v_owner_user_id
   ) returning id into v_academy_id;
+
+  -- Insert active join code for easy testing
+  insert into academy_join_codes (academy_id, code, role, is_active)
+  values (v_academy_id, 'CRCKT1', 'player', true);
 
   -- ============================================================
   -- 3. PROFILES & ACADEMY_MEMBERS
