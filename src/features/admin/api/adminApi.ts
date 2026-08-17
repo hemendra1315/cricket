@@ -147,24 +147,73 @@ export async function fetchPlatformAcademyDetails(
 
 export interface CreatePlatformAcademyPayload {
   name: string;
-  ownerUserId: UUID;
   city?: string;
   contactEmail?: string;
   contactPhone?: string;
+  timezone?: string;
+  feeMode?: 'player_pays' | 'academy_pays';
+}
+
+export interface CreatedPlatformAcademyResponse {
+  id: UUID;
+  name: string;
+  slug: string;
+  city?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  timezone: string;
+  feeMode: string;
+  playerJoinCode: string;
+  invitationId: UUID;
+  invitationToken: string;
+  invitationExpiresAt: string;
+  createdAt: string;
 }
 
 export async function createPlatformAcademy(
   payload: CreatePlatformAcademyPayload,
-): Promise<{ id: UUID; name: string }> {
-  const { data, error } = await (supabase.rpc as unknown as RpcCaller)('create_platform_academy', {
-    p_name: payload.name,
-    p_owner_user_id: payload.ownerUserId,
-    p_city: payload.city ?? null,
-    p_contact_email: payload.contactEmail ?? null,
-    p_contact_phone: payload.contactPhone ?? null,
+): Promise<CreatedPlatformAcademyResponse> {
+  const { data, error } = await (supabase.rpc as unknown as RpcCaller)(
+    'super_admin_create_academy_with_invite',
+    {
+      p_name: payload.name,
+      p_city: payload.city ?? null,
+      p_contact_email: payload.contactEmail ?? null,
+      p_contact_phone: payload.contactPhone ?? null,
+      p_timezone: payload.timezone ?? 'Asia/Kolkata',
+      p_fee_mode: payload.feeMode ?? 'player_pays',
+    },
+  );
+  if (error) throwRpcError('super_admin_create_academy_with_invite', error);
+  return data as unknown as CreatedPlatformAcademyResponse;
+}
+
+export async function regenerateOwnerInvitation(academyId: UUID): Promise<{
+  invitationId: UUID;
+  invitationToken: string;
+  invitationExpiresAt: string;
+  academyId: UUID;
+}> {
+  const { data, error } = await (supabase.rpc as unknown as RpcCaller)(
+    'regenerate_owner_invitation',
+    {
+      p_academy_id: academyId,
+    },
+  );
+  if (error) throwRpcError('regenerate_owner_invitation', error);
+  return data as unknown as {
+    invitationId: UUID;
+    invitationToken: string;
+    invitationExpiresAt: string;
+    academyId: UUID;
+  };
+}
+
+export async function revokeOwnerInvitation(invitationId: UUID): Promise<void> {
+  const { error } = await (supabase.rpc as unknown as RpcCaller)('revoke_owner_invitation', {
+    p_invitation_id: invitationId,
   });
-  if (error) throw error;
-  return data as unknown as { id: UUID; name: string };
+  if (error) throwRpcError('revoke_owner_invitation', error);
 }
 
 export async function deletePlatformAcademy(academyId: UUID): Promise<void> {

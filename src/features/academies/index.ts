@@ -4,11 +4,15 @@ export {
   fetchActiveJoinCode,
   fetchMyJoinRequests,
   fetchMyMemberships,
+  getOwnerInvitationDetails,
+  acceptOwnerInvitation,
   regenerateJoinCode,
   requestJoinByCode,
   updateAcademy,
   type CreateAcademyInput,
   type UpdateAcademyInput,
+  type OwnerInvitationDetails,
+  type AcceptOwnerInvitationResult,
 } from './api/academiesApi';
 export {
   useAcademy,

@@ -190,3 +190,39 @@ export async function updateAcademy(academyId: UUID, input: UpdateAcademyInput):
   );
   return toAcademy(row);
 }
+
+export type OwnerInvitationDetails = {
+  isValid: boolean;
+  status: 'pending' | 'accepted' | 'revoked' | 'expired' | 'not_found' | 'invalid';
+  academyId?: UUID;
+  academyName?: string;
+  expiresAt?: string;
+  targetRole?: string;
+};
+
+export type AcceptOwnerInvitationResult = {
+  academyId: UUID;
+  academyName: string;
+  role: 'academy_owner';
+  alreadyAccepted: boolean;
+};
+
+export async function getOwnerInvitationDetails(token: string): Promise<OwnerInvitationDetails> {
+  const result = await rpc<OwnerInvitationDetails>('get_owner_invitation_details', {
+    p_token: token,
+  });
+  return {
+    isValid: Boolean(result.isValid),
+    status: result.status,
+    academyId: result.academyId,
+    academyName: result.academyName,
+    expiresAt: result.expiresAt,
+    targetRole: result.targetRole,
+  };
+}
+
+export async function acceptOwnerInvitation(token: string): Promise<AcceptOwnerInvitationResult> {
+  return rpc<AcceptOwnerInvitationResult>('accept_owner_invitation', {
+    p_token: token,
+  });
+}

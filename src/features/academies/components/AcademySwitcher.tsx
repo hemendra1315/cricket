@@ -14,7 +14,7 @@ export function AcademySwitcher({ className }: { className?: string }) {
   const { active } = useMemberships();
   const { membership, academyId: activeAcademyId, switchAcademy } = useActiveAcademy();
   const isSuperAdmin = useAuthStore((state) => state.profile?.isSuperAdmin === true);
-  const platformAcademiesQuery = usePlatformAcademies();
+  const platformAcademiesQuery = usePlatformAcademies({ enabled: isSuperAdmin });
 
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 
 import { Button, Card, CardBody, Input } from '@/components/ui';
 import { FormField } from '@/components/form';
@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 
 /** Authentication entry point supporting both Email/Password and Google OAuth. */
 export default function SignInPage() {
+  const [searchParams] = useSearchParams();
   const { login, loginWithPassword, isAuthenticated } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +18,12 @@ export default function SignInPage() {
   const [isSubmitting, setSubmitting] = useState(false);
   const [isGoogleSubmitting, setGoogleSubmitting] = useState(false);
 
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  const pendingInviteToken = sessionStorage.getItem('pending_owner_invite_token');
+  const redirectTarget =
+    searchParams.get('redirectTo') ||
+    (pendingInviteToken ? `/academy/invite/${pendingInviteToken}` : '/');
+
+  if (isAuthenticated) return <Navigate to={redirectTarget} replace />;
 
   const onPasswordSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

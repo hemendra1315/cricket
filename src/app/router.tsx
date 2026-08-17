@@ -17,6 +17,7 @@ const ProfilePage = lazy(() => import('@/features/auth/pages/ProfilePage'));
 const ProfileOnboardingPage = lazy(
   () => import('@/features/onboarding/pages/ProfileOnboardingPage'),
 );
+const OwnerInvitationPage = lazy(() => import('@/features/onboarding/pages/OwnerInvitationPage'));
 const OnboardingStartPage = lazy(() => import('@/features/onboarding/pages/OnboardingStartPage'));
 const CreateAcademyPage = lazy(() => import('@/features/onboarding/pages/CreateAcademyPage'));
 const JoinAcademyPage = lazy(() => import('@/features/onboarding/pages/JoinAcademyPage'));
@@ -68,6 +69,13 @@ export const router = createBrowserRouter([
       { path: '/signin', element: <Navigate to="/sign-in" replace /> },
       { path: '/login', element: <Navigate to="/sign-in" replace /> },
       { path: '/auth/callback', element: <AuthCallbackPage /> },
+    ],
+  },
+  {
+    element: <OnboardingLayout />,
+    children: [
+      { path: '/academy/invite/:token', element: <OwnerInvitationPage /> },
+      { path: '/invite/:token', element: <OwnerInvitationPage /> },
     ],
   },
   {

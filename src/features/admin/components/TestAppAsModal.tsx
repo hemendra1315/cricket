@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GraduationCap, UserCheck, Building2, ChevronRight } from 'lucide-react';
 
 import { Modal, Select } from '@/components/ui';
-import { useAcademyStore, useTestModeStore, useUiStore } from '@/stores';
+import { useAcademyStore, useAuthStore, useTestModeStore, useUiStore } from '@/stores';
 import { useMemberships } from '@/features/academies';
 import { usePlatformAcademies } from '@/features/admin/hooks/useAdmin';
 import type { PlatformAcademy } from '@/features/admin/api/adminApi';
@@ -21,8 +21,9 @@ export function TestAppAsModal({ open, onClose }: TestAppAsModalProps) {
   const activeAcademyId = useAcademyStore((state) => state.activeAcademyId);
   const setActiveAcademy = useAcademyStore((state) => state.setActiveAcademy);
   const setTestMode = useTestModeStore((state) => state.setTestMode);
+  const isSuperAdmin = useAuthStore((state) => state.profile?.isSuperAdmin === true);
 
-  const platformAcademiesQuery = usePlatformAcademies();
+  const platformAcademiesQuery = usePlatformAcademies({ enabled: isSuperAdmin && open });
   const myMemberships = useMemberships();
 
   // Combine platform academies with personal memberships for selection

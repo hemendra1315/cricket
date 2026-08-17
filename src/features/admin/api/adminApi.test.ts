@@ -7,8 +7,11 @@ import {
   fetchPlatformAcademyDetails,
   fetchPlatformAnalytics,
   fetchPlatformUsers,
+  regenerateOwnerInvitation,
+  revokeOwnerInvitation,
   superAdminAddMember,
   superAdminSeedAcademyDemoData,
+  type CreatePlatformAcademyPayload,
 } from './adminApi';
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -162,49 +165,64 @@ describe('adminApi', () => {
   });
 
   describe('createPlatformAcademy', () => {
-    it('calls create_platform_academy RPC with payload parameters', async () => {
-      const payload = {
-        name: 'New Stars Academy',
-        ownerUserId: 'owner-uuid' as UUID,
-        city: 'Bengaluru',
-        contactEmail: 'owner@stars.com',
-        contactPhone: '+919876543210',
+    it('calls super_admin_create_academy_with_invite RPC with payload', async () => {
+      const payload: CreatePlatformAcademyPayload = {
+        name: 'New Academy',
+        city: 'Mumbai',
+        contactEmail: 'contact@academy.com',
+        contactPhone: '9876543210',
       };
-
-      const mockResponse = { id: 'new-acad-id', name: payload.name };
-      mockedSupabase.rpc.mockResolvedValue({ data: mockResponse, error: null } as never);
+      mockedSupabase.rpc.mockResolvedValue({
+        data: {
+          id: 'acad-new',
+          name: 'New Academy',
+          invitationToken: 'tok123',
+          playerJoinCode: 'PLY123',
+        },
+        error: null,
+      } as never);
 
       const result = await createPlatformAcademy(payload);
 
-      expect(mockedSupabase.rpc).toHaveBeenCalledWith('create_platform_academy', {
+      expect(mockedSupabase.rpc).toHaveBeenCalledWith('super_admin_create_academy_with_invite', {
         p_name: payload.name,
-        p_owner_user_id: payload.ownerUserId,
         p_city: payload.city,
         p_contact_email: payload.contactEmail,
         p_contact_phone: payload.contactPhone,
+        p_timezone: 'Asia/Kolkata',
+        p_fee_mode: 'player_pays',
       });
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual({
+        id: 'acad-new',
+        name: 'New Academy',
+        invitationToken: 'tok123',
+        playerJoinCode: 'PLY123',
+      });
     });
 
-    it('handles optional fields default to null', async () => {
-      const payload = {
+    it('handles null optional fields', async () => {
+      const payload: CreatePlatformAcademyPayload = {
         name: 'Minimal Academy',
-        ownerUserId: 'owner-uuid-2' as UUID,
       };
-
       mockedSupabase.rpc.mockResolvedValue({
-        data: { id: 'min-acad', name: payload.name },
+        data: {
+          id: 'acad-min',
+          name: 'Minimal Academy',
+          invitationToken: 'tok456',
+          playerJoinCode: 'PLY456',
+        },
         error: null,
       } as never);
 
       await createPlatformAcademy(payload);
 
-      expect(mockedSupabase.rpc).toHaveBeenCalledWith('create_platform_academy', {
+      expect(mockedSupabase.rpc).toHaveBeenCalledWith('super_admin_create_academy_with_invite', {
         p_name: payload.name,
-        p_owner_user_id: payload.ownerUserId,
         p_city: null,
         p_contact_email: null,
         p_contact_phone: null,
+        p_timezone: 'Asia/Kolkata',
+        p_fee_mode: 'player_pays',
       });
     });
 
@@ -213,11 +231,60 @@ describe('adminApi', () => {
         data: null,
         error: { message: 'Slug already taken' },
       } as never);
-      await expect(
-        createPlatformAcademy({ name: 'Duplicate', ownerUserId: 'u-1' as UUID }),
-      ).rejects.toEqual({
-        message: 'Slug already taken',
+      await expect(createPlatformAcademy({ name: 'Duplicate' })).rejects.toThrow(
+        'Slug already taken',
+      );
+    });
+  });
+
+  describe('regenerateOwnerInvitation', () => {
+    it('calls regenerate_owner_invitation RPC with academy id', async () => {
+      const academyId = 'acad-123' as UUID;
+      mockedSupabase.rpc.mockResolvedValue({
+        data: {
+          invitationId: 'inv-1',
+          invitationToken: 'new-tok-123',
+          invitationExpiresAt: '2026-08-24T00:00:00Z',
+          academyId: 'acad-123',
+        },
+        error: null,
+      } as never);
+
+      const result = await regenerateOwnerInvitation(academyId);
+
+      expect(mockedSupabase.rpc).toHaveBeenCalledWith('regenerate_owner_invitation', {
+        p_academy_id: academyId,
       });
+      expect(result.invitationToken).toBe('new-tok-123');
+    });
+
+    it('throws error when regenerate fails', async () => {
+      mockedSupabase.rpc.mockResolvedValue({
+        data: null,
+        error: { message: 'Unauthorized' },
+      } as never);
+      await expect(regenerateOwnerInvitation('acad-123' as UUID)).rejects.toThrow('Unauthorized');
+    });
+  });
+
+  describe('revokeOwnerInvitation', () => {
+    it('calls revoke_owner_invitation RPC with invitation id', async () => {
+      const invitationId = 'inv-del' as UUID;
+      mockedSupabase.rpc.mockResolvedValue({ data: null, error: null } as never);
+
+      await revokeOwnerInvitation(invitationId);
+
+      expect(mockedSupabase.rpc).toHaveBeenCalledWith('revoke_owner_invitation', {
+        p_invitation_id: invitationId,
+      });
+    });
+
+    it('throws error when revoke fails', async () => {
+      mockedSupabase.rpc.mockResolvedValue({
+        data: null,
+        error: { message: 'Not found' },
+      } as never);
+      await expect(revokeOwnerInvitation('inv-del' as UUID)).rejects.toThrow('Not found');
     });
   });
 

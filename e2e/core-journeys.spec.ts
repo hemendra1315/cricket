@@ -54,7 +54,9 @@ test.describe('1. Authentication & Route Protection', () => {
 });
 
 test.describe('2. Academy Creation & Join by Code UI Flows', () => {
-  test('create academy onboarding page renders all form controls', async ({ page }) => {
+  test('normal user onboarding only shows Join Academy with code and blocks create-academy', async ({
+    page,
+  }) => {
     await page.addInitScript(
       (data) => {
         sessionStorage.setItem('cam.e2e_auth', JSON.stringify(data));
@@ -62,11 +64,13 @@ test.describe('2. Academy Creation & Join by Code UI Flows', () => {
       { user: MOCK_USER, profile: MOCK_PROFILE, memberships: [], joinRequests: [] },
     );
 
+    await page.goto('/onboarding');
+    await expect(page.getByRole('heading', { name: /join an academy/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /create an academy/i })).not.toBeVisible();
+
+    // Trying to directly navigate to /onboarding/create-academy redirects normal user
     await page.goto('/onboarding/create-academy');
-    await expect(page.getByRole('heading', { name: /create your academy/i })).toBeVisible();
-    await expect(page.getByLabel(/academy name/i)).toBeVisible();
-    await expect(page.getByLabel(/city/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /create academy/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/onboarding$/);
   });
 
   test('join academy by code onboarding page renders code input and request button', async ({
@@ -229,5 +233,32 @@ test.describe('8. Mobile Responsiveness & Viewport Fit', () => {
       });
       expect(scrollWidth).toBeLessThanOrEqual(width);
     }
+  });
+});
+
+test.describe('9. Owner Invitation Flow', () => {
+  test('unauthenticated visitor opening owner invite sees invite card and sign-in button', async ({
+    page,
+  }) => {
+    // Intercept Supabase RPC call for get_owner_invitation_details
+    await page.route('**/rest/v1/rpc/get_owner_invitation_details*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          isValid: true,
+          status: 'pending',
+          academyId: 'acad-inv-test',
+          academyName: 'Champions Cricket Academy',
+          expiresAt: new Date(Date.now() + 86400000).toISOString(),
+          targetRole: 'academy_owner',
+        }),
+      });
+    });
+
+    await page.goto('/academy/invite/sample-valid-token-12345');
+    await expect(page.getByRole('heading', { name: /academy owner invitation/i })).toBeVisible();
+    await expect(page.getByText('Champions Cricket Academy')).toBeVisible();
+    await expect(page.getByRole('button', { name: /sign in to accept invitation/i })).toBeVisible();
   });
 });

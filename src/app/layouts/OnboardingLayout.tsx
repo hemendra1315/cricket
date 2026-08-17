@@ -7,17 +7,19 @@ import { useAuth } from '@/features/auth';
 
 /** Narrow layout for join-code / academy-creation / pending-approval steps. */
 export function OnboardingLayout() {
-  const { logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   return (
     <div className="bg-bg min-h-screen">
       <header className="flex h-14 items-center justify-between px-4">
-        <span className="text-fg font-semibold">Getting started</span>
+        <span className="text-fg font-semibold">Cricket Academy Manager</span>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" onClick={() => void logout()}>
-            Sign out
-          </Button>
+          {isAuthenticated ? (
+            <Button variant="ghost" size="sm" onClick={() => void logout()}>
+              Sign out
+            </Button>
+          ) : null}
         </div>
       </header>
       <main className="mx-auto w-full max-w-xl p-4">

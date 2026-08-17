@@ -8,6 +8,8 @@ import {
   fetchPlatformAcademyDetails,
   createPlatformAcademy,
   deletePlatformAcademy,
+  regenerateOwnerInvitation,
+  revokeOwnerInvitation,
   superAdminAddMember,
   superAdminSeedAcademyDemoData,
   type CreatePlatformAcademyPayload,
@@ -21,10 +23,11 @@ export function usePlatformAnalytics() {
   });
 }
 
-export function usePlatformAcademies() {
+export function usePlatformAcademies(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['admin-platform-academies'],
     queryFn: fetchPlatformAcademies,
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -122,6 +125,28 @@ export function useSuperAdminSeedDemoData() {
     mutationFn: (academyId: UUID) => superAdminSeedAcademyDemoData(academyId),
     onSuccess: (_data, academyId) => {
       invalidateAcademyQueries(queryClient, academyId);
+    },
+  });
+}
+
+export function useRegenerateOwnerInvitation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (academyId: UUID) => regenerateOwnerInvitation(academyId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
+    },
+  });
+}
+
+export function useRevokeOwnerInvitation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (invitationId: UUID) => revokeOwnerInvitation(invitationId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
     },
   });
 }

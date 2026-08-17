@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { FormField } from '@/components/form';
 import { Button, Card, CardBody, CardFooter, CardHeader, Input, Select } from '@/components/ui';
+import { useAuth } from '@/features/auth';
 import { useCreateAcademy } from '@/features/academies';
 import { errorMessage } from '@/lib/api';
 import { createAcademyFormSchema, type CreateAcademyFormValues } from '@/lib/validators';
@@ -12,11 +14,19 @@ import { FEE_MODES, FEE_MODE_LABELS } from '@/types/enums';
 
 const TIMEZONES = ['Asia/Kolkata', 'Asia/Dubai', 'Asia/Colombo', 'UTC'];
 
-/** Creates the academy and makes the signed-in user its owner. */
+/** Creates the academy and makes the signed-in user its owner. (Restricted to Super Admin) */
 export default function CreateAcademyPage() {
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const createAcademy = useCreateAcademy();
   const pushToast = useUiStore((state) => state.pushToast);
+
+  // Restrict to platform super admins
+  useEffect(() => {
+    if (profile && !profile.isSuperAdmin) {
+      navigate('/onboarding', { replace: true });
+    }
+  }, [profile, navigate]);
 
   const {
     register,

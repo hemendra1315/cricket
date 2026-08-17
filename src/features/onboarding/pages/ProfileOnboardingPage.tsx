@@ -294,8 +294,13 @@ export default function ProfileOnboardingPage() {
         variant: 'success',
       });
 
-      // Navigate to Home Redirect
-      navigate('/', { replace: true });
+      // If user came via an owner invitation, return to that invitation
+      const pendingInviteToken = sessionStorage.getItem('pending_owner_invite_token');
+      if (pendingInviteToken) {
+        navigate(`/academy/invite/${pendingInviteToken}`, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err: unknown) {
       setErrorMessage(errorMessageText(err));
     } finally {

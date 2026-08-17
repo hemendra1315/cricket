@@ -1,5 +1,18 @@
 import { useState } from 'react';
-import { Building2, Calendar, LogIn, Plus, ShieldCheck, Trash2, Trophy, Users } from 'lucide-react';
+import {
+  Building2,
+  Calendar,
+  Check,
+  Copy,
+  Link2,
+  LogIn,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  Trophy,
+  Users,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardBody, CardHeader, Button, Input, Modal, Select } from '@/components/ui';
 import { ConfirmDialog, EmptyState, ErrorState } from '@/components/feedback';
@@ -13,6 +26,7 @@ import {
   usePlatformAcademyDetails,
   useCreatePlatformAcademy,
   useDeletePlatformAcademy,
+  useRegenerateOwnerInvitation,
 } from '../hooks/useAdmin';
 import type { PlatformAcademy } from '../api/adminApi';
 import type { UUID } from '@/types';
@@ -30,10 +44,24 @@ export default function PlatformDashboardPage() {
   // Create Academy Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createName, setCreateName] = useState('');
-  const [createOwnerId, setCreateOwnerId] = useState<UUID | ''>('');
   const [createCity, setCreateCity] = useState('');
   const [createEmail, setCreateEmail] = useState('');
   const [createPhone, setCreatePhone] = useState('');
+  const [createTimezone, setCreateTimezone] = useState('Asia/Kolkata');
+  const [createFeeMode, setCreateFeeMode] = useState<'player_pays' | 'academy_pays'>('player_pays');
+
+  // Created Invite Modal state
+  const [createdInviteInfo, setCreatedInviteInfo] = useState<{
+    academyName: string;
+    inviteToken: string;
+    playerJoinCode: string;
+    expiresAt: string;
+  } | null>(null);
+  const [hasCopied, setHasCopied] = useState(false);
+
+  // Existing Academy Invite Management modal
+  const [inviteModalAcademy, setInviteModalAcademy] = useState<PlatformAcademy | null>(null);
+  const [activeInviteToken, setActiveInviteToken] = useState<string | null>(null);
 
   // Delete Academy Modal state
   const [academyToDelete, setAcademyToDelete] = useState<PlatformAcademy | null>(null);
@@ -45,10 +73,22 @@ export default function PlatformDashboardPage() {
 
   const createAcademyMutation = useCreatePlatformAcademy();
   const deleteAcademyMutation = useDeletePlatformAcademy();
+  const regenerateInviteMutation = useRegenerateOwnerInvitation();
 
   const analytics = analyticsQuery.data;
   const academies = academiesQuery.data ?? [];
   const users = usersQuery.data ?? [];
+
+  const copyToClipboard = async (text: string, message = 'Link copied to clipboard') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setHasCopied(true);
+      pushToast({ title: message, variant: 'success' });
+      setTimeout(() => setHasCopied(false), 2000);
+    } catch {
+      pushToast({ title: 'Failed to copy link', variant: 'error' });
+    }
+  };
 
   const handleEnterAcademy = (acad: PlatformAcademy) => {
     switchAcademy(acad.id);
@@ -66,30 +106,48 @@ export default function PlatformDashboardPage() {
       pushToast({ title: 'Academy name is required', variant: 'error' });
       return;
     }
-    if (!createOwnerId) {
-      pushToast({ title: 'Please select an owner for the academy', variant: 'error' });
-      return;
-    }
 
     try {
-      await createAcademyMutation.mutateAsync({
+      const created = await createAcademyMutation.mutateAsync({
         name: createName.trim(),
-        ownerUserId: createOwnerId as UUID,
         city: createCity.trim() || undefined,
         contactEmail: createEmail.trim() || undefined,
         contactPhone: createPhone.trim() || undefined,
+        timezone: createTimezone,
+        feeMode: createFeeMode,
       });
 
       pushToast({ title: 'Academy created successfully', variant: 'success' });
       setIsCreateModalOpen(false);
       setCreateName('');
-      setCreateOwnerId('');
       setCreateCity('');
       setCreateEmail('');
       setCreatePhone('');
+
+      // Open owner invitation modal with generated link
+      setCreatedInviteInfo({
+        academyName: created.name,
+        inviteToken: created.invitationToken,
+        playerJoinCode: created.playerJoinCode,
+        expiresAt: created.invitationExpiresAt,
+      });
     } catch (err) {
       pushToast({
         title: 'Failed to create academy',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'error',
+      });
+    }
+  };
+
+  const handleRegenerateInvite = async (academyId: UUID) => {
+    try {
+      const res = await regenerateInviteMutation.mutateAsync(academyId);
+      setActiveInviteToken(res.invitationToken);
+      pushToast({ title: 'New owner invitation link generated', variant: 'success' });
+    } catch (err) {
+      pushToast({
+        title: 'Failed to regenerate invite',
         description: err instanceof Error ? err.message : 'Unknown error',
         variant: 'error',
       });
@@ -423,6 +481,17 @@ export default function PlatformDashboardPage() {
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="min-h-[44px] gap-1"
+                          onClick={() => {
+                            setInviteModalAcademy(acad);
+                            setActiveInviteToken(null);
+                          }}
+                        >
+                          <Link2 className="h-4 w-4" /> Owner Invite
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           className="min-h-[44px]"
                           onClick={() => setSelectedAcademyId(acad.id)}
                         >
@@ -482,6 +551,18 @@ export default function PlatformDashboardPage() {
                               className="min-h-[36px] gap-1"
                             >
                               <LogIn className="h-3.5 w-3.5" /> Enter Academy
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                setInviteModalAcademy(acad);
+                                setActiveInviteToken(null);
+                              }}
+                              className="min-h-[36px] gap-1"
+                              title="Generate/Manage Owner Invite"
+                            >
+                              <Link2 className="h-3.5 w-3.5" /> Owner Invite
                             </Button>
                             <Button
                               size="sm"
@@ -767,6 +848,12 @@ export default function PlatformDashboardPage() {
         size="md"
       >
         <form onSubmit={handleCreateSubmit} noValidate className="space-y-4">
+          <p className="text-fg-muted text-xs">
+            Creating an academy will automatically generate a secure{' '}
+            <strong>Owner Invitation Link</strong>. You can copy and share this link directly with
+            the academy owner.
+          </p>
+
           <div>
             <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-name">
               Academy name *
@@ -777,24 +864,6 @@ export default function PlatformDashboardPage() {
               onChange={(e) => setCreateName(e.target.value)}
               placeholder="e.g. Rising Stars Cricket Academy"
             />
-          </div>
-
-          <div>
-            <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-owner">
-              Owner *
-            </label>
-            <Select
-              id="create-owner"
-              value={createOwnerId}
-              onChange={(e) => setCreateOwnerId(e.target.value as UUID | '')}
-            >
-              <option value="">Select owner</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.fullName ?? user.email}
-                </option>
-              ))}
-            </Select>
           </div>
 
           <div>
@@ -834,16 +903,180 @@ export default function PlatformDashboardPage() {
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-timezone">
+                Timezone
+              </label>
+              <Select
+                id="create-timezone"
+                value={createTimezone}
+                onChange={(e) => setCreateTimezone(e.target.value)}
+              >
+                <option value="Asia/Kolkata">Asia/Kolkata</option>
+                <option value="Asia/Dubai">Asia/Dubai</option>
+                <option value="Asia/Colombo">Asia/Colombo</option>
+                <option value="UTC">UTC</option>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-fg mb-1 block text-sm font-medium" htmlFor="create-feemode">
+                Fee Mode
+              </label>
+              <Select
+                id="create-feemode"
+                value={createFeeMode}
+                onChange={(e) => setCreateFeeMode(e.target.value as 'player_pays' | 'academy_pays')}
+              >
+                <option value="player_pays">Player Pays</option>
+                <option value="academy_pays">Academy Pays</option>
+              </Select>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => setIsCreateModalOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" isLoading={createAcademyMutation.isPending}>
-              Create Academy
+              Create Academy & Generate Invite
             </Button>
           </div>
         </form>
       </Modal>
+
+      {/* POST-CREATION OWNER INVITATION MODAL */}
+      {createdInviteInfo && (
+        <Modal
+          open={Boolean(createdInviteInfo)}
+          onClose={() => setCreatedInviteInfo(null)}
+          title="Academy Created Successfully!"
+          size="md"
+        >
+          <div className="space-y-5">
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="text-fg font-bold">{createdInviteInfo.academyName} is ready!</h3>
+              </div>
+              <p className="text-fg-muted mt-1 text-xs">
+                A default player join code (
+                <strong className="text-fg font-mono">{createdInviteInfo.playerJoinCode}</strong>)
+                and an Owner Invitation Link have been created.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-fg block text-xs font-semibold tracking-wider uppercase">
+                Owner Invitation Link (Single-Use)
+              </label>
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={`${window.location.origin}/academy/invite/${createdInviteInfo.inviteToken}`}
+                  className="bg-surface-subtle font-mono text-xs select-all"
+                />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() =>
+                    copyToClipboard(
+                      `${window.location.origin}/academy/invite/${createdInviteInfo.inviteToken}`,
+                      'Owner invitation link copied!',
+                    )
+                  }
+                  className="shrink-0 gap-1.5 font-semibold"
+                >
+                  {hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {hasCopied ? 'Copied' : 'Copy Link'}
+                </Button>
+              </div>
+              <p className="text-fg-muted text-[11px]">
+                Send this link to the academy owner. When they open and accept the link, they will
+                automatically become the verified Owner.
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button variant="secondary" onClick={() => setCreatedInviteInfo(null)}>
+                Done
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* MANAGE / REGENERATE OWNER INVITATION MODAL */}
+      {inviteModalAcademy && (
+        <Modal
+          open={Boolean(inviteModalAcademy)}
+          onClose={() => {
+            setInviteModalAcademy(null);
+            setActiveInviteToken(null);
+          }}
+          title={`Owner Invitation — ${inviteModalAcademy.name}`}
+          size="md"
+        >
+          <div className="space-y-5">
+            <p className="text-fg-muted text-xs">
+              Generate a new secure single-use invitation link for the owner of{' '}
+              <strong>{inviteModalAcademy.name}</strong>. Generating a new link revokes any previous
+              pending links.
+            </p>
+
+            {activeInviteToken ? (
+              <div className="space-y-2">
+                <label className="text-fg block text-xs font-semibold tracking-wider uppercase">
+                  New Owner Invitation Link
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    value={`${window.location.origin}/academy/invite/${activeInviteToken}`}
+                    className="bg-surface-subtle font-mono text-xs select-all"
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() =>
+                      copyToClipboard(
+                        `${window.location.origin}/academy/invite/${activeInviteToken}`,
+                        'Owner invitation link copied!',
+                      )
+                    }
+                    className="shrink-0 gap-1.5 font-semibold"
+                  >
+                    {hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {hasCopied ? 'Copied' : 'Copy'}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setInviteModalAcademy(null);
+                  setActiveInviteToken(null);
+                }}
+              >
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                isLoading={regenerateInviteMutation.isPending}
+                onClick={() => handleRegenerateInvite(inviteModalAcademy.id)}
+                className="gap-1.5 font-semibold"
+              >
+                <Link2 className="h-4 w-4" />
+                {activeInviteToken ? 'Regenerate Again' : 'Generate Invitation Link'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* DELETE ACADEMY CONFIRMATION */}
       <ConfirmDialog
