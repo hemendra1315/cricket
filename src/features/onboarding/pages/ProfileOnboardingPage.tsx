@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, ShieldCheck, Smartphone, User } from 'lucide-react';
+import { ArrowLeft, Camera, CheckCircle2, ShieldCheck, Smartphone, User } from 'lucide-react';
 
 import { Avatar, Button, Card, CardBody, Input } from '@/components/ui';
-import { useAuth, updateMyProfile } from '@/features/auth';
+import { useAuth, updateMyProfile, uploadAvatar } from '@/features/auth';
 import { isProfileComplete } from '@/features/auth/utils/profileCompletion';
 import { supabase } from '@/lib/supabase/client';
 import { errorMessage as errorMessageText } from '@/lib/api/errors';
 import { useAuthStore, useUiStore } from '@/stores';
+
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const COUNTRY_CODES = [
   { code: '+91', country: 'India (IN)' },
@@ -39,6 +42,10 @@ export default function ProfileOnboardingPage() {
   const [fullName, setFullName] = useState(initialGoogleName);
   const [dateOfBirth, setDateOfBirth] = useState(profile?.dateOfBirth ?? '');
   const [avatarUrl, setAvatarUrl] = useState(initialGoogleAvatar);
+  const [previewUrl, setPreviewUrl] = useState(initialGoogleAvatar);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   const [countryCode, setCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState(
     profile?.phone ? profile.phone.replace(/^\+\d+\s*/, '') : '',
@@ -54,10 +61,43 @@ export default function ProfileOnboardingPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(30);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   // Max DOB is today, min DOB is 100 years ago
   const todayStr = new Date().toISOString().split('T')[0];
+
+  // File picker handler
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAvatarError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setAvatarError('Please select a valid image file (JPEG, PNG, or WebP).');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_SIZE) {
+      setAvatarError('Image size must be less than 5MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setAvatarFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+  };
+
+  // Remove photo handler
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null);
+    setPreviewUrl('');
+    setAvatarUrl('');
+    setAvatarError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   // Countdown timer for resending OTP
   useEffect(() => {
@@ -74,6 +114,7 @@ export default function ProfileOnboardingPage() {
   const handleProceedToOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setAvatarError(null);
 
     if (!fullName.trim() || fullName.trim().length < 2) {
       setErrorMessage('Please enter your full name (at least 2 characters).');
@@ -94,6 +135,22 @@ export default function ProfileOnboardingPage() {
     if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 15) {
       setErrorMessage('Please enter a valid mobile phone number.');
       return;
+    }
+
+    // Upload avatar if a new file was chosen
+    if (avatarFile && user?.id) {
+      setIsUploadingAvatar(true);
+      try {
+        const uploadedUrl = await uploadAvatar(user.id, avatarFile);
+        setAvatarUrl(uploadedUrl);
+        setAvatarFile(null);
+      } catch {
+        setIsUploadingAvatar(false);
+        setAvatarError('Failed to upload profile picture. Please try again or remove it.');
+        return;
+      } finally {
+        setIsUploadingAvatar(false);
+      }
     }
 
     setIsSendingOtp(true);
@@ -261,25 +318,75 @@ export default function ProfileOnboardingPage() {
                 <p className="text-fg-muted text-sm">Just a few details before you get started.</p>
               </div>
 
-              {/* AVATAR PREVIEW */}
+              {/* PROFILE PICTURE (OPTIONAL) */}
               <div className="flex flex-col items-center justify-center gap-3">
-                <Avatar
-                  name={fullName || user?.email || 'User'}
-                  src={avatarUrl || undefined}
-                  size="lg"
-                  className="ring-primary/10 h-20 w-20 ring-4"
-                />
-                <div className="w-full">
-                  <label className="text-fg-muted mb-1 block text-xs font-semibold uppercase">
+                <div className="relative">
+                  <Avatar
+                    name={fullName || user?.email || 'User'}
+                    src={previewUrl || undefined}
+                    size="lg"
+                    className="ring-primary/20 h-24 w-24 ring-4 transition"
+                  />
+                  {isUploadingAvatar ? (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 backdrop-blur-xs">
+                      <div className="border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <label
+                    htmlFor="avatar-upload"
+                    className="text-fg-muted text-xs font-semibold uppercase"
+                  >
                     Profile Picture (Optional)
                   </label>
-                  <Input
-                    type="url"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="Image URL or keep Google photo"
-                    className="text-xs"
+
+                  <input
+                    id="avatar-upload"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-label="Upload profile picture"
+                    className="sr-only"
+                    onChange={handleFileChange}
+                    disabled={isUploadingAvatar || isSendingOtp}
                   />
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingAvatar || isSendingOtp}
+                      className="gap-1.5"
+                    >
+                      <Camera className="h-4 w-4" />
+                      {previewUrl ? 'Change Photo' : 'Upload Profile Picture'}
+                    </Button>
+
+                    {previewUrl ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveAvatar}
+                        disabled={isUploadingAvatar || isSendingOtp}
+                        className="text-fg-muted hover:text-danger text-xs"
+                      >
+                        Remove
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  <p className="text-fg-muted text-[11px]">JPEG, PNG, or WebP (max 5MB)</p>
+
+                  {avatarError ? (
+                    <p role="alert" className="text-danger text-xs font-medium">
+                      {avatarError}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -357,7 +464,8 @@ export default function ProfileOnboardingPage() {
                 type="submit"
                 variant="primary"
                 size="lg"
-                isLoading={isSendingOtp}
+                isLoading={isSendingOtp || isUploadingAvatar}
+                disabled={isSendingOtp || isUploadingAvatar}
                 className="w-full font-bold shadow-2xs"
               >
                 <Smartphone className="mr-2 h-4 w-4" /> Continue to Phone Verification

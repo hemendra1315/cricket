@@ -1,8 +1,9 @@
 import React from 'react';
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import ProfileOnboardingPage from '@/features/onboarding/pages/ProfileOnboardingPage';
+import * as authFeature from '@/features/auth';
 import { isProfileComplete, getMissingProfileFields } from '../utils/profileCompletion';
 import { useAuthStore, useTestModeStore, useAcademyStore } from '@/stores';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -172,6 +173,232 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
       fireEvent.click(changePhoneBtn);
 
       expect(screen.getByRole('heading', { name: /complete your profile/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('Avatar Upload & Storage Integration Tests', () => {
+    beforeEach(() => {
+      if (!globalThis.URL.createObjectURL) {
+        globalThis.URL.createObjectURL = vi.fn(
+          (file: Blob | MediaSource) => `blob:mock/${(file as File).name || 'avatar'}`,
+        );
+      }
+    });
+
+    it('renders upload control and button instead of text URL input', () => {
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      // Verify no plain text URL input exists
+      expect(
+        screen.queryByPlaceholderText(/image url or keep google photo/i),
+      ).not.toBeInTheDocument();
+
+      // Verify accessible upload button and file input
+      expect(
+        screen.getByRole('button', { name: /change photo|upload profile picture/i }),
+      ).toBeInTheDocument();
+      const fileInput = screen.getByLabelText(/upload profile picture/i) as HTMLInputElement;
+      expect(fileInput).toBeInTheDocument();
+      expect(fileInput.type).toBe('file');
+      expect(fileInput.accept).toBe('image/jpeg,image/png,image/webp');
+    });
+
+    it('displays existing Google avatar initially when present', () => {
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      const avatarImg = screen.getByAltText(/rahul google user/i) as HTMLImageElement;
+      expect(avatarImg).toBeInTheDocument();
+      expect(avatarImg.src).toContain('https://lh3.googleusercontent.com/a/mock-photo');
+    });
+
+    it('updates preview upon valid image selection', () => {
+      const createObjectURLSpy = vi
+        .spyOn(URL, 'createObjectURL')
+        .mockReturnValue('blob:mock/new-avatar.png');
+
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      const fileInput = screen.getByLabelText(/upload profile picture/i);
+      const validFile = new File(['valid content'], 'new-avatar.png', { type: 'image/png' });
+
+      fireEvent.change(fileInput, { target: { files: [validFile] } });
+
+      const avatarImg = screen.getByAltText(/rahul google user/i) as HTMLImageElement;
+      expect(avatarImg.src).toBe('blob:mock/new-avatar.png');
+      expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument();
+
+      createObjectURLSpy.mockRestore();
+    });
+
+    it('rejects invalid file types with a clear validation error', () => {
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      const fileInput = screen.getByLabelText(/upload profile picture/i);
+      const invalidFile = new File(['pdf data'], 'document.pdf', { type: 'application/pdf' });
+
+      fireEvent.change(fileInput, { target: { files: [invalidFile] } });
+
+      expect(
+        screen.getByText(/please select a valid image file \(jpeg, png, or webp\)/i),
+      ).toBeInTheDocument();
+    });
+
+    it('rejects oversized files exceeding 5MB with a clear validation error', () => {
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      const fileInput = screen.getByLabelText(/upload profile picture/i);
+      // Create a 6MB file
+      const bigFile = new File(['x'], 'huge.jpg', { type: 'image/jpeg' });
+      Object.defineProperty(bigFile, 'size', { value: 6 * 1024 * 1024 });
+
+      fireEvent.change(fileInput, { target: { files: [bigFile] } });
+
+      expect(screen.getByText(/image size must be less than 5mb/i)).toBeInTheDocument();
+    });
+
+    it('allows user to remove avatar and resets preview', () => {
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      const removeBtn = screen.getByRole('button', { name: /remove/i });
+      fireEvent.click(removeBtn);
+
+      // When removed, avatar defaults to initials or fallback without img
+      expect(screen.queryByAltText(/rahul google user/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /upload profile picture/i })).toBeInTheDocument();
+    });
+
+    it('handles successful avatar upload, generates public URL, and updates profile avatar_url', async () => {
+      const mockUploadedUrl =
+        'https://storage.supabase.co/avatars/user-google-uuid-52/1720000000000.png';
+      const uploadSpy = vi.spyOn(authFeature, 'uploadAvatar').mockResolvedValue(mockUploadedUrl);
+      const updateProfileSpy = vi.spyOn(authFeature, 'updateMyProfile').mockResolvedValue({
+        id: 'user-google-uuid-52',
+        email: 'googleuser@cricket.app',
+        fullName: 'Rahul Google User',
+        phone: '+919876543210',
+        phoneVerified: true,
+        avatarUrl: mockUploadedUrl,
+        dateOfBirth: '2000-01-15',
+        locale: 'en',
+        timezone: 'Asia/Kolkata',
+        isSuperAdmin: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      const fileInput = screen.getByLabelText(/upload profile picture/i);
+      const validFile = new File(['valid content'], 'profile.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [validFile] } });
+
+      const dobInput = screen.getByLabelText(/date of birth/i);
+      fireEvent.change(dobInput, { target: { value: '2000-01-15' } });
+
+      const phoneInput = screen.getByPlaceholderText(/98765 43210/i);
+      fireEvent.change(phoneInput, { target: { value: '9876543210' } });
+
+      const submitButton = screen.getByRole('button', { name: /continue to phone verification/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(uploadSpy).toHaveBeenCalledWith('user-google-uuid-52', validFile);
+        expect(screen.getByRole('heading', { name: /verify your phone/i })).toBeInTheDocument();
+      });
+
+      // Enter OTP
+      const otpInputs = screen.getAllByRole('textbox');
+      ['1', '2', '3', '4', '5', '6'].forEach((digit, idx) => {
+        fireEvent.change(otpInputs[idx]!, { target: { value: digit } });
+      });
+
+      const verifyBtn = screen.getByRole('button', { name: /verify & complete profile/i });
+      fireEvent.click(verifyBtn);
+
+      await waitFor(() => {
+        expect(updateProfileSpy).toHaveBeenCalledWith(
+          'user-google-uuid-52',
+          expect.objectContaining({
+            avatarUrl: mockUploadedUrl,
+            phoneVerified: true,
+          }),
+        );
+      });
+
+      uploadSpy.mockRestore();
+      updateProfileSpy.mockRestore();
+    });
+
+    it('handles upload failure gracefully by showing an actionable error and preventing step progression', async () => {
+      const uploadSpy = vi
+        .spyOn(authFeature, 'uploadAvatar')
+        .mockRejectedValue(new Error('Storage upload failed'));
+
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      const fileInput = screen.getByLabelText(/upload profile picture/i);
+      const validFile = new File(['valid content'], 'profile.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [validFile] } });
+
+      const dobInput = screen.getByLabelText(/date of birth/i);
+      fireEvent.change(dobInput, { target: { value: '2000-01-15' } });
+
+      const phoneInput = screen.getByPlaceholderText(/98765 43210/i);
+      fireEvent.change(phoneInput, { target: { value: '9876543210' } });
+
+      const submitButton = screen.getByRole('button', { name: /continue to phone verification/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(uploadSpy).toHaveBeenCalled();
+        expect(
+          screen.getByText(/failed to upload profile picture\. please try again or remove it\./i),
+        ).toBeInTheDocument();
+      });
+
+      // Verify user remains on profile details form and did not progress to OTP step
+      expect(screen.getByRole('heading', { name: /complete your profile/i })).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /verify your phone/i })).not.toBeInTheDocument();
+
+      uploadSpy.mockRestore();
     });
   });
 });

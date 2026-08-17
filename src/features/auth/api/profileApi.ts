@@ -1,4 +1,4 @@
-import { unwrap } from '@/lib/api';
+import { toApiError, unwrap } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { Profile, UUID } from '@/types';
 
@@ -96,4 +96,19 @@ export async function updateMyProfile(userId: UUID, input: UpdateProfileInput): 
       .single(),
   );
   return toProfile(row);
+}
+
+export async function uploadAvatar(userId: UUID, file: File): Promise<string> {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const filePath = `${userId}/${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, {
+    upsert: true,
+    contentType: file.type,
+  });
+
+  if (uploadError) throw toApiError(uploadError);
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+  return data.publicUrl;
 }

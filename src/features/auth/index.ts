@@ -3,6 +3,7 @@ export {
   ensureMyProfile,
   fetchMyProfile,
   updateMyProfile,
+  uploadAvatar,
   type UpdateProfileInput,
 } from './api/profileApi';
 export { AuthProvider } from './components/AuthProvider';
