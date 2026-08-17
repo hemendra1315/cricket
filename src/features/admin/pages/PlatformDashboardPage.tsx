@@ -14,7 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardBody, CardHeader, Button, Input, Modal, Select } from '@/components/ui';
+import { Card, CardBody, CardHeader, Button, Input, Modal, Select, Avatar } from '@/components/ui';
 import { ConfirmDialog, EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { formatDate } from '@/lib/utils/date';
@@ -353,13 +353,22 @@ export default function PlatformDashboardPage() {
                       {academies.slice(0, 5).map((acad) => (
                         <tr key={acad.id} className="hover:bg-surface-subtle/50">
                           <td className="text-fg py-3 font-medium">
-                            {acad.name}
-                            {acad.city ? (
-                              <span className="text-fg-muted text-xs font-normal">
-                                {' '}
-                                · {acad.city}
-                              </span>
-                            ) : null}
+                            <div className="flex items-center gap-2.5">
+                              <Avatar
+                                name={acad.name}
+                                src={acad.logoUrl}
+                                size="sm"
+                                shape="rounded"
+                              />
+                              <div className="min-w-0">
+                                <span className="truncate">{acad.name}</span>
+                                {acad.city ? (
+                                  <span className="text-fg-muted block text-xs font-normal">
+                                    {acad.city}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
                           </td>
                           <td className="text-fg-muted py-3">{acad.ownerName}</td>
                           <td className="text-fg py-3">{acad.memberCount}</td>
@@ -445,13 +454,16 @@ export default function PlatformDashboardPage() {
                       className="border-border-subtle bg-surface space-y-3 rounded-xl border p-4 shadow-2xs"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="text-fg font-bold">{acad.name}</h3>
-                          <p className="text-fg-muted text-xs">
-                            /{acad.slug} {acad.city ? `· ${acad.city}` : ''}
-                          </p>
+                        <div className="flex items-center gap-3">
+                          <Avatar name={acad.name} src={acad.logoUrl} size="md" shape="rounded" />
+                          <div className="min-w-0">
+                            <h3 className="text-fg truncate font-bold">{acad.name}</h3>
+                            <p className="text-fg-muted text-xs">
+                              /{acad.slug} {acad.city ? `· ${acad.city}` : ''}
+                            </p>
+                          </div>
                         </div>
-                        <span className="bg-surface-muted text-fg-muted rounded-md px-2 py-0.5 text-[11px] font-medium">
+                        <span className="bg-surface-muted text-fg-muted shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium">
                           {formatDate(acad.createdAt)}
                         </span>
                       </div>
@@ -470,41 +482,45 @@ export default function PlatformDashboardPage() {
                       </div>
 
                       <div className="border-border-subtle flex flex-wrap items-center justify-between gap-2 border-t pt-2">
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          className="min-h-[44px] flex-1 gap-1.5 font-semibold"
-                          onClick={() => handleEnterAcademy(acad)}
-                        >
-                          <LogIn className="h-4 w-4" /> Enter Academy
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="min-h-[44px] gap-1"
-                          onClick={() => {
-                            setInviteModalAcademy(acad);
-                            setActiveInviteToken(null);
-                          }}
-                        >
-                          <Link2 className="h-4 w-4" /> Owner Invite
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="min-h-[44px]"
-                          onClick={() => setSelectedAcademyId(acad.id)}
-                        >
-                          Details
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="min-h-[44px] text-red-500 hover:text-red-600"
-                          onClick={() => setAcademyToDelete(acad)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={() => handleEnterAcademy(acad)}
+                            className="min-h-[36px] gap-1"
+                          >
+                            <LogIn className="h-3.5 w-3.5" /> Enter
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setSelectedAcademyId(acad.id)}
+                          >
+                            Details
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setInviteModalAcademy(acad);
+                              setActiveInviteToken(null);
+                            }}
+                            aria-label={`Owner invite for ${acad.name}`}
+                          >
+                            <Link2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => setAcademyToDelete(acad)}
+                            aria-label={`Delete ${acad.name}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -529,9 +545,19 @@ export default function PlatformDashboardPage() {
                       {filteredAcademies.map((acad) => (
                         <tr key={acad.id} className="hover:bg-surface-subtle/50">
                           <td className="text-fg px-2 py-3 font-medium">
-                            <div>{acad.name}</div>
-                            <div className="text-fg-muted text-xs">
-                              /{acad.slug} {acad.city ? `· ${acad.city}` : ''}
+                            <div className="flex items-center gap-2.5">
+                              <Avatar
+                                name={acad.name}
+                                src={acad.logoUrl}
+                                size="sm"
+                                shape="rounded"
+                              />
+                              <div className="min-w-0">
+                                <span className="truncate">{acad.name}</span>
+                                <div className="text-fg-muted text-xs">
+                                  /{acad.slug} {acad.city ? `· ${acad.city}` : ''}
+                                </div>
+                              </div>
                             </div>
                           </td>
                           <td className="px-2 py-3">

@@ -108,6 +108,16 @@ export default function ProfileOnboardingPage() {
     return () => clearInterval(timer);
   }, [step, countdown]);
 
+  // Autofocus first OTP digit on step transition
+  useEffect(() => {
+    if (step === 'otp') {
+      const timer = setTimeout(() => {
+        otpInputsRef.current[0]?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
+
   const fullPhoneNumber = `${countryCode}${phoneNumber.trim()}`;
 
   // Step 1: Submit Profile details & Send Phone OTP
@@ -194,6 +204,9 @@ export default function ProfileOnboardingPage() {
         description: `A new 6-digit code was sent to ${fullPhoneNumber}`,
         variant: 'info',
       });
+      setTimeout(() => {
+        otpInputsRef.current[0]?.focus();
+      }, 50);
     } catch {
       setErrorMessage('Could not resend verification code. Please try again.');
     } finally {
@@ -201,48 +214,9 @@ export default function ProfileOnboardingPage() {
     }
   };
 
-  // OTP Input Change handler
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newDigits = [...otpDigits];
-    newDigits[index] = value.slice(-1);
-    setOtpDigits(newDigits);
-
-    // Auto-advance to next input
-    if (value && index < 5) {
-      otpInputsRef.current[index + 1]?.focus();
-    }
-  };
-
-  // OTP Paste handler
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedText = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (!pastedText) return;
-    const newDigits = [...otpDigits];
-    for (let i = 0; i < pastedText.length; i++) {
-      const char = pastedText[i];
-      if (char) {
-        newDigits[i] = char;
-      }
-    }
-    setOtpDigits(newDigits);
-    otpInputsRef.current[Math.min(pastedText.length, 5)]?.focus();
-  };
-
-  // OTP Backspace navigation
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
-      otpInputsRef.current[index - 1]?.focus();
-    }
-  };
-
   // Step 2: Verify OTP & Complete Profile
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-
-    const otpCode = otpDigits.join('');
+  const executeVerifyOtp = async (codeToVerify?: string) => {
+    const otpCode = codeToVerify ?? otpDigits.join('');
     if (otpCode.length !== 6) {
       setErrorMessage('Please enter the complete 6-digit verification code.');
       return;
@@ -254,6 +228,8 @@ export default function ProfileOnboardingPage() {
     }
 
     setIsVerifyingOtp(true);
+    setErrorMessage(null);
+
     try {
       // Attempt Supabase OTP verification
       const { error: verifyError } = await supabase.auth.verifyOtp({
@@ -305,6 +281,84 @@ export default function ProfileOnboardingPage() {
       setErrorMessage(errorMessageText(err));
     } finally {
       setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await executeVerifyOtp();
+  };
+
+  // OTP Input Change handler (supports single digit entry and browser SMS autofill)
+  const handleOtpChange = (index: number, value: string) => {
+    const cleanValue = value.replace(/\D/g, '');
+    if (!cleanValue && value !== '') return;
+
+    // Handle multi-digit insertion (e.g. mobile SMS autofill via autocomplete="one-time-code")
+    if (cleanValue.length > 1) {
+      const fullCode = cleanValue.slice(0, 6);
+      const newDigits = [...otpDigits];
+      for (let i = 0; i < 6; i++) {
+        newDigits[i] = fullCode[i] ?? '';
+      }
+      setOtpDigits(newDigits);
+      otpInputsRef.current[Math.min(fullCode.length - 1, 5)]?.focus();
+
+      if (fullCode.length === 6) {
+        void executeVerifyOtp(fullCode);
+      }
+      return;
+    }
+
+    const singleDigit = cleanValue.slice(-1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = singleDigit;
+    setOtpDigits(newDigits);
+
+    // Auto-advance to next input if a digit was entered
+    if (singleDigit && index < 5) {
+      otpInputsRef.current[index + 1]?.focus();
+    }
+
+    // Auto-verify if all 6 digits are complete after entering a digit
+    const fullCode = newDigits.join('');
+    if (fullCode.length === 6 && singleDigit) {
+      void executeVerifyOtp(fullCode);
+    }
+  };
+
+  // OTP Paste handler (supports full-code paste with non-numeric filtering)
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pastedText) return;
+
+    const newDigits = [...otpDigits];
+    for (let i = 0; i < 6; i++) {
+      newDigits[i] = pastedText[i] ?? '';
+    }
+    setOtpDigits(newDigits);
+
+    const nextIndex = Math.min(pastedText.length - 1, 5);
+    otpInputsRef.current[Math.max(0, nextIndex)]?.focus();
+
+    if (pastedText.length === 6) {
+      void executeVerifyOtp(pastedText);
+    }
+  };
+
+  // OTP Keyboard navigation (Backspace and ArrowLeft/ArrowRight)
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      if (!otpDigits[index] && index > 0) {
+        otpInputsRef.current[index - 1]?.focus();
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
+      otpInputsRef.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      e.preventDefault();
+      otpInputsRef.current[index + 1]?.focus();
     }
   };
 
@@ -500,13 +554,15 @@ export default function ProfileOnboardingPage() {
                     }}
                     type="text"
                     inputMode="numeric"
-                    maxLength={1}
+                    autoComplete="one-time-code"
+                    pattern="[0-9]*"
+                    maxLength={index === 0 ? 6 : 1}
                     value={digit}
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                     onPaste={handleOtpPaste}
                     className="border-border-subtle bg-surface text-fg focus:border-primary focus:ring-primary/40 h-12 w-11 rounded-xl border text-center text-xl font-extrabold focus:ring-2 focus:outline-none sm:h-14 sm:w-12"
-                    aria-label={`Digit ${index + 1}`}
+                    aria-label={`Digit ${index + 1} of 6`}
                   />
                 ))}
               </div>

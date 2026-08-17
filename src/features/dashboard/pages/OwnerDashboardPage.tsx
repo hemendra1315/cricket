@@ -9,7 +9,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-import { Card, CardBody } from '@/components/ui';
+import { Avatar, Card, CardBody } from '@/components/ui';
 import { ErrorState } from '@/components/feedback';
 import { formatDate } from '@/lib/utils/date';
 import { useActiveAcademy } from '@/features/academies';
@@ -50,15 +50,23 @@ export default function OwnerDashboardPage() {
 
   return (
     <div className="space-y-4 pb-20 md:pb-6">
-      {/* 1. Header */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-fg text-xl font-bold tracking-tight md:text-2xl">
-            {membership?.academyName ?? 'Academy Dashboard'}
-          </h1>
-          <p className="text-fg-muted text-xs font-medium">
-            {membership?.city ? `${membership.city} • ` : ''}Academy Operations & Performance
-          </p>
+      {/* 1. Header with Academy Branding */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar
+            name={membership?.academyName}
+            src={membership?.logoUrl}
+            shape="rounded"
+            className="h-10 w-10 text-base sm:h-12 sm:w-12 sm:text-lg"
+          />
+          <div>
+            <h1 className="text-fg text-xl font-bold tracking-tight md:text-2xl">
+              {membership?.academyName ?? 'Academy Dashboard'}
+            </h1>
+            <p className="text-fg-muted text-xs font-medium">
+              {membership?.city ? `${membership.city} • ` : ''}Academy Operations & Performance
+            </p>
+          </div>
         </div>
       </div>
 

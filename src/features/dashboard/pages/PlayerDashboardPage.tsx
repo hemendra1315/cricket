@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
-import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
+import { Card, CardBody, CardHeader, Badge, Avatar } from '@/components/ui';
 import { EmptyState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { SuperAdminAcademyActions } from '@/features/admin';
@@ -84,13 +84,23 @@ export default function PlayerDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-fg text-2xl font-bold tracking-tight md:text-3xl">
-          My Cricket Dashboard
-        </h1>
-        <p className="text-fg-muted mt-1 text-xs font-medium md:text-sm">
-          {membership?.academyName ?? 'Academy'}
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar
+            name={membership?.academyName}
+            src={membership?.logoUrl}
+            shape="rounded"
+            className="h-10 w-10 text-base sm:h-12 sm:w-12 sm:text-lg"
+          />
+          <div>
+            <h1 className="text-fg text-2xl font-bold tracking-tight md:text-3xl">
+              My Cricket Dashboard
+            </h1>
+            <p className="text-fg-muted text-xs font-medium md:text-sm">
+              {membership?.academyName ?? 'Academy'}
+            </p>
+          </div>
+        </div>
       </div>
 
       <SuperAdminAcademyActions />

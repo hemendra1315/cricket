@@ -1,4 +1,4 @@
-import { rpc, unwrap } from '@/lib/api';
+import { rpc, toApiError, unwrap } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import type { Academy, JoinRequest, Membership, UUID } from '@/types';
 import type { FeeMode, JoinableRole } from '@/types/enums';
@@ -165,6 +165,7 @@ export async function regenerateJoinCode(
 
 export type UpdateAcademyInput = Partial<{
   name: string;
+  logoUrl: string | null;
   city: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
@@ -178,6 +179,7 @@ export async function updateAcademy(academyId: UUID, input: UpdateAcademyInput):
       .from('academies')
       .update({
         ...(input.name === undefined ? null : { name: input.name }),
+        ...(input.logoUrl === undefined ? null : { logo_url: input.logoUrl }),
         ...(input.city === undefined ? null : { city: input.city }),
         ...(input.contactEmail === undefined ? null : { contact_email: input.contactEmail }),
         ...(input.contactPhone === undefined ? null : { contact_phone: input.contactPhone }),
@@ -191,11 +193,47 @@ export async function updateAcademy(academyId: UUID, input: UpdateAcademyInput):
   return toAcademy(row);
 }
 
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+export async function uploadAcademyLogo(academyId: UUID, file: File): Promise<string> {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error('Invalid file format. Please upload a JPG, PNG, or WebP image.');
+  }
+
+  if (file.size > MAX_LOGO_SIZE_BYTES) {
+    throw new Error('Image file is too large. Maximum allowed size is 5 MB.');
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const filePath = `${academyId}/${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('academy-logos')
+    .upload(filePath, file, {
+      upsert: true,
+      contentType: file.type,
+    });
+
+  if (uploadError) throw toApiError(uploadError);
+
+  const { data } = supabase.storage.from('academy-logos').getPublicUrl(filePath);
+  const publicUrl = data.publicUrl;
+
+  await updateAcademy(academyId, { logoUrl: publicUrl });
+  return publicUrl;
+}
+
+export async function removeAcademyLogo(academyId: UUID): Promise<void> {
+  await updateAcademy(academyId, { logoUrl: null });
+}
+
 export type OwnerInvitationDetails = {
   isValid: boolean;
   status: 'pending' | 'accepted' | 'revoked' | 'expired' | 'not_found' | 'invalid';
   academyId?: UUID;
   academyName?: string;
+  logoUrl?: string | null;
   expiresAt?: string;
   targetRole?: string;
 };

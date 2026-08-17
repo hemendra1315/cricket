@@ -9,6 +9,8 @@ export {
   regenerateJoinCode,
   requestJoinByCode,
   updateAcademy,
+  uploadAcademyLogo,
+  removeAcademyLogo,
   type CreateAcademyInput,
   type UpdateAcademyInput,
   type OwnerInvitationDetails,

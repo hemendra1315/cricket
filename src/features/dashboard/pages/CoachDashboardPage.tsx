@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CalendarDays, Users, ChevronRight, ArrowRight, Clock, MapPin, Layers } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
-import { Card, CardBody, CardHeader, Button, Badge } from '@/components/ui';
+import { Card, CardBody, CardHeader, Button, Badge, Avatar } from '@/components/ui';
 import { ErrorState } from '@/components/feedback';
 import { formatDate } from '@/lib/utils/date';
 import { useActiveAcademy } from '@/features/academies';
@@ -156,14 +156,24 @@ export default function CoachDashboardPage() {
 
   return (
     <div className="space-y-4 pb-20 md:pb-6">
-      {/* 1. Compact Header */}
-      <div className="flex flex-col gap-0.5">
-        <h1 className="text-fg text-xl font-bold tracking-tight md:text-2xl">
-          {getTimeOfDayGreeting()}, Coach
-        </h1>
-        <p className="text-fg-muted text-xs font-medium">
-          {membership?.academyName ?? 'Academy'} • Daily Training & Squad Overview
-        </p>
+      {/* 1. Compact Header with Academy Branding */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar
+            name={membership?.academyName}
+            src={membership?.logoUrl}
+            shape="rounded"
+            className="h-10 w-10 text-base sm:h-12 sm:w-12 sm:text-lg"
+          />
+          <div>
+            <h1 className="text-fg text-xl font-bold tracking-tight md:text-2xl">
+              {getTimeOfDayGreeting()}, Coach
+            </h1>
+            <p className="text-fg-muted text-xs font-medium">
+              {membership?.academyName ?? 'Academy'} • Daily Training & Squad Overview
+            </p>
+          </div>
+        </div>
       </div>
 
       <SuperAdminAcademyActions />

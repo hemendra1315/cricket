@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Building2, CheckCircle2, ShieldAlert, Sparkles } from 'lucide-react';
+import { CheckCircle2, ShieldAlert, Sparkles } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Button, Card, CardBody, CardHeader } from '@/components/ui';
+import { Avatar, Button, Card, CardBody, CardHeader } from '@/components/ui';
 import { useAuth } from '@/features/auth';
 import {
   getOwnerInvitationDetails,
@@ -203,9 +203,12 @@ export default function OwnerInvitationPage() {
         />
         <CardBody className="space-y-6 p-6 sm:p-8">
           <div className="border-border-subtle bg-surface-subtle flex flex-col items-center gap-3 rounded-2xl border p-6 text-center">
-            <div className="bg-primary/15 text-primary flex h-14 w-14 items-center justify-center rounded-2xl">
-              <Building2 className="h-7 w-7" />
-            </div>
+            <Avatar
+              name={invite.academyName}
+              src={invite.logoUrl}
+              shape="rounded"
+              className="h-16 w-16 text-2xl shadow-sm"
+            />
             <div>
               <p className="text-fg-muted text-xs font-semibold tracking-wider uppercase">
                 Academy

@@ -401,4 +401,154 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
       uploadSpy.mockRestore();
     });
   });
+
+  describe('Automatic OTP Code Detection, Paste & SMS Autofill Verification', () => {
+    const advanceToOtpStep = async () => {
+      render(
+        <BrowserRouter>
+          <ProfileOnboardingPage />
+        </BrowserRouter>,
+        { wrapper: queryWrapper },
+      );
+
+      const dobInput = screen.getByLabelText(/date of birth/i);
+      fireEvent.change(dobInput, { target: { value: '2000-01-15' } });
+
+      const phoneInput = screen.getByPlaceholderText(/98765 43210/i);
+      fireEvent.change(phoneInput, { target: { value: '9876543210' } });
+
+      const submitButton = screen.getByRole('button', { name: /continue to phone verification/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /verify your phone/i })).toBeInTheDocument();
+      });
+
+      return screen.getAllByRole('textbox');
+    };
+
+    it('renders 6 OTP inputs with autocomplete="one-time-code" and inputMode="numeric"', async () => {
+      const otpInputs = await advanceToOtpStep();
+
+      expect(otpInputs).toHaveLength(6);
+      otpInputs.forEach((input, index) => {
+        expect(input).toHaveAttribute('inputMode', 'numeric');
+        expect(input).toHaveAttribute('autoComplete', 'one-time-code');
+        expect(input).toHaveAttribute('aria-label', `Digit ${index + 1} of 6`);
+      });
+    });
+
+    it('supports full 6-digit paste, distributes digits across all 6 boxes, and triggers automatic verification', async () => {
+      const updateProfileSpy = vi.spyOn(authFeature, 'updateMyProfile');
+      const otpInputs = await advanceToOtpStep();
+
+      // Paste 6-digit string
+      fireEvent.paste(otpInputs[0]!, {
+        clipboardData: {
+          getData: () => '849201',
+        },
+      });
+
+      // Verify each box received its respective digit
+      expect(otpInputs[0]).toHaveValue('8');
+      expect(otpInputs[1]).toHaveValue('4');
+      expect(otpInputs[2]).toHaveValue('9');
+      expect(otpInputs[3]).toHaveValue('2');
+      expect(otpInputs[4]).toHaveValue('0');
+      expect(otpInputs[5]).toHaveValue('1');
+
+      // Auto-verification executes on 6 digits
+      await waitFor(() => {
+        expect(updateProfileSpy).toHaveBeenCalledWith(
+          'user-google-uuid-52',
+          expect.objectContaining({ phoneVerified: true }),
+        );
+      });
+
+      updateProfileSpy.mockRestore();
+    });
+
+    it('sanitizes non-numeric characters on paste and extracts numeric OTP digits correctly', async () => {
+      const updateProfileSpy = vi.spyOn(authFeature, 'updateMyProfile');
+      const otpInputs = await advanceToOtpStep();
+
+      // Paste code formatted with dashes/spaces/text
+      fireEvent.paste(otpInputs[0]!, {
+        clipboardData: {
+          getData: () => 'Code: 739-182 (Your OTP)',
+        },
+      });
+
+      expect(otpInputs[0]).toHaveValue('7');
+      expect(otpInputs[1]).toHaveValue('3');
+      expect(otpInputs[2]).toHaveValue('9');
+      expect(otpInputs[3]).toHaveValue('1');
+      expect(otpInputs[4]).toHaveValue('8');
+      expect(otpInputs[5]).toHaveValue('2');
+
+      await waitFor(() => {
+        expect(updateProfileSpy).toHaveBeenCalledWith(
+          'user-google-uuid-52',
+          expect.objectContaining({ phoneVerified: true }),
+        );
+      });
+
+      updateProfileSpy.mockRestore();
+    });
+
+    it('handles mobile SMS autofill direct value change on first input box', async () => {
+      const updateProfileSpy = vi.spyOn(authFeature, 'updateMyProfile');
+      const otpInputs = await advanceToOtpStep();
+
+      // Mobile browser assigns full OTP to the focused input during SMS autofill
+      fireEvent.change(otpInputs[0]!, { target: { value: '520914' } });
+
+      expect(otpInputs[0]).toHaveValue('5');
+      expect(otpInputs[1]).toHaveValue('2');
+      expect(otpInputs[2]).toHaveValue('0');
+      expect(otpInputs[3]).toHaveValue('9');
+      expect(otpInputs[4]).toHaveValue('1');
+      expect(otpInputs[5]).toHaveValue('4');
+
+      await waitFor(() => {
+        expect(updateProfileSpy).toHaveBeenCalledWith(
+          'user-google-uuid-52',
+          expect.objectContaining({ phoneVerified: true }),
+        );
+      });
+
+      updateProfileSpy.mockRestore();
+    });
+
+    it('supports manual digit-by-digit entry, editing individual digits, and keyboard backspace navigation', async () => {
+      const updateProfileSpy = vi.spyOn(authFeature, 'updateMyProfile');
+      const otpInputs = await advanceToOtpStep();
+
+      // Enter digits 1 to 5
+      fireEvent.change(otpInputs[0]!, { target: { value: '1' } });
+      fireEvent.change(otpInputs[1]!, { target: { value: '2' } });
+      fireEvent.change(otpInputs[2]!, { target: { value: '3' } });
+      fireEvent.change(otpInputs[3]!, { target: { value: '4' } });
+      fireEvent.change(otpInputs[4]!, { target: { value: '5' } });
+
+      // Edit digit 2 to '9'
+      fireEvent.change(otpInputs[1]!, { target: { value: '9' } });
+      expect(otpInputs[1]).toHaveValue('9');
+
+      // Backspace on empty index 5 moves focus backwards
+      fireEvent.keyDown(otpInputs[5]!, { key: 'Backspace' });
+
+      // Enter 6th digit completes the code and triggers auto-verification
+      fireEvent.change(otpInputs[5]!, { target: { value: '6' } });
+
+      await waitFor(() => {
+        expect(updateProfileSpy).toHaveBeenCalledWith(
+          'user-google-uuid-52',
+          expect.objectContaining({ phoneVerified: true }),
+        );
+      });
+
+      updateProfileSpy.mockRestore();
+    });
+  });
 });

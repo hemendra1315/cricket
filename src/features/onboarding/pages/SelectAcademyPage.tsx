@@ -44,7 +44,7 @@ export default function SelectAcademyPage() {
         ))}
 
         <Link to="/onboarding" className={buttonStyles('ghost', 'sm', 'mt-2')}>
-          Join or create another academy
+          Join another academy
         </Link>
       </CardBody>
     </Card>

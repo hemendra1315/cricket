@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { User } from 'lucide-react';
 import { initials } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
@@ -6,6 +7,7 @@ type AvatarProps = {
   name?: string | null;
   src?: string | null;
   size?: 'xs' | 'sm' | 'md' | 'lg';
+  shape?: 'circle' | 'rounded';
   className?: string;
 };
 
@@ -23,17 +25,33 @@ const ICON_SIZES = {
   lg: 'h-5 w-5',
 } as const;
 
-export function Avatar({ name, src, size = 'md', className }: AvatarProps) {
-  const base = cn('inline-flex items-center justify-center rounded-full', SIZES[size], className);
+export function Avatar({ name, src, size = 'md', shape = 'circle', className }: AvatarProps) {
+  const [erroredSrc, setErroredSrc] = useState<string | null>(null);
 
-  if (src) {
-    return <img src={src} alt={name ?? 'User avatar'} className={cn(base, 'object-cover')} />;
+  const hasError = Boolean(src && erroredSrc === src);
+  const shapeClass = shape === 'rounded' ? 'rounded-xl' : 'rounded-full';
+  const base = cn(
+    'inline-flex shrink-0 items-center justify-center overflow-hidden font-semibold select-none',
+    shapeClass,
+    SIZES[size],
+    className,
+  );
+
+  if (src && !hasError) {
+    return (
+      <img
+        src={src}
+        alt={name ?? 'Avatar'}
+        onError={() => setErroredSrc(src)}
+        className={cn(base, 'object-cover')}
+      />
+    );
   }
 
   const inits = initials(name, '');
 
   return (
-    <span className={cn(base, 'bg-primary/15 text-primary font-semibold')} aria-hidden>
+    <span className={cn(base, 'bg-primary/15 text-primary')} aria-hidden>
       {inits || <User className={ICON_SIZES[size]} />}
     </span>
   );

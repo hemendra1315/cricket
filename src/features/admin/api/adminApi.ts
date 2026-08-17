@@ -16,6 +16,7 @@ export interface PlatformAcademy {
   id: UUID;
   name: string;
   slug: string;
+  logoUrl?: string | null;
   city: string | null;
   timezone: string;
   feeMode: string;

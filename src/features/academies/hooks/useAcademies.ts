@@ -149,6 +149,8 @@ export function useUpdateAcademy(academyId: UUID) {
     mutationFn: (input: UpdateAcademyInput) => updateAcademy(academyId, input),
     onSuccess: async (academy) => {
       queryClient.setQueryData(queryKeys.academy.detail(academyId), academy);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.academy.all });
+      await queryClient.invalidateQueries({ queryKey: ['admin-platform-academies'] });
       await invalidateIdentity();
     },
   });
