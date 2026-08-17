@@ -53,30 +53,41 @@ export default function TrainingSessionDetailPage() {
 
   const handleDelete = async () => {
     if (!sessionId) return;
-    await deleteSession.mutateAsync({ sessionId });
-    navigate('/sessions');
+    try {
+      await deleteSession.mutateAsync({ sessionId });
+      pushToast({ title: 'Session deleted', variant: 'success' });
+      navigate('/sessions');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete session';
+      pushToast({ title: 'Failed to delete session', description: msg, variant: 'error' });
+    }
   };
 
   const handleStatusChange = async (status: 'completed' | 'cancelled') => {
     if (!sessionId || !session) return;
-    await updateSession.mutateAsync({
-      sessionId,
-      input: {
-        batchId: session.batchId,
-        title: session.title,
-        focusArea: session.focusArea,
-        sessionDate: session.sessionDate,
-        startAt: session.startAt,
-        endAt: session.endAt,
-        coachId: session.coachId,
-        status,
-        notes: session.notes,
-      },
-    });
-    pushToast({
-      title: status === 'completed' ? 'Session marked completed' : 'Session cancelled',
-      variant: 'success',
-    });
+    try {
+      await updateSession.mutateAsync({
+        sessionId,
+        input: {
+          batchId: session.batchId,
+          title: session.title,
+          focusArea: session.focusArea,
+          sessionDate: session.sessionDate,
+          startAt: session.startAt,
+          endAt: session.endAt,
+          coachId: session.coachId,
+          status,
+          notes: session.notes,
+        },
+      });
+      pushToast({
+        title: status === 'completed' ? 'Session marked completed' : 'Session cancelled',
+        variant: 'success',
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update session status';
+      pushToast({ title: 'Failed to update session status', description: msg, variant: 'error' });
+    }
   };
 
   if (!academyId || !sessionId || !isUUID(sessionId)) {
@@ -231,6 +242,8 @@ function SessionEditForm({
 
   const coaches = membersQuery.data?.filter((member) => member.role === 'coach') ?? [];
 
+  const pushToast = useUiStore((state) => state.pushToast);
+
   const {
     register,
     handleSubmit,
@@ -249,21 +262,26 @@ function SessionEditForm({
   });
 
   const handleSubmitEdit = handleSubmit(async (values) => {
-    await updateSession.mutateAsync({
-      sessionId: session.id,
-      input: {
-        batchId: values.batchId,
-        title: values.title,
-        focusArea: values.focusArea || null,
-        sessionDate: values.sessionDate,
-        startAt: values.startAt,
-        endAt: values.endAt,
-        coachId: values.coachId,
-        status: session.status,
-        notes: values.notes || null,
-      },
-    });
-    onSuccess();
+    try {
+      await updateSession.mutateAsync({
+        sessionId: session.id,
+        input: {
+          batchId: values.batchId,
+          title: values.title,
+          focusArea: values.focusArea || null,
+          sessionDate: values.sessionDate,
+          startAt: values.startAt,
+          endAt: values.endAt,
+          coachId: values.coachId,
+          status: session.status,
+          notes: values.notes || null,
+        },
+      });
+      onSuccess();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update session';
+      pushToast({ title: 'Update Failed', description: msg, variant: 'error' });
+    }
   });
 
   return (

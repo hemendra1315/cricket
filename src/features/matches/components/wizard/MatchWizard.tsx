@@ -10,6 +10,7 @@ import { AwardsStep } from './steps/AwardsStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { useSaveMatchResult } from '../../hooks/useMatches';
 import type { SaveMatchResultPayload } from '../../api/matchesTypes';
+import { useUiStore } from '@/stores';
 
 export function MatchWizard({
   academyId,
@@ -20,6 +21,7 @@ export function MatchWizard({
   initialState?: WizardState;
   onComplete: (matchId: UUID) => void;
 }) {
+  const pushToast = useUiStore((state) => state.pushToast);
   const [currentStep, setCurrentStep] = useState<WizardStep>(
     initialState ? 'scorecard' : 'details',
   );
@@ -121,8 +123,14 @@ export function MatchWizard({
       },
     };
 
-    const res = await saveMutation.mutateAsync(payload);
-    onComplete(res.matchId as UUID);
+    try {
+      const res = await saveMutation.mutateAsync(payload);
+      pushToast({ title: 'Match saved successfully', variant: 'success' });
+      onComplete(res.matchId as UUID);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to save match result';
+      pushToast({ title: 'Save Match Failed', description: msg, variant: 'error' });
+    }
   }
 
   return (

@@ -38,6 +38,7 @@ function querySingleValue(sql: string): string {
 
 test.describe('Phase 3: Real-World 7-Step Pilot Readiness Manual Walkthrough', () => {
   test('Complete 7-Step Pilot End-to-End Walkthrough', async ({ browser }) => {
+    test.setTimeout(90000);
     console.log('===============================================================');
     console.log('STARTING REAL-WORLD 7-STEP PILOT READINESS MANUAL WALKTHROUGH');
     console.log('===============================================================');

@@ -46,9 +46,14 @@ export default function DrillDetailPage() {
 
   const handleSave = handleSubmit(async (values) => {
     if (!drill || !academyId || !canManage) return;
-    await updateDrill.mutateAsync({ drillId: drill.id, input: values });
-    pushToast({ title: 'Drill updated', variant: 'success' });
-    navigate('/drills');
+    try {
+      await updateDrill.mutateAsync({ drillId: drill.id, input: values });
+      pushToast({ title: 'Drill updated', variant: 'success' });
+      navigate('/drills');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update drill';
+      pushToast({ title: 'Update Failed', description: msg, variant: 'error' });
+    }
   });
 
   if (!academyId || !drillId) {

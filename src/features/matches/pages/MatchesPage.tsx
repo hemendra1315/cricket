@@ -76,31 +76,41 @@ export default function MatchesPage() {
   });
 
   const handleCreate = handleSubmit(async (value) => {
-    await createMatch.mutateAsync({
-      academyId: academyId as string,
-      matchName: value.matchName,
-      matchDate: matchDate?.toISOString().split('T')[0] || value.matchDate,
-      opponentName: value.opponentName || null,
-      tournament: value.tournament || null,
-      matchType: value.matchType,
-      format: value.format,
-      overs: value.overs ? parseFloat(value.overs) : null,
-      batchId: value.batchId || null,
-    });
+    try {
+      await createMatch.mutateAsync({
+        academyId: academyId as string,
+        matchName: value.matchName,
+        matchDate: matchDate?.toISOString().split('T')[0] || value.matchDate,
+        opponentName: value.opponentName || null,
+        tournament: value.tournament || null,
+        matchType: value.matchType,
+        format: value.format,
+        overs: value.overs ? parseFloat(value.overs) : null,
+        batchId: value.batchId || null,
+      });
 
-    pushToast({
-      title: 'Match created',
-      variant: 'success',
-    });
+      pushToast({
+        title: 'Match created',
+        variant: 'success',
+      });
 
-    reset(DEFAULT_MATCH_FORM);
-    setMatchDate(null);
-    setShowForm(false);
+      reset(DEFAULT_MATCH_FORM);
+      setMatchDate(null);
+      setShowForm(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create match';
+      pushToast({ title: 'Failed to create match', description: msg, variant: 'error' });
+    }
   });
 
   const handleDelete = async (matchId: string) => {
-    await deleteMatch.mutateAsync({ matchId });
-    pushToast({ title: 'Match deleted', variant: 'success' });
+    try {
+      await deleteMatch.mutateAsync({ matchId });
+      pushToast({ title: 'Match deleted', variant: 'success' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete match';
+      pushToast({ title: 'Failed to delete match', description: msg, variant: 'error' });
+    }
   };
 
   const [matchFilter, setMatchFilter] = useState<'all' | 'upcoming' | 'completed'>('all');

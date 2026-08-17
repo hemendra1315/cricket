@@ -99,6 +99,9 @@ export async function fetchAcademyDrills(academyId: UUID): Promise<Drill[]> {
 }
 
 export async function createDrill(input: CreateDrillInput): Promise<Drill> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const row = await unwrap<any>(
     (supabase as any)
       .from('drills')
@@ -109,7 +112,7 @@ export async function createDrill(input: CreateDrillInput): Promise<Drill> {
         description: input.description,
         duration_minutes: input.durationMinutes,
         difficulty: input.difficulty,
-        created_by: null,
+        created_by: user?.id ?? null,
       })
       .select(DRILL_COLUMNS)
       .single(),

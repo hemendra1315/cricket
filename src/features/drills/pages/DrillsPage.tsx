@@ -78,31 +78,56 @@ export default function DrillsPage() {
 
   const handleCreate = handleSubmit(async (values) => {
     if (!academyId || !canManage) return;
-    await createDrill.mutateAsync({ ...values, academyId });
-    pushToast({ title: 'Drill created', variant: 'success' });
-    reset(DEFAULT_FORM_VALUES);
-    setShowForm(false);
+    try {
+      await createDrill.mutateAsync({ ...values, academyId });
+      pushToast({ title: 'Drill created', variant: 'success' });
+      reset(DEFAULT_FORM_VALUES);
+      setShowForm(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create drill';
+      pushToast({ title: 'Create Failed', description: msg, variant: 'error' });
+    }
   });
 
   const handleAssign = async () => {
     if (!academyId || !selectedDrillId || assignmentSaveDisabled) return;
-    await assignDrill.mutateAsync({
-      academyId,
-      drillId: selectedDrillId,
-      playerId: targetType === 'player' ? selectedPlayerId : null,
-      batchId: targetType === 'batch' ? selectedBatchId : null,
-      dueDate: dueDate || null,
-    });
-    pushToast({ title: 'Drill assigned', variant: 'success' });
-    setSelectedDrillId('');
-    setSelectedPlayerId('');
-    setSelectedBatchId('');
-    setDueDate('');
+    try {
+      await assignDrill.mutateAsync({
+        academyId,
+        drillId: selectedDrillId,
+        playerId: targetType === 'player' ? selectedPlayerId : null,
+        batchId: targetType === 'batch' ? selectedBatchId : null,
+        dueDate: dueDate || null,
+      });
+      pushToast({ title: 'Drill assigned', variant: 'success' });
+      setSelectedDrillId('');
+      setSelectedPlayerId('');
+      setSelectedBatchId('');
+      setDueDate('');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to assign drill';
+      pushToast({ title: 'Assign Failed', description: msg, variant: 'error' });
+    }
   };
 
   const handleDeleteAssignment = async (assignmentId: UUID) => {
-    await deleteAssignment.mutateAsync({ assignmentId });
-    pushToast({ title: 'Assignment removed', variant: 'success' });
+    try {
+      await deleteAssignment.mutateAsync({ assignmentId });
+      pushToast({ title: 'Assignment removed', variant: 'success' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to remove assignment';
+      pushToast({ title: 'Remove Failed', description: msg, variant: 'error' });
+    }
+  };
+
+  const handleDeleteDrill = async (drillId: UUID) => {
+    try {
+      await deleteDrill.mutateAsync({ drillId });
+      pushToast({ title: 'Drill deleted', variant: 'success' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete drill';
+      pushToast({ title: 'Delete Failed', description: msg, variant: 'error' });
+    }
   };
 
   if (!academyId) return null;
@@ -383,7 +408,7 @@ export default function DrillsPage() {
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => void deleteDrill.mutateAsync({ drillId: drill.id })}
+                          onClick={() => void handleDeleteDrill(drill.id)}
                         >
                           Delete
                         </Button>

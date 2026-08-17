@@ -84,20 +84,15 @@ export async function createBatch(input: CreateBatchInput): Promise<Batch> {
     coach_id: input.coachId && input.coachId.trim() !== '' ? input.coachId : null,
   };
 
-  const { data: insertedRow, error: insertError } = await (supabase as any)
-    .from('batches')
-    .insert(payload)
-    .select(
-      'id, academy_id, name, age_group, description, training_days, training_time, coach_id, created_at, updated_at',
-    )
-    .single();
-
-  if (insertError) {
-    console.error('Supabase insert batch error:', insertError);
-    throw new Error(
-      insertError.message || insertError.details || 'Failed to create batch in database',
-    );
-  }
+  const insertedRow = await unwrap<any>(
+    (supabase as any)
+      .from('batches')
+      .insert(payload)
+      .select(
+        'id, academy_id, name, age_group, description, training_days, training_time, coach_id, created_at, updated_at',
+      )
+      .single(),
+  );
 
   let coachObj = {
     id: null,
@@ -153,21 +148,16 @@ export async function updateBatch(batchId: UUID, input: UpdateBatchInput): Promi
     coach_id: input.coachId && input.coachId.trim() !== '' ? input.coachId : null,
   };
 
-  const { data: updatedRow, error: updateError } = await (supabase as any)
-    .from('batches')
-    .update(payload)
-    .eq('id', batchId)
-    .select(
-      'id, academy_id, name, age_group, description, training_days, training_time, coach_id, created_at, updated_at',
-    )
-    .single();
-
-  if (updateError) {
-    console.error('Supabase update batch error:', updateError);
-    throw new Error(
-      updateError.message || updateError.details || 'Failed to update batch in database',
-    );
-  }
+  const updatedRow = await unwrap<any>(
+    (supabase as any)
+      .from('batches')
+      .update(payload)
+      .eq('id', batchId)
+      .select(
+        'id, academy_id, name, age_group, description, training_days, training_time, coach_id, created_at, updated_at',
+      )
+      .single(),
+  );
 
   let coachObj = {
     id: null,

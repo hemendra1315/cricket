@@ -36,6 +36,9 @@ export async function markAllPresent(
   academyId: UUID,
 ): Promise<void> {
   if (playerIds.length === 0) return;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   await unwrapVoid(
     (supabase as any)
       .from('attendance')
@@ -45,7 +48,7 @@ export async function markAllPresent(
           session_id: sessionId,
           player_id: playerId,
           status: 'present' as AttendanceStatus,
-          marked_by: null,
+          marked_by: user?.id ?? null,
         })),
         { onConflict: ['session_id', 'player_id'] },
       )
@@ -59,6 +62,9 @@ export async function markAttendance(
   status: AttendanceStatus,
   academyId: UUID,
 ): Promise<AttendanceRecord> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const row = await unwrap<any>(
     (supabase as any)
       .from('attendance')
@@ -68,7 +74,7 @@ export async function markAttendance(
           session_id: sessionId,
           player_id: playerId,
           status,
-          marked_by: null,
+          marked_by: user?.id ?? null,
         },
         { onConflict: ['session_id', 'player_id'] },
       )
