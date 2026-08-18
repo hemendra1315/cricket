@@ -14,9 +14,14 @@ export type PlayerProfile = {
   joinedAt: string | null;
   battingStyle: string | null;
   bowlingStyle: string | null;
+  playerRole: string | null;
   jerseyNumber: string | null;
+  playerCode: string | null;
+  bio: string | null;
   batchId: UUID | null;
   batchName: string | null;
+  academyName: string;
+  academyLogoUrl: string | null;
 };
 
 export type PlayerStatistics = {

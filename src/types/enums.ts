@@ -1,5 +1,5 @@
 /** Mirrors the Postgres enums defined in docs/DB-SCHEMA.sql. */
-export const APP_ROLES = ['super_admin', 'academy_owner', 'coach', 'player'] as const;
+export const APP_ROLES = ['super_admin', 'academy_owner', 'coach', 'player', 'parent'] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
 export const MEMBER_STATUSES = ['pending', 'active', 'suspended', 'rejected', 'left'] as const;
@@ -40,6 +40,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   academy_owner: 'Academy Owner',
   coach: 'Coach',
   player: 'Player',
+  parent: 'Parent',
 };
 
 /** Landing route per role, used by the post-login redirect. */
@@ -48,6 +49,7 @@ export const ROLE_HOME: Record<AppRole, string> = {
   academy_owner: '/dashboard',
   coach: '/coach',
   player: '/player',
+  parent: '/parent/dashboard',
 };
 
 /** === MATCH MODULE ENUMS === */

@@ -46,4 +46,11 @@ export function isToday(value: string | Date, timezone = env.defaultTimezone): b
   return inAcademyTz(value, timezone).format('YYYY-MM-DD') === today;
 }
 
+export function isTimeRangeValid(startTime: Date | null, endTime: Date | null) {
+  if (!startTime || !endTime) return true;
+  const startMins = startTime.getHours() * 60 + startTime.getMinutes();
+  const endMins = endTime.getHours() * 60 + endTime.getMinutes();
+  return endMins > startMins;
+}
+
 export { dayjs };

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/query/keys';
 import { supabase } from '@/lib/supabase/client';
@@ -28,6 +28,7 @@ import {
   fetchPlayerDrillSummary,
   fetchPlayerCareerHighlights,
   fetchPlayerChartData,
+  updateCricketProfile,
 } from '../api/playersApi';
 
 // ============================================================
@@ -40,6 +41,33 @@ export function usePlayerProfile(academyId: UUID | null, playerId: UUID | null) 
     enabled:
       Boolean(academyId) && Boolean(playerId) && isUUID(academyId ?? '') && isUUID(playerId ?? ''),
     queryFn: () => fetchPlayerProfile(academyId as UUID, playerId as UUID),
+  });
+}
+
+export function useUpdateCricketProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      academyId,
+      playerId,
+      data,
+    }: {
+      academyId: UUID;
+      playerId: UUID;
+      data: {
+        bio?: string | null;
+        battingStyle?: string | null;
+        bowlingStyle?: string | null;
+        playerRole?: string | null;
+        jerseyNumber?: number | null;
+      };
+    }) => updateCricketProfile(academyId, playerId, data),
+    onSuccess: (_, { academyId, playerId }) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.academy.member(academyId, playerId),
+      });
+    },
   });
 }
 

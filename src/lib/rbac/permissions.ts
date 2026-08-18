@@ -33,6 +33,8 @@ export const CAPABILITIES = [
   'billing:manage',
   'reports:export',
   'notifications:read',
+  'announcements:read',
+  'announcements:manage',
   'platform:manage',
 ] as const;
 
@@ -49,6 +51,7 @@ const PLAYER: Capability[] = [
   'billing:read_own',
   'reports:export',
   'notifications:read',
+  'announcements:read',
 ];
 
 const COACH: Capability[] = [
@@ -68,6 +71,8 @@ const COACH: Capability[] = [
   'stats:read_all',
   'reports:export',
   'notifications:read',
+  'announcements:read',
+  'announcements:manage',
 ];
 
 const OWNER: Capability[] = [
@@ -98,6 +103,18 @@ const OWNER: Capability[] = [
   'billing:manage',
   'reports:export',
   'notifications:read',
+  'announcements:read',
+  'announcements:manage',
+];
+
+const PARENT: Capability[] = [
+  'players:read',
+  'sessions:read',
+  'attendance:read',
+  'matches:read',
+  'stats:read_own',
+  'notifications:read',
+  'announcements:read',
 ];
 
 export const ROLE_CAPABILITIES: Record<AppRole, readonly Capability[]> = {
@@ -105,6 +122,7 @@ export const ROLE_CAPABILITIES: Record<AppRole, readonly Capability[]> = {
   coach: COACH,
   academy_owner: OWNER,
   super_admin: CAPABILITIES,
+  parent: PARENT,
 };
 
 export function roleHasCapability(role: AppRole, capability: Capability): boolean {

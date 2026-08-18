@@ -24,7 +24,7 @@ import type { UUID } from '@/types';
 import type { CreateTrainingSessionInput } from '../api/sessionsTypes';
 import { useBatches } from '@/features/batches';
 import { useCreateTrainingSession, useTrainingSessions } from '../hooks/useSessions';
-import { formatDate, formatTime } from '@/lib/utils/date';
+import { formatDate, formatTime, isTimeRangeValid } from '@/lib/utils/date';
 
 type FormValues = Omit<CreateTrainingSessionInput, 'academyId' | 'startAt' | 'endAt'>;
 
@@ -79,9 +79,9 @@ export default function TrainingSessionsPage() {
       return;
     }
 
-    if (endTime.getTime() <= startTime.getTime()) {
+    if (!isTimeRangeValid(startTime, endTime)) {
       pushToast({
-        title: 'End time must be after start time',
+        title: 'End time must be after start time.',
         variant: 'error',
       });
       return;

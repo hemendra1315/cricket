@@ -19,6 +19,7 @@ import { LoadingScreen } from '@/components/feedback';
 import { Avatar, Button, Modal, ThemeToggle } from '@/components/ui';
 import { AcademySwitcher, useActiveAcademy } from '@/features/academies';
 import { useAuth } from '@/features/auth';
+import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { InstallAppButton } from '@/features/pwa/components/InstallAppButton';
 import { useOnlineStatus } from '@/hooks';
 import { hasCapability, useActiveRoles, useCan, type Capability } from '@/lib/rbac';
@@ -32,6 +33,7 @@ interface NavItemDef {
   icon: ReactNode;
   requiresCapability: Capability | null;
   superAdminOnly?: boolean;
+  parentOnly?: boolean;
 }
 
 const SIDEBAR_ITEMS: NavItemDef[] = [
@@ -53,6 +55,13 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
     label: 'Coach View',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'sessions:manage',
+  },
+  {
+    to: '/parent/dashboard',
+    label: 'Family Dashboard',
+    icon: <Users className="h-4 w-4" aria-hidden />,
+    requiresCapability: null,
+    parentOnly: true,
   },
   {
     to: '/player',
@@ -126,11 +135,17 @@ export function AppShell() {
 
   // Filter allowed items for the user
   const allowedNavItems = SIDEBAR_ITEMS.filter((item) => {
+    const isParent = testModeRole === 'parent' || (!testModeRole && roles.includes('parent'));
     if (testModeRole) {
       if (item.superAdminOnly) return false;
-      return item.requiresCapability === null || hasCapability(roles, item.requiresCapability);
+      if (item.parentOnly && !isParent) return false;
+      const mappedTestRole = testModeRole === 'student' ? 'player' : testModeRole;
+      return (
+        item.requiresCapability === null || hasCapability([mappedTestRole], item.requiresCapability)
+      );
     }
     if (item.superAdminOnly) return isSuperAdmin;
+    if (item.parentOnly && !isParent) return false;
     return item.requiresCapability === null || hasCapability(roles, item.requiresCapability);
   });
 
@@ -154,6 +169,7 @@ export function AppShell() {
               <WifiOff className="h-4 w-4" aria-hidden /> Offline
             </span>
           ) : null}
+          <NotificationBell />
           <ThemeToggle />
           <button
             onClick={() => navigate(targetSettingsRoute)}

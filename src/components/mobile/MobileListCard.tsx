@@ -18,10 +18,11 @@ export function MobileListCard({
   onClick,
   className = '',
 }: MobileListCardProps) {
+  const Component = onClick ? 'button' : 'div';
   return (
-    <div
+    <Component
       onClick={onClick}
-      className={`bg-surface hover:bg-surface-muted/40 border-border-subtle flex min-h-[52px] items-center justify-between gap-3 rounded-2xl border p-3.5 shadow-2xs transition active:scale-[0.99] ${
+      className={`bg-surface hover:bg-surface-muted/40 border-border-subtle flex min-h-[52px] w-full items-center justify-between gap-3 rounded-2xl border p-3.5 text-left shadow-2xs transition active:scale-[0.99] ${
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
     >
@@ -37,6 +38,6 @@ export function MobileListCard({
         {rightBadge}
         {onClick && <ChevronRight className="text-fg-muted/60 h-4 w-4" />}
       </div>
-    </div>
+    </Component>
   );
 }

@@ -31,6 +31,8 @@ import type {
   PlayerStatistics,
 } from '../api/playersTypes';
 import { SimpleBarChart, SimpleLineChart } from '@/components/charts/SimpleBarChart';
+import { CricketCard } from '../components/CricketCard';
+import { FamilyTab } from '../components/FamilyTab';
 
 type TabId =
   | 'overview'
@@ -40,7 +42,8 @@ type TabId =
   | 'highlights'
   | 'notes'
   | 'attendance'
-  | 'drills';
+  | 'drills'
+  | 'family';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -51,11 +54,12 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'notes', label: 'Coach Notes' },
   { id: 'attendance', label: 'Attendance' },
   { id: 'drills', label: 'Drills' },
+  { id: 'family', label: 'Family & Links' },
 ];
 
 export default function PlayerProfilePage() {
   const { memberId } = useParams<{ memberId: string }>();
-  const { academyId } = useActiveAcademy();
+  const { academyId, membership } = useActiveAcademy();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   const profileQuery = usePlayerProfile(academyId, memberId ?? null);
@@ -104,27 +108,6 @@ export default function PlayerProfilePage() {
     (activeTab === 'attendance' && attendanceQuery.isPending) ||
     (activeTab === 'drills' && drillsQuery.isPending);
 
-  const dismissals = statsQuery.data
-    ? statsQuery.data.battingInnings - statsQuery.data.battingNotOuts
-    : 0;
-
-  const battingAverage =
-    statsQuery.data && statsQuery.data.battingInnings > 0
-      ? dismissals > 0
-        ? (statsQuery.data.battingRuns / dismissals).toFixed(2)
-        : statsQuery.data.battingRuns.toFixed(2)
-      : '0.00';
-
-  const strikeRate =
-    statsQuery.data && statsQuery.data.ballsFacedSum > 0
-      ? ((statsQuery.data.battingRuns / statsQuery.data.ballsFacedSum) * 100).toFixed(2)
-      : '0.00';
-
-  const economy =
-    statsQuery.data && statsQuery.data.bowlingOvers > 0
-      ? (statsQuery.data.bowlingRunsConceded / statsQuery.data.bowlingOvers).toFixed(2)
-      : '0.00';
-
   const renderTabContent = () => {
     if (isLoading) {
       return <p className="text-fg-muted">Loading…</p>;
@@ -161,6 +144,8 @@ export default function PlayerProfilePage() {
         return <AttendanceTab summary={attendanceQuery.data ?? null} />;
       case 'drills':
         return <DrillsTab summary={drillsQuery.data ?? null} />;
+      case 'family':
+        return <FamilyTab academyId={academyId!} playerUserId={profileQuery.data?.userId} />;
       default:
         return null;
     }
@@ -184,9 +169,15 @@ export default function PlayerProfilePage() {
       )}
 
       <div className="hidden items-center gap-3 md:flex">
-        <Link to="/members" className="text-fg-muted hover:text-fg text-sm">
-          ← Back to roster
-        </Link>
+        {membership?.role === 'parent' ? (
+          <Link to="/parent/dashboard" className="text-fg-muted hover:text-fg text-sm">
+            ← Back to dashboard
+          </Link>
+        ) : (
+          <Link to="/members" className="text-fg-muted hover:text-fg text-sm">
+            ← Back to roster
+          </Link>
+        )}
       </div>
 
       {profileQuery.isPending ? (
@@ -199,58 +190,33 @@ export default function PlayerProfilePage() {
               We could not locate the requested player record for this academy.
             </p>
             <div className="pt-2">
-              <Link to="/members">
-                <Button variant="primary">View Roster</Button>
-              </Link>
+              {membership?.role === 'parent' ? (
+                <Link to="/parent/dashboard">
+                  <Button variant="primary">View Dashboard</Button>
+                </Link>
+              ) : (
+                <Link to="/members">
+                  <Button variant="primary">View Roster</Button>
+                </Link>
+              )}
             </div>
           </CardBody>
         </Card>
       ) : (
         <>
-          <Card className="hidden md:block">
-            <CardBody>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="bg-surface-muted flex h-16 w-16 items-center justify-center rounded-full">
-                  {profileQuery.data.avatarUrl ? (
-                    <img
-                      src={profileQuery.data.avatarUrl}
-                      alt=""
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-fg text-xl font-semibold">
-                      {profileQuery.data.fullName?.[0] ?? '?'}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h1 className="text-fg text-2xl font-semibold">
-                    {profileQuery.data.fullName ?? 'Unknown'}
-                  </h1>
-                  <p className="text-fg-muted text-sm">{profileQuery.data.email}</p>
-                  {profileQuery.data.batchName && (
-                    <p className="text-fg-muted text-sm">Batch: {profileQuery.data.batchName}</p>
-                  )}
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          {statsQuery.data && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              <StatCard label="Matches" value={statsQuery.data.matchesPlayed.toString()} />
-              <StatCard label="Runs" value={statsQuery.data.battingRuns.toString()} />
-              <StatCard label="Wickets" value={statsQuery.data.bowlingWickets.toString()} />
-              <StatCard label="Batting Avg" value={battingAverage} />
-              <StatCard label="Strike Rate" value={strikeRate} />
-              <StatCard label="Economy" value={economy} />
-            </div>
-          )}
+          <div className="mb-6">
+            <CricketCard profile={profileQuery.data} stats={statsQuery.data ?? null} />
+          </div>
 
           {/* Contained Horizontal Scrolling Tab Bar */}
           <div className="border-border-subtle bg-surface max-w-full overflow-x-auto rounded-xl border p-1 shadow-2xs">
             <div className="flex min-w-max gap-1">
-              {TABS.map((tab) => (
+              {TABS.filter((tab) => {
+                if (membership?.role === 'parent') {
+                  return !['notes', 'drills', 'family'].includes(tab.id);
+                }
+                return true;
+              }).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -270,17 +236,6 @@ export default function PlayerProfilePage() {
         </>
       )}
     </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <CardBody className="py-3">
-        <p className="text-fg-muted text-xs tracking-wide uppercase">{label}</p>
-        <p className="text-fg text-lg font-semibold">{value}</p>
-      </CardBody>
-    </Card>
   );
 }
 

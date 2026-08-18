@@ -132,6 +132,34 @@ export function MobileBottomNav() {
         matchPrefixes: ['/more', '/stats', '/drills'],
       },
     ];
+  } else if (
+    testModeRole === 'parent' ||
+    (!testModeRole && !canUpdateAcademy && role === 'parent')
+  ) {
+    // Parent: Home | Profile | More
+    items = [
+      {
+        key: 'home',
+        to: homePath,
+        label: 'Home',
+        icon: Home,
+        matchPrefixes: ['/parent/dashboard', '/dashboard'],
+      },
+      {
+        key: 'profile',
+        to: '/parent/profile',
+        label: 'Profile',
+        icon: User,
+        matchPrefixes: ['/parent/profile', '/profile'],
+      },
+      {
+        key: 'more',
+        to: '/more',
+        label: 'More',
+        icon: MoreHorizontal,
+        matchPrefixes: ['/more', '/parent/notifications'],
+      },
+    ];
   } else if (canUpdateAcademy) {
     // Owner & Super Admin: Home | Players | Sessions | Settings | More
     items = [
@@ -184,7 +212,10 @@ export function MobileBottomNav() {
       className="bg-surface/95 border-border-subtle fixed right-0 bottom-0 left-0 z-40 border-t pb-[env(safe-area-inset-bottom)] shadow-lg backdrop-blur-md md:hidden"
       aria-label="Mobile Bottom Navigation"
     >
-      <div className="grid h-16 grid-cols-5 items-center px-1">
+      <div
+        className="grid h-16 items-center px-1"
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      >
         {items.map((item) => {
           const active = isItemActive(item);
           const Icon = item.icon;
@@ -192,12 +223,16 @@ export function MobileBottomNav() {
             <button
               key={item.key}
               onClick={() => navigate(item.to)}
-              className={`flex h-full min-h-[48px] w-full flex-col items-center justify-center px-1 py-1 transition active:scale-95 ${
+              className={`flex h-full min-h-[48px] w-full min-w-0 flex-col items-center justify-center px-1 py-1 transition active:scale-95 ${
                 active ? 'text-primary font-semibold' : 'text-fg-muted hover:text-fg font-normal'
               }`}
             >
-              <Icon className={`mb-1 h-5 w-5 ${active ? 'text-primary' : 'text-fg-muted'}`} />
-              <span className="text-[10px] leading-none tracking-tight">{item.label}</span>
+              <Icon
+                className={`mb-1 h-5 w-5 shrink-0 ${active ? 'text-primary' : 'text-fg-muted'}`}
+              />
+              <span className="w-full truncate text-center text-[10px] leading-none tracking-tight">
+                {item.label}
+              </span>
             </button>
           );
         })}

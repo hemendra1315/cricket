@@ -28,6 +28,7 @@ export function MobileFilterChips<T extends string>({
           <button
             key={opt.id}
             onClick={() => onChange(opt.id)}
+            aria-pressed={isActive}
             className={`flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition active:scale-95 ${
               isActive
                 ? 'bg-primary text-primary-fg shadow-2xs'

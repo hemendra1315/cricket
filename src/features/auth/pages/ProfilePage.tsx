@@ -12,7 +12,8 @@ import {
   CardHeader,
   Input,
 } from '@/components/ui';
-import { useMemberships } from '@/features/academies';
+import { useMemberships, useActiveAcademy } from '@/features/academies';
+import { useLinkedChildren } from '@/features/parents';
 import { InstallAppButton, ShareAppButton } from '@/features/pwa';
 import { errorMessage } from '@/lib/api';
 import { profileFormSchema, type ProfileFormValues } from '@/lib/validators';
@@ -22,12 +23,50 @@ import { ROLE_LABELS } from '@/types/enums';
 import { useAuth } from '../hooks/useAuth';
 import { useUpdateProfile } from '../hooks/useProfile';
 
+function LinkedChildrenSection() {
+  const { academyId } = useActiveAcademy();
+  const { data: children = [], isLoading } = useLinkedChildren(academyId || undefined);
+
+  if (!academyId) return null;
+
+  return (
+    <Card>
+      <CardHeader
+        title="Linked Children"
+        description="Children linked to your account in this academy."
+      />
+      <CardBody className="space-y-2">
+        {isLoading ? (
+          <p className="text-fg-muted text-sm">Loading children...</p>
+        ) : children.length === 0 ? (
+          <p className="text-fg-muted text-sm">No children linked to your account yet.</p>
+        ) : (
+          children.map((child) => (
+            <div
+              key={child.player.id}
+              className="border-border-subtle flex items-center gap-3 rounded-lg border p-3"
+            >
+              <Avatar name={child.player.fullName} src={child.player.avatarUrl} size="sm" />
+              <div>
+                <p className="text-fg text-sm font-medium">{child.player.fullName}</p>
+                <p className="text-fg-muted text-xs">{child.player.batchName || 'No Batch'}</p>
+              </div>
+            </div>
+          ))
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
 /** Lets a user complete their own profile and see where they are a member. */
 export default function ProfilePage() {
   const { profile } = useAuth();
   const { all } = useMemberships();
   const updateProfile = useUpdateProfile();
   const pushToast = useUiStore((state) => state.pushToast);
+
+  const isParent = all.some((m) => m.role === 'parent');
 
   const {
     register,
@@ -140,6 +179,8 @@ export default function ProfilePage() {
           ))}
         </CardBody>
       </Card>
+
+      {isParent && <LinkedChildrenSection />}
 
       <Card>
         <CardHeader

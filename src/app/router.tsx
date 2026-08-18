@@ -46,11 +46,28 @@ const BatchAttendancePage = lazy(() => import('@/features/attendance/pages/Batch
 const OwnerDashboardPage = lazy(() => import('@/features/dashboard/pages/OwnerDashboardPage'));
 const CoachDashboardPage = lazy(() => import('@/features/dashboard/pages/CoachDashboardPage'));
 const PlayerDashboardPage = lazy(() => import('@/features/dashboard/pages/PlayerDashboardPage'));
+const ParentDashboardPage = lazy(() => import('@/features/parents/pages/ParentDashboardPage'));
+const ParentLinkPlayerPage = lazy(() => import('@/features/parents/pages/ParentLinkPlayerPage'));
 const PlatformDashboardPage = lazy(() => import('@/features/admin/pages/PlatformDashboardPage'));
 const DrillsPage = lazy(() => import('@/features/drills/pages/DrillsPage'));
 const DrillDetailPage = lazy(() => import('@/features/drills/pages/DrillDetailPage'));
 const StatsPage = lazy(() => import('@/features/stats/pages/StatsPage'));
 const AcademySettingsPage = lazy(() => import('@/features/academies/pages/AcademySettingsPage'));
+const NotificationsPage = lazy(() =>
+  import('@/features/notifications/pages/NotificationsPage').then((m) => ({
+    default: m.NotificationsPage,
+  })),
+);
+const AnnouncementsPage = lazy(() =>
+  import('@/features/notifications/pages/AnnouncementsPage').then((m) => ({
+    default: m.AnnouncementsPage,
+  })),
+);
+const CreateAnnouncementPage = lazy(() =>
+  import('@/features/notifications/pages/CreateAnnouncementPage').then((m) => ({
+    default: m.CreateAnnouncementPage,
+  })),
+);
 const ForbiddenPage = lazy(() => import('@/pages/ForbiddenPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
@@ -125,7 +142,10 @@ export const router = createBrowserRouter([
                   },
                   {
                     element: <RequireRole allow={['coach', 'academy_owner', 'super_admin']} />,
-                    children: [{ path: '/coach', element: <CoachDashboardPage /> }],
+                    children: [
+                      { path: '/coach', element: <CoachDashboardPage /> },
+                      { path: '/announcements/new', element: <CreateAnnouncementPage /> },
+                    ],
                   },
                   {
                     element: <RequireRole allow={['player', 'super_admin']} />,
@@ -135,10 +155,24 @@ export const router = createBrowserRouter([
                     ],
                   },
                   {
+                    element: <RequireRole allow={['parent', 'super_admin']} />,
+                    children: [
+                      { path: '/parent/dashboard', element: <ParentDashboardPage /> },
+                      { path: '/parent/link-player', element: <ParentLinkPlayerPage /> },
+                      { path: '/parent/child/:memberId', element: <PlayerProfilePage /> },
+                      { path: '/parent/notifications', element: <NotificationsPage /> },
+                      { path: '/parent/profile', element: <ProfilePage /> },
+                    ],
+                  },
+                  {
                     element: (
-                      <RequireRole allow={['player', 'coach', 'academy_owner', 'super_admin']} />
+                      <RequireRole
+                        allow={['player', 'coach', 'academy_owner', 'super_admin', 'parent']}
+                      />
                     ),
                     children: [
+                      { path: '/notifications', element: <NotificationsPage /> },
+                      { path: '/announcements', element: <AnnouncementsPage /> },
                       { path: '/more', element: <MorePage /> },
                       { path: '/stats', element: <StatsPage /> },
                       { path: '/drills', element: <DrillsPage /> },

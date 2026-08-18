@@ -8,12 +8,13 @@ export function TeamSelectStep({
   onBack,
 }: {
   data: ExtractedMatchData;
-  onConfirm: (academyTeamName: string, opponentName: string) => void;
+  onConfirm: (teamId: 'A' | 'B', opponentName: string) => void;
   onBack: () => void;
 }) {
-  const [selectedAcademyTeam, setSelectedAcademyTeam] = useState<string>(data.teamA.name);
+  const [selectedTeamId, setSelectedTeamId] = useState<'A' | 'B'>('A');
 
-  const opponentName = selectedAcademyTeam === data.teamA.name ? data.teamB.name : data.teamA.name;
+  const selectedAcademyTeamName = selectedTeamId === 'A' ? data.teamA.name : data.teamB.name;
+  const opponentName = selectedTeamId === 'A' ? data.teamB.name : data.teamA.name;
 
   return (
     <div className="space-y-6">
@@ -27,9 +28,9 @@ export function TeamSelectStep({
       <div className="grid gap-4 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => setSelectedAcademyTeam(data.teamA.name)}
+          onClick={() => setSelectedTeamId('A')}
           className={`rounded-xl border p-5 text-left transition ${
-            selectedAcademyTeam === data.teamA.name
+            selectedTeamId === 'A'
               ? 'border-primary bg-primary/10'
               : 'border-border-subtle hover:border-primary/40'
           }`}
@@ -43,9 +44,9 @@ export function TeamSelectStep({
 
         <button
           type="button"
-          onClick={() => setSelectedAcademyTeam(data.teamB.name)}
+          onClick={() => setSelectedTeamId('B')}
           className={`rounded-xl border p-5 text-left transition ${
-            selectedAcademyTeam === data.teamB.name
+            selectedTeamId === 'B'
               ? 'border-primary bg-primary/10'
               : 'border-border-subtle hover:border-primary/40'
           }`}
@@ -61,7 +62,7 @@ export function TeamSelectStep({
       <div className="bg-surface-subtle border-border-subtle rounded-xl border p-4 text-sm">
         <p className="text-fg font-medium">Selected Configuration:</p>
         <p className="text-fg-muted mt-1">
-          <strong>Academy Team:</strong> {selectedAcademyTeam}
+          <strong>Academy Team:</strong> {selectedAcademyTeamName}
         </p>
         <p className="text-fg-muted">
           <strong>Opponent:</strong> {opponentName}
@@ -72,7 +73,7 @@ export function TeamSelectStep({
         <Button type="button" variant="ghost" onClick={onBack}>
           ← Back
         </Button>
-        <Button type="button" onClick={() => onConfirm(selectedAcademyTeam, opponentName)}>
+        <Button type="button" onClick={() => onConfirm(selectedTeamId, opponentName)}>
           Next: Player Mapping →
         </Button>
       </div>

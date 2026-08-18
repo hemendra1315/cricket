@@ -1,4 +1,5 @@
 import DatePicker from 'react-datepicker';
+import { isTimeRangeValid } from '@/lib/utils/date';
 
 type TimeRangePickerProps = {
   label: string;
@@ -23,6 +24,7 @@ export function TimeRangePicker({
   onStartTimeChange,
   onEndTimeChange,
 }: TimeRangePickerProps) {
+  const invalid = !isTimeRangeValid(startTime, endTime);
   return (
     <div>
       <label className="text-fg block text-sm font-medium">{label}</label>
@@ -35,7 +37,7 @@ export function TimeRangePicker({
           timeIntervals={30}
           dateFormat="h:mm aa"
           placeholderText="Start Time"
-          className="w-full rounded-lg border px-3 py-2"
+          className={`w-full rounded-lg border px-3 py-2 ${invalid ? 'border-danger focus:border-danger' : 'border-border'}`}
           popperClassName="react-datepicker-popper"
           autoComplete="off"
         />
@@ -47,11 +49,12 @@ export function TimeRangePicker({
           timeIntervals={30}
           dateFormat="h:mm aa"
           placeholderText="End Time"
-          className="w-full rounded-lg border px-3 py-2"
+          className={`w-full rounded-lg border px-3 py-2 ${invalid ? 'border-danger focus:border-danger' : 'border-border'}`}
           popperClassName="react-datepicker-popper"
           autoComplete="off"
         />
       </div>
+      {invalid && <p className="text-danger mt-1 text-xs">End time must be after start time.</p>}
     </div>
   );
 }

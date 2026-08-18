@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type TestModeRole = 'student' | 'coach' | 'academy_owner' | null;
+export type TestModeRole = 'student' | 'coach' | 'academy_owner' | 'parent' | null;
 
 type TestModeState = {
   activeRole: TestModeRole;

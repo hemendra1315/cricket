@@ -32,7 +32,7 @@ export function CricHeroesImportModal({
 }) {
   const [step, setStep] = useState<'upload' | 'teams' | 'players' | 'duplicate'>('upload');
   const [extracted, setExtracted] = useState<ExtractedMatchData | null>(null);
-  const [selectedAcademyTeam, setSelectedAcademyTeam] = useState<string>('');
+  const [selectedAcademyTeamId, setSelectedAcademyTeamId] = useState<'A' | 'B'>('A');
   const [opponentName, setOpponentName] = useState<string>('');
   const [mappedPlayers, setMappedPlayers] = useState<MappedPlayer[]>([]);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
@@ -81,8 +81,8 @@ export function CricHeroesImportModal({
     setStep('teams');
   }
 
-  function handleTeamsConfirmed(teamName: string, oppName: string) {
-    setSelectedAcademyTeam(teamName);
+  function handleTeamsConfirmed(teamId: 'A' | 'B', oppName: string) {
+    setSelectedAcademyTeamId(teamId);
     setOpponentName(oppName);
 
     if (duplicateWarning) {
@@ -112,9 +112,12 @@ export function CricHeroesImportModal({
       // Non-blocking: continue import even if mapping save encounters a network glitch
     }
 
-    // Filter relevant innings for academy team
+    // Filter relevant innings for academy team based on selected team A or B
+    // Assuming innings[0] corresponds to team A (first parsed team) and innings[1] to team B
     const academyInnings =
-      extracted.innings.find((i) => i.teamName === selectedAcademyTeam) || extracted.innings[0];
+      selectedAcademyTeamId === 'A'
+        ? extracted.innings[0]
+        : extracted.innings[1] || extracted.innings[0];
 
     const playerLookup = new Map(mappedPlayers.map((p) => [p.cricheroesName.toLowerCase(), p]));
 
@@ -184,7 +187,7 @@ export function CricHeroesImportModal({
       matchType: extracted.matchType,
       format: extracted.format,
       result: extracted.result,
-      teamScore: extracted.teamA.score,
+      teamScore: selectedAcademyTeamId === 'A' ? extracted.teamA.score : extracted.teamB.score,
       overs: getDefaultOversForFormat(extracted.format),
       tournament: extracted.tournament,
       selectedPlayerIds: lineup.map((l) => l.memberId),

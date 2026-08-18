@@ -30,8 +30,10 @@ export async function fetchPlayerProfile(academyId: UUID, playerId: UUID): Promi
       .select(
         `
         id, academy_id, user_id, role, status, joined_at, 
+        player_code, batting_style, bowling_style, player_role, jersey_number, bio,
         profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url, phone),
-        batch_members!left(batch_id, joined_at, batches!inner(id, name))
+        batch_members!left(batch_id, joined_at, batches!inner(id, name)),
+        academies!inner(name, logo_url)
       `,
       )
       .eq('academy_id', academyId)
@@ -57,12 +59,50 @@ export async function fetchPlayerProfile(academyId: UUID, playerId: UUID): Promi
     role: row.role,
     status: row.status,
     joinedAt: row.joined_at,
-    battingStyle: null,
-    bowlingStyle: null,
-    jerseyNumber: null,
+    battingStyle: row.batting_style ?? null,
+    bowlingStyle: row.bowling_style ?? null,
+    playerRole: row.player_role ?? null,
+    jerseyNumber: row.jersey_number ? String(row.jersey_number) : null,
+    playerCode: row.player_code ?? null,
+    bio: row.bio ?? null,
     batchId: batchMember?.batch_id ?? null,
     batchName: batchMember?.batches?.name ?? null,
+    academyName: row.academies?.name ?? 'Unknown Academy',
+    academyLogoUrl: row.academies?.logo_url ?? null,
   };
+}
+
+// ============================================================
+// UPDATE CRICKET PROFILE
+// ============================================================
+
+export async function updateCricketProfile(
+  academyId: UUID,
+  playerId: UUID,
+  data: {
+    bio?: string | null;
+    battingStyle?: string | null;
+    bowlingStyle?: string | null;
+    playerRole?: string | null;
+    jerseyNumber?: number | null;
+  },
+): Promise<void> {
+  const payload: any = {};
+  if (data.bio !== undefined) payload.bio = data.bio;
+  if (data.battingStyle !== undefined) payload.batting_style = data.battingStyle;
+  if (data.bowlingStyle !== undefined) payload.bowling_style = data.bowlingStyle;
+  if (data.playerRole !== undefined) payload.player_role = data.playerRole;
+  if (data.jerseyNumber !== undefined) payload.jersey_number = data.jerseyNumber;
+
+  if (Object.keys(payload).length === 0) return;
+
+  await unwrap(
+    (supabase as any)
+      .from('academy_members')
+      .update(payload)
+      .eq('academy_id', academyId)
+      .eq('id', playerId),
+  );
 }
 
 // ============================================================

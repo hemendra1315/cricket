@@ -4,6 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Link } from 'react-router-dom';
 
 import { TimeRangePicker } from '@/components/form';
+import { isTimeRangeValid } from '@/lib/utils/date';
 import {
   Button,
   Card,
@@ -76,6 +77,14 @@ export default function BatchesPage() {
 
   const handleCreate = handleSubmit(
     async (value) => {
+      if (!isTimeRangeValid(startTime, endTime)) {
+        pushToast({
+          title: 'End time must be after start time.',
+          variant: 'error',
+        });
+        return;
+      }
+
       const formattedTime =
         startTime && endTime
           ? `${startTime.toLocaleTimeString([], {

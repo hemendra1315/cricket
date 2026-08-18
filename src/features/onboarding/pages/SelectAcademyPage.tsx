@@ -4,7 +4,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Avatar, buttonStyles, Card, CardBody, CardHeader } from '@/components/ui';
 import { useActiveAcademy, useMemberships } from '@/features/academies';
 import { useAuthStore } from '@/stores';
-import { ROLE_LABELS } from '@/types/enums';
+import { ROLE_LABELS, ROLE_HOME } from '@/types/enums';
 
 /** Chooser shown when a user belongs to several academies and none is active. */
 export default function SelectAcademyPage() {
@@ -28,7 +28,7 @@ export default function SelectAcademyPage() {
             className="border-border-subtle hover:bg-surface-muted flex w-full items-center gap-3 rounded-lg border p-3 text-left"
             onClick={() => {
               switchAcademy(membership.academyId);
-              void navigate('/dashboard', { replace: true });
+              void navigate(ROLE_HOME[membership.role] || '/dashboard', { replace: true });
             }}
           >
             <Avatar name={membership.academyName} src={membership.logoUrl} />
