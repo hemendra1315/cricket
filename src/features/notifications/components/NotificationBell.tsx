@@ -25,7 +25,7 @@ export function NotificationBell() {
           filter: `recipient_user_id=eq.${user.id}`,
         },
         () => {
-          // Invalidate notifications query to fetch new data
+          // Invalidate the notifications list query so React Query refetches.
           void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEYS.lists() });
         },
       )
@@ -36,11 +36,12 @@ export function NotificationBell() {
     };
   }, [user, queryClient]);
 
+  // Recalculate unreadCount whenever notifications change
   const unreadCount = notifications.filter((n) => n.status !== 'read' && !n.read_at).length;
 
   return (
     <Link
-      to="/academy/notifications"
+      to="/notifications"
       className="text-fg-muted hover:text-fg hover:bg-surface-hover relative rounded-full p-2 transition"
       aria-label="View notifications"
     >
