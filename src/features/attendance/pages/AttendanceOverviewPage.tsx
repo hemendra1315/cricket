@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarCheck, Users, TrendingUp, Clock } from 'lucide-react';
 
+import { ErrorState } from '@/components/feedback';
 import { Button, Card, CardBody, CardHeader } from '@/components/ui';
 import { SimpleBarChart } from '@/components/charts/SimpleBarChart';
 import { MobilePageHeader, MobileStatCard } from '@/components/mobile';
@@ -17,17 +18,40 @@ export default function AttendanceOverviewPage() {
   const analyticsQuery = useOwnerDashboardAnalytics(academyId);
   const batchesQuery = useBatches(academyId);
 
-  const analytics = analyticsQuery.data;
-
   const monthlyAttendanceData = useMemo(() => {
-    if (!analytics?.monthlyAttendance) return [];
-    return analytics.monthlyAttendance.map((item) => ({
+    const data = analyticsQuery.data;
+    if (!data?.monthlyAttendance) return [];
+    return data.monthlyAttendance.map((item) => ({
       label: item.label,
       value: item.value,
     }));
-  }, [analytics]);
+  }, [analyticsQuery.data]);
 
   if (!academyId) return null;
+
+  if (analyticsQuery.isPending || batchesQuery.isPending) {
+    return <p className="text-fg-muted">Loading attendance data…</p>;
+  }
+
+  const error = analyticsQuery.error || batchesQuery.error;
+  if (
+    analyticsQuery.isError ||
+    !analyticsQuery.data ||
+    batchesQuery.isError ||
+    !batchesQuery.data
+  ) {
+    return (
+      <ErrorState
+        error={error}
+        onRetry={() => {
+          void analyticsQuery.refetch();
+          void batchesQuery.refetch();
+        }}
+      />
+    );
+  }
+
+  const analytics = analyticsQuery.data;
 
   return (
     <div className="space-y-4 pb-24 md:pb-6">

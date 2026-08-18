@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Users, QrCode, Calendar, TrendingUp, Bell, MapPin, Clock } from 'lucide-react';
 import { Card, buttonStyles } from '@/components/ui';
+import { ErrorState } from '@/components/feedback';
 import { useLinkedChildren } from '../hooks/useParents';
 import { useActiveAcademy } from '@/features/academies/hooks/useAcademies';
 import { useTrainingSessions } from '@/features/sessions/hooks/useSessions';
@@ -91,11 +92,54 @@ export default function ParentDashboardPage() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChildDashboard({ child, academyId }: { child: any; academyId: string }) {
-  const { data: sessions = [] } = useTrainingSessions(academyId);
-  const { data: matches = [] } = useAcademyMatches(academyId);
-  const { data: stats } = usePlayerStatisticsById(academyId, child.player.id);
-  const { data: attendance = [] } = usePlayerAttendance(child.player.id, academyId);
-  const { data: announcements = [] } = useAnnouncements();
+  const sessionsQuery = useTrainingSessions(academyId);
+  const matchesQuery = useAcademyMatches(academyId);
+  const statsQuery = usePlayerStatisticsById(academyId, child.player.id);
+  const attendanceQuery = usePlayerAttendance(child.player.id, academyId);
+  const announcementsQuery = useAnnouncements();
+
+  if (
+    statsQuery.isPending ||
+    attendanceQuery.isPending ||
+    sessionsQuery.isPending ||
+    matchesQuery.isPending ||
+    announcementsQuery.isPending
+  ) {
+    return <p className="text-fg-muted p-4">Loading dashboard…</p>;
+  }
+
+  const firstError =
+    statsQuery.error ||
+    attendanceQuery.error ||
+    sessionsQuery.error ||
+    matchesQuery.error ||
+    announcementsQuery.error;
+  if (
+    statsQuery.isError ||
+    attendanceQuery.isError ||
+    sessionsQuery.isError ||
+    matchesQuery.isError ||
+    announcementsQuery.isError
+  ) {
+    return (
+      <ErrorState
+        error={firstError}
+        onRetry={() => {
+          void statsQuery.refetch();
+          void attendanceQuery.refetch();
+          void sessionsQuery.refetch();
+          void matchesQuery.refetch();
+          void announcementsQuery.refetch();
+        }}
+      />
+    );
+  }
+
+  const sessions = sessionsQuery.data;
+  const matches = matchesQuery.data;
+  const stats = statsQuery.data;
+  const attendance = attendanceQuery.data;
+  const announcements = announcementsQuery.data;
 
   const now = new Date();
 

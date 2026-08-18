@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
 import { Card, CardBody, CardHeader, Badge, Avatar } from '@/components/ui';
-import { EmptyState } from '@/components/feedback';
+import { EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { SuperAdminAcademyActions } from '@/features/admin';
 import { usePlayerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
@@ -61,24 +61,13 @@ export default function PlayerDashboardPage() {
     return <p className="text-fg-muted">Loading dashboard…</p>;
   }
 
-  const analytics = analyticsQuery.data ?? {
-    stats: {
-      matchesPlayed: 0,
-      battingRuns: 0,
-      bowlingWickets: 0,
-      battingAverage: '0.00',
-      strikeRate: '0.00',
-      economy: '0.00',
-      attendancePercentage: 0,
-    },
-    recentMatches: [],
-    upcomingSessions: [],
-    pendingAssignments: [],
-    completedAssignments: [],
-    recentAwards: [],
-    careerHighlights: [],
-    runsTrend: [],
-  };
+  const analytics = analyticsQuery.data;
+
+  if (analyticsQuery.isError || !analytics) {
+    return (
+      <ErrorState error={analyticsQuery.error} onRetry={() => void analyticsQuery.refetch()} />
+    );
+  }
 
   const stats = analytics.stats;
 

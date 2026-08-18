@@ -11,7 +11,7 @@ import {
   Select,
   Textarea,
 } from '@/components/ui';
-import { EmptyState } from '@/components/feedback';
+import { EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { useCan } from '@/lib/rbac';
 import { useUiStore } from '@/stores';
@@ -69,15 +69,19 @@ export default function DrillDetailPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-fg text-xl font-semibold">Drill details</h1>
-          <p className="text-fg-muted">View or update your drill.</p>
+          <h1 className="text-fg text-xl font-bold">Edit Drill</h1>
+          <p className="text-fg-muted text-sm">Update the details of this practice drill.</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => void navigate('/drills')}>
-          Back to drills
+        <Button variant="secondary" onClick={() => navigate('/drills')}>
+          Back to List
         </Button>
       </div>
 
-      {!drill ? (
+      {drillsQuery.isPending ? (
+        <p className="text-fg-muted">Loading drill details…</p>
+      ) : drillsQuery.isError ? (
+        <ErrorState error={drillsQuery.error} onRetry={() => void drillsQuery.refetch()} />
+      ) : !drill ? (
         <EmptyState
           title="Drill not found"
           description="This drill does not exist or you do not have access."

@@ -6,16 +6,17 @@ import { Badge, Button, Card, CardBody, CardHeader } from '@/components/ui';
 import { useMemberships } from '@/features/academies';
 import { useAuth, useIdentity } from '@/features/auth';
 import { formatDateTime } from '@/lib/utils/date';
-import { ROLE_LABELS } from '@/types/enums';
+import { ROLE_LABELS, ROLE_HOME } from '@/types/enums';
 
 /** Waiting room for users whose join request has not been approved yet. */
 export default function PendingApprovalPage() {
-  const { pendingRequests, pending, hasAnyAcademy } = useMemberships();
+  const { pendingRequests, pending, hasAnyAcademy, active } = useMemberships();
   const { profile } = useAuth();
   const identity = useIdentity();
 
-  // Approved while sitting on this page → straight into the app.
-  if (hasAnyAcademy) return <Navigate to="/dashboard" replace />;
+  const activeMembership = active[0];
+  if (hasAnyAcademy && activeMembership)
+    return <Navigate to={ROLE_HOME[activeMembership.role]} replace />;
 
   const waiting = [
     ...pendingRequests.map((request) => ({

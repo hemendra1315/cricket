@@ -107,7 +107,10 @@ export const router = createBrowserRouter([
             element: <RequireProfileOnboarding />,
             children: [
               { path: '/onboarding', element: <OnboardingStartPage /> },
-              { path: '/onboarding/create-academy', element: <CreateAcademyPage /> },
+              {
+                element: <RequireRole allow={['super_admin']} />,
+                children: [{ path: '/onboarding/create-academy', element: <CreateAcademyPage /> }],
+              },
               { path: '/onboarding/join-academy', element: <JoinAcademyPage /> },
               { path: '/onboarding/pending', element: <PendingApprovalPage /> },
               { path: '/onboarding/select-academy', element: <SelectAcademyPage /> },
