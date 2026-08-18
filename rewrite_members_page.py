@@ -1,9 +1,10 @@
-﻿import { useMemo, useState } from 'react';
+with open('src/features/members/pages/MembersPage.tsx', 'w', encoding='utf-8') as f:
+    f.write('''import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Plus, Search, UserCheck, X } from 'lucide-react';
 
 import { ErrorState } from '@/components/feedback';
-import {  MobilePageHeader } from '@/components/mobile';
+import { MobileEmptyState, MobileFilterChips, MobilePageHeader } from '@/components/mobile';
 import {
   Avatar,
   Badge,
@@ -22,10 +23,10 @@ import {
   TR,
 } from '@/components/ui';
 import { JoinCodeCard, useActiveAcademy } from '@/features/academies';
-
+import { useAuth } from '@/features/auth';
 import { useBatches } from '@/features/batches';
 import { useCan } from '@/lib/rbac';
-
+import { formatDate } from '@/lib/utils/date';
 import { useUiStore } from '@/stores';
 import type { AcademyMember, PendingJoinRequest, UUID } from '@/types';
 import { JOINABLE_ROLES, ROLE_LABELS, type JoinableRole, type MemberStatus } from '@/types/enums';
@@ -63,17 +64,16 @@ export default function MembersPage() {
       const name = (member.fullName || '').toLowerCase();
       const email = (member.email || '').toLowerCase();
       const idStr = (member.id || '').toLowerCase();
-
+      
       const matchesSearch =
         !searchQuery ||
         name.includes(searchQuery.toLowerCase()) ||
         email.includes(searchQuery.toLowerCase()) ||
         idStr.includes(searchQuery.toLowerCase());
-
+        
       const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
       const matchesRole = roleFilter === 'all' || member.role === roleFilter;
-      const matchesBatch =
-        batchFilter === 'all' || member.batches?.some((b) => b.id === batchFilter);
+      const matchesBatch = batchFilter === 'all' || member.batches?.some(b => b.id === batchFilter);
 
       return matchesSearch && matchesStatus && matchesRole && matchesBatch;
     });
@@ -119,11 +119,11 @@ export default function MembersPage() {
   const hasRequests = (requestsQuery.data?.length ?? 0) > 0;
 
   return (
-    <div className="min-w-0 space-y-5 pb-24 md:pb-8">
+    <div className="space-y-5 pb-24 md:pb-8 min-w-0">
       <div className="md:hidden">
         <MobilePageHeader
           title="Players"
-          count={`${filteredMembers.length} found`}
+          count={${filteredMembers.length} found}
           subtitle="Manage academy players, batches, and profiles."
           primaryAction={
             canManage
@@ -148,7 +148,7 @@ export default function MembersPage() {
           <Button
             variant="primary"
             onClick={() => setIsAddModalOpen(true)}
-            className="min-h-[44px] shrink-0 px-4 font-semibold shadow-2xs"
+            className="min-h-[44px] px-4 font-semibold shadow-2xs shrink-0"
           >
             <Plus className="mr-2 h-4 w-4" /> Add Player
           </Button>
@@ -208,8 +208,7 @@ export default function MembersPage() {
         >
           <div className="space-y-4 p-1">
             <p className="text-fg-muted text-sm">
-              Assign <strong>{approvingRequest.fullName ?? approvingRequest.email}</strong> to
-              batches? (Optional)
+              Assign <strong>{approvingRequest.fullName ?? approvingRequest.email}</strong> to batches? (Optional)
             </p>
             <div className="space-y-2">
               {batchesQuery.data?.map((batch) => (
@@ -253,28 +252,28 @@ export default function MembersPage() {
       )}
 
       {/* SEARCH & FILTERS */}
-      <div className="bg-surface border-border-subtle flex min-w-0 flex-col gap-3 rounded-2xl border p-3 shadow-2xs sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
-          <Search className="text-fg-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+      <div className="bg-surface border-border-subtle flex flex-col gap-3 rounded-2xl border p-3 shadow-2xs sm:flex-row sm:items-center min-w-0">
+        <div className="relative flex-1 min-w-0">
+          <Search className="text-fg-muted absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search players..."
-            className="border-border-subtle bg-surface-muted placeholder:text-fg-muted/60 focus:border-primary focus:ring-primary/20 h-10 w-full rounded-xl border py-2 pr-4 pl-9 text-sm transition-all outline-none focus:ring-2"
+            className="border-border-subtle bg-surface-muted placeholder:text-fg-muted/60 focus:border-primary focus:ring-primary/20 h-10 w-full rounded-xl border py-2 pl-9 pr-4 text-sm outline-none transition-all focus:ring-2"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="text-fg-muted hover:text-fg absolute top-1/2 right-3 -translate-y-1/2"
+              className="text-fg-muted hover:text-fg absolute right-3 top-1/2 -translate-y-1/2"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
-        <div className="hide-scrollbar flex shrink-0 items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar shrink-0">
           <Select
-            className="border-border-subtle h-10 min-w-[120px] rounded-xl text-sm"
+            className="h-10 min-w-[120px] rounded-xl text-sm border-border-subtle"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as MemberStatus | 'all')}
           >
@@ -284,26 +283,22 @@ export default function MembersPage() {
             <option value="suspended">Suspended</option>
             <option value="left">Inactive</option>
           </Select>
-
+          
           <Select
-            className="border-border-subtle h-10 min-w-[140px] rounded-xl text-sm"
+            className="h-10 min-w-[140px] rounded-xl text-sm border-border-subtle"
             value={batchFilter}
             onChange={(e) => setBatchFilter(e.target.value as UUID | 'all')}
           >
             <option value="all">All Batches</option>
-            {batchesQuery.data?.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
+            {batchesQuery.data?.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </Select>
 
           <Select
-            className="border-border-subtle h-10 min-w-[110px] rounded-xl text-sm"
+            className="h-10 min-w-[110px] rounded-xl text-sm border-border-subtle"
             value={roleFilter}
-            onChange={(e) =>
-              setRoleFilter(e.target.value as JoinableRole | 'academy_owner' | 'all')
-            }
+            onChange={(e) => setRoleFilter(e.target.value as JoinableRole | 'academy_owner' | 'all')}
           >
             <option value="all">All Roles</option>
             <option value="player">Players</option>
@@ -313,13 +308,13 @@ export default function MembersPage() {
         </div>
       </div>
 
-      <Card className="border-border-subtle bg-surface min-w-0 shadow-2xs">
+      <Card className="border-border-subtle bg-surface shadow-2xs min-w-0">
         {query.isPending ? (
           <CardBody className="p-6">
             <div className="space-y-4">
-              <SkeletonText lines={2} />
-              <SkeletonText lines={2} />
-              <SkeletonText lines={2} />
+              <SkeletonText className="h-12 w-full rounded-xl" />
+              <SkeletonText className="h-12 w-full rounded-xl" />
+              <SkeletonText className="h-12 w-full rounded-xl" />
             </div>
           </CardBody>
         ) : query.isError ? (
@@ -327,7 +322,7 @@ export default function MembersPage() {
             <ErrorState error={query.error} onRetry={() => void query.refetch()} />
           </CardBody>
         ) : (
-          <CardBody className="min-w-0 p-0">
+          <CardBody className="p-0 min-w-0">
             {filteredMembers.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-fg-muted font-medium">No players found matching your filters.</p>
@@ -341,11 +336,15 @@ export default function MembersPage() {
 
       {/* ADD PLAYER MODAL */}
       {isAddModalOpen && (
-        <Modal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add Player">
+        <Modal
+          open={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          title="Add Player"
+        >
           <div className="space-y-4 p-1">
             <p className="text-fg-muted text-sm">
-              Share this Join Code with your players. When they sign up or enter this code in the
-              app, they will be automatically assigned to this academy.
+              Share this Join Code with your players. When they sign up or enter this code in the app,
+              they will be automatically assigned to this academy.
             </p>
             <JoinCodeCard academyId={academyId} />
             <div className="flex justify-end pt-2">
@@ -369,21 +368,21 @@ function MemberTable({
   academyId: string;
   canManage: boolean;
 }) {
-  
-  const { changeRole } = useUpdateMember(academyId);
+  const { user } = useAuth();
+  const { changeRole, changeStatus, removeMember } = useUpdateMember(academyId);
   const pushToast = useUiStore((state) => state.pushToast);
 
   return (
     <>
-      <div className="divide-border-subtle flex min-w-0 flex-col divide-y md:hidden">
+      <div className="md:hidden divide-border-subtle flex flex-col divide-y min-w-0">
         {members.map((member) => {
           return (
             <Link
               key={member.id}
-              to={`/members/${member.id}`}
-              className="hover:bg-surface-muted flex min-w-0 items-center justify-between p-4 transition-colors"
+              to={/members/}
+              className="flex items-center justify-between p-4 hover:bg-surface-muted transition-colors min-w-0"
             >
-              <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Avatar
                   name={member.fullName ?? member.email}
                   src={member.avatarUrl}
@@ -395,25 +394,25 @@ function MemberTable({
                     {member.fullName ?? member.email}
                   </p>
                   <div className="text-fg-muted mt-1 flex flex-wrap items-center gap-2 text-xs">
-                    <Badge tone={STATUS_TONES[member.status]} className="px-1.5 py-0 text-[10px]">
+                    <Badge tone={STATUS_TONES[member.status]} className="text-[10px] px-1.5 py-0">
                       {member.status}
                     </Badge>
-                    {member.batches && member.batches.length > 0 && member.batches[0] && (
-                      <span className="text-primary max-w-[120px] truncate font-medium">
+                    {member.batches && member.batches.length > 0 && (
+                      <span className="truncate max-w-[120px] font-medium text-primary">
                         {member.batches[0].name}
-                        {member.batches.length > 1 && ` +${member.batches.length - 1}`}
+                        {member.batches.length > 1 &&  +}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-              <ChevronRight className="text-fg-muted/50 ml-2 h-5 w-5 shrink-0" />
+              <ChevronRight className="text-fg-muted/50 h-5 w-5 shrink-0 ml-2" />
             </Link>
           );
         })}
       </div>
 
-      <div className="hidden min-w-0 overflow-x-auto md:block">
+      <div className="hidden md:block min-w-0 overflow-x-auto">
         <Table>
           <THead>
             <TR>
@@ -426,19 +425,15 @@ function MemberTable({
           </THead>
           <TBody>
             {members.map((member) => {
-              
+              const isSelf = member.userId === user?.id;
               return (
-                <TR key={member.id} className="hover:bg-surface-muted group transition-colors">
+                <TR key={member.id} className="hover:bg-surface-muted transition-colors group">
                   <TD className="min-w-[200px]">
                     <div className="flex items-center gap-3">
-                      <Avatar
-                        name={member.fullName ?? member.email}
-                        src={member.avatarUrl}
-                        size="sm"
-                      />
+                      <Avatar name={member.fullName ?? member.email} src={member.avatarUrl} size="sm" />
                       <div className="min-w-0">
                         <Link
-                          to={`/members/${member.id}`}
+                          to={/members/}
                           className="text-fg hover:text-primary truncate text-sm font-bold hover:underline"
                         >
                           {member.fullName ?? member.email}
@@ -450,37 +445,30 @@ function MemberTable({
                   <TD>
                     {member.batches && member.batches.length > 0 ? (
                       <div className="flex flex-col gap-1">
-                        {member.batches.map((b) => (
-                          <span key={b.id} className="text-primary text-xs font-semibold">
-                            {b.name}
-                          </span>
+                        {member.batches.map(b => (
+                          <span key={b.id} className="text-xs font-semibold text-primary">{b.name}</span>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-fg-muted text-xs">—</span>
+                      <span className="text-fg-muted text-xs">�</span>
                     )}
                   </TD>
                   <TD>
                     {canManage && member.role !== 'academy_owner' ? (
                       <Select
-                        aria-label={`Role for ${member.email}`}
-                        className="h-8 w-32 py-1 text-xs"
+                        aria-label={Role for }
+                        className="h-8 w-32 text-xs py-1"
                         value={member.role}
                         disabled={changeRole.isPending}
                         onChange={(event) =>
                           changeRole.mutate(
                             { membershipId: member.id, role: event.target.value as JoinableRole },
-                            {
-                              onSuccess: () =>
-                                pushToast({ title: 'Role updated', variant: 'success' }),
-                            },
+                            { onSuccess: () => pushToast({ title: 'Role updated', variant: 'success' }) }
                           )
                         }
                       >
                         {JOINABLE_ROLES.map((role) => (
-                          <option key={role} value={role}>
-                            {ROLE_LABELS[role]}
-                          </option>
+                          <option key={role} value={role}>{ROLE_LABELS[role]}</option>
                         ))}
                       </Select>
                     ) : (
@@ -492,8 +480,8 @@ function MemberTable({
                   </TD>
                   <TD className="text-right">
                     <Link
-                      to={`/members/${member.id}`}
-                      className="text-primary hover:bg-primary/10 inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 transition-colors group-hover:opacity-100"
+                      to={/members/}
+                      className="text-primary hover:bg-primary/10 inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold transition-colors opacity-0 group-hover:opacity-100"
                     >
                       View Profile <ChevronRight className="ml-1 h-3.5 w-3.5" />
                     </Link>
@@ -507,3 +495,4 @@ function MemberTable({
     </>
   );
 }
+''')

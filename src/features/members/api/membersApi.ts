@@ -16,6 +16,7 @@ type MemberRow = {
     avatar_url: string | null;
     phone: string | null;
   } | null;
+  batch_members?: { batches: { id: string; name: string } | null }[] | null;
 };
 
 type PendingJoinRequestRow = {
@@ -38,7 +39,7 @@ type PendingJoinRequestRow = {
  * twice (`user_id` and `invited_by`), which makes a bare embed ambiguous.
  */
 const MEMBER_COLUMNS =
-  'id, academy_id, user_id, role, status, joined_at, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url, phone)';
+  'id, academy_id, user_id, role, status, joined_at, profiles!academy_members_user_id_fkey!inner(full_name, email, avatar_url, phone), batch_members(batches(id, name))';
 
 function toMember(row: MemberRow): AcademyMember {
   return {
@@ -52,6 +53,9 @@ function toMember(row: MemberRow): AcademyMember {
     email: row.profiles?.email ?? '',
     avatarUrl: row.profiles?.avatar_url ?? null,
     phone: row.profiles?.phone ?? null,
+    batches: row.batch_members
+      ? row.batch_members.map(bm => bm.batches).filter((b): b is { id: string; name: string } => b !== null)
+      : [],
   };
 }
 

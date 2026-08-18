@@ -86,6 +86,7 @@ export type AcademyMember = {
   email: string;
   avatarUrl: string | null;
   phone: string | null;
+  batches?: { id: UUID; name: string }[];
 };
 
 export type Batch = {
