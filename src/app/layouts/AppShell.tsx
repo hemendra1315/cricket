@@ -33,6 +33,7 @@ interface NavItemDef {
   icon: ReactNode;
   requiresCapability: Capability | null;
   superAdminOnly?: boolean;
+  group?: string;
   parentOnly?: boolean;
 }
 
@@ -43,18 +44,21 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
     icon: <ShieldCheck className="h-4 w-4" aria-hidden />,
     requiresCapability: null,
     superAdminOnly: true,
+    group: 'Platform',
   },
   {
     to: '/dashboard',
     label: 'Dashboard',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'academy:update',
+    group: 'Academy',
   },
   {
     to: '/coach',
     label: 'Coach View',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'sessions:manage',
+    group: 'Home',
   },
   {
     to: '/parent/dashboard',
@@ -62,54 +66,63 @@ const SIDEBAR_ITEMS: NavItemDef[] = [
     icon: <Users className="h-4 w-4" aria-hidden />,
     requiresCapability: null,
     parentOnly: true,
+    group: 'Home',
   },
   {
     to: '/player',
     label: 'My Cricket',
     icon: <LayoutDashboard className="h-4 w-4" aria-hidden />,
     requiresCapability: 'stats:read_own',
+    group: 'Home',
   },
   {
     to: '/members',
     label: 'Members',
     icon: <Users className="h-4 w-4" aria-hidden />,
     requiresCapability: 'members:manage',
+    group: 'People',
   },
   {
     to: '/batches',
     label: 'Batches',
     icon: <Menu className="h-4 w-4" aria-hidden />,
     requiresCapability: 'batches:read',
+    group: 'Training',
   },
   {
     to: '/sessions',
     label: 'Sessions',
     icon: <CalendarDays className="h-4 w-4" aria-hidden />,
     requiresCapability: 'sessions:read',
+    group: 'Training',
   },
   {
     to: '/matches',
     label: 'Matches',
     icon: <Trophy className="h-4 w-4" aria-hidden />,
     requiresCapability: 'matches:read',
+    group: 'Matches',
   },
   {
     to: '/stats',
     label: 'Stats & Performance',
     icon: <BarChart2 className="h-4 w-4" aria-hidden />,
     requiresCapability: null,
+    group: 'Matches',
   },
   {
     to: '/settings/academy',
     label: 'Academy Settings',
     icon: <Settings className="h-4 w-4" aria-hidden />,
     requiresCapability: 'academy:update',
+    group: 'Academy',
   },
   {
     to: '/profile',
     label: 'My Profile',
     icon: <User className="h-4 w-4" aria-hidden />,
     requiresCapability: null,
+    group: 'Academy',
   },
 ];
 
@@ -246,24 +259,35 @@ export function AppShell() {
       <div className="flex">
         {/* DESKTOP SIDEBAR (>= 768px / md) */}
         <aside className="border-border-subtle bg-surface hidden md:block md:w-56 md:shrink-0 md:border-r md:p-3">
-          <nav className="space-y-1">
-            {allowedNavItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    'flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-fg-muted hover:bg-surface-muted',
-                  )
-                }
-              >
-                {item.icon}
-                {item.label}
-              </NavLink>
-            ))}
+          <nav className="space-y-6">
+            {['Home', 'People', 'Training', 'Matches', 'Academy', 'Platform'].map((group) => {
+              const groupItems = allowedNavItems.filter((i) => i.group === group);
+              if (groupItems.length === 0) return null;
+              return (
+                <div key={group} className="space-y-1">
+                  <p className="text-fg-muted mb-2 px-3 text-xs font-bold tracking-wider uppercase">
+                    {group}
+                  </p>
+                  {groupItems.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) =>
+                        cn(
+                          'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-colors',
+                          isActive
+                            ? 'bg-primary text-primary-inverse'
+                            : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
+                        )
+                      }
+                    >
+                      {item.icon}
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </div>
+              );
+            })}
           </nav>
         </aside>
 

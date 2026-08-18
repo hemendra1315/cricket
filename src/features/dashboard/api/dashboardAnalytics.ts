@@ -31,6 +31,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
     topBowlersResult,
     topFieldersResult,
     academyRecordsResult,
+    todaySessionsResult,
   ] = await Promise.all([
     // Total active players
     unwrap<any[]>(
@@ -146,6 +147,18 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
         .order('fielding_catches', { ascending: false })
         .limit(5),
     ),
+    // Today\'s Sessions
+    unwrap<any[]>(
+      (supabase as any)
+        .from('training_sessions')
+        .select(
+          'id, title, session_date, start_at, end_at, batch_id, coach_id, status, batches (name, player_count:batch_members(count)), academy_members!training_sessions_coach_id_fkey(id, profiles!academy_members_user_id_fkey(full_name)), attendance_count:attendance(count)',
+        )
+        .eq('academy_id', academyId)
+        .eq('session_date', new Date().toISOString().split('T')[0])
+        .neq('status', 'cancelled')
+        .order('start_at', { ascending: true }),
+    ),
     // Academy records
     unwrap<any[]>(
       (supabase as any)
@@ -213,6 +226,21 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
     result: match.result,
     teamScore: match.team_score,
     wicketsLost: match.wickets_lost,
+  }));
+
+  const todaySessions = (todaySessionsResult ?? []).map((session: any) => ({
+    id: session.id,
+    title: session.title,
+    sessionDate: session.session_date,
+    startAt: session.start_at,
+    endAt: session.end_at,
+    status: session.status,
+    batchName: session.batches?.name ?? null,
+    playerCount: session.batches?.player_count?.[0]?.count ?? 0,
+    attendanceMarked: (session.attendance_count?.[0]?.count ?? 0) > 0,
+    coach: {
+      fullName: session.academy_members?.profiles?.full_name ?? null,
+    },
   }));
 
   const upcomingSessions = (upcomingSessionsResult ?? []).map((session: any) => ({
@@ -289,6 +317,7 @@ export async function fetchOwnerDashboardAnalytics(academyId: UUID) {
     attendancePercentage,
     sessionsThisWeek,
     recentMatches,
+    todaySessions,
     upcomingSessions,
     activities,
     topBatters,
@@ -367,7 +396,17 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
     ),
   ]);
 
-  const todaySession = todaySessionResult[0] ?? null;
+  const todaySessions = (todaySessionResult ?? []).map((session: any) => ({
+    id: session.id,
+    title: session.title,
+    sessionDate: session.session_date,
+    startAt: session.start_at,
+    endAt: session.end_at,
+    status: session.status,
+    batchName: session.batches?.name ?? null,
+    playerCount: session.batches?.player_count?.[0]?.count ?? 0,
+    attendanceMarked: (session.attendance_count?.[0]?.count ?? 0) > 0,
+  }));
 
   const recentMatches = (recentMatchesResult ?? []).map((match: any) => ({
     id: match.id,
@@ -479,7 +518,7 @@ export async function fetchCoachDashboardAnalytics(academyId: UUID, coachId: UUI
   }
 
   return {
-    todaySession,
+    todaySessions,
     recentMatches,
     assignedBatches,
     wins,

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Users,
   UserCheck,
@@ -7,28 +7,36 @@ import {
   CalendarDays,
   Trophy,
   ArrowRight,
+  Plus,
+  UserPlus,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 
-import { Avatar, Card, CardBody } from '@/components/ui';
+import { Avatar, Card, CardBody, CardHeader, Button, Badge } from '@/components/ui';
 import { ErrorState } from '@/components/feedback';
-import { formatDate } from '@/lib/utils/date';
 import { useActiveAcademy } from '@/features/academies';
 import { useOwnerDashboardAnalytics } from '../hooks/useDashboardAnalytics';
 import { KpiCard } from '../components/KpiCard';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { JoinCodeCard } from '@/features/academies';
 import { SuperAdminAcademyActions } from '@/features/admin';
-import { DashboardQuickActions } from '../components/DashboardQuickActions';
 import type { ActivityItem } from '../components/ActivityFeed';
+import { useCan } from '@/lib/rbac';
 
 export default function OwnerDashboardPage() {
+  const navigate = useNavigate();
   const { academyId, membership } = useActiveAcademy();
   const analyticsQuery = useOwnerDashboardAnalytics(academyId);
+
+  const canManagePlayers = useCan('players:manage');
+  const canManageSessions = useCan('sessions:manage');
+  const canManageMatches = useCan('matches:manage');
 
   const analytics = analyticsQuery.data;
 
   if (analyticsQuery.isPending) {
-    return <p className="text-fg-muted py-8 text-center text-sm">Loading dashboard…</p>;
+    return <p className="text-fg-muted py-8 text-center text-sm">Loading dashboard...</p>;
   }
 
   if (analyticsQuery.isError || !analytics) {
@@ -45,8 +53,7 @@ export default function OwnerDashboardPage() {
       timestamp: a.timestamp,
     })) ?? [];
 
-  const nextSession = analytics.upcomingSessions?.[0] ?? null;
-  const latestMatch = analytics.recentMatches?.[0] ?? null;
+  const todaySessions = analytics.todaySessions ?? [];
 
   return (
     <div className="space-y-4 pb-20 md:pb-6">
@@ -64,7 +71,7 @@ export default function OwnerDashboardPage() {
               {membership?.academyName ?? 'Academy Dashboard'}
             </h1>
             <p className="text-fg-muted truncate text-xs font-medium">
-              {membership?.city ? `${membership.city} • ` : ''}Academy Operations & Performance
+              {membership?.city ? `${membership.city} � ` : ''}Academy Operations & Performance
             </p>
           </div>
         </div>
@@ -72,127 +79,178 @@ export default function OwnerDashboardPage() {
 
       <SuperAdminAcademyActions />
 
-      {/* 2. Compact Primary Stats Grid */}
+      {/* 2. Today's Overview (KPIs) */}
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
         <KpiCard
-          title="Players"
-          value={analytics.totalPlayers}
-          icon={<Users className="text-primary h-4 w-4" />}
+          title="Today's Sessions"
+          value={todaySessions.length}
+          icon={<CalendarDays className="text-primary h-4 w-4" />}
         />
         <KpiCard
-          title="Coaches"
-          value={analytics.totalCoaches}
-          icon={<UserCheck className="text-info h-4 w-4" />}
+          title="Players Expected"
+          value={todaySessions.reduce((acc, s) => acc + (s.playerCount || 0), 0)}
+          icon={<Users className="text-info h-4 w-4" />}
         />
         <KpiCard
-          title="Batches"
+          title="Active Batches"
           value={analytics.totalBatches}
           icon={<Layers className="text-warning h-4 w-4" />}
         />
         <KpiCard
-          title="Attendance"
-          value={`${analytics.attendancePercentage}%`}
-          icon={<CalendarCheck className="text-success h-4 w-4" />}
+          title="Total Players"
+          value={analytics.totalPlayers}
+          icon={<UserCheck className="text-success h-4 w-4" />}
         />
       </div>
 
-      {/* 3. Small Compact Player Join Code Card */}
-      {academyId ? <JoinCodeCard academyId={academyId} /> : null}
-
-      {/* 4. Collapsed Quick Actions Button */}
-      <DashboardQuickActions />
-
-      {/* 6. Small Summary Cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {/* Attendance Summary Card */}
-        <Card className="hover:border-border p-3.5 transition-all">
-          <CardBody className="p-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="text-fg-muted flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase">
-                  <CalendarCheck className="text-success h-3.5 w-3.5" />
-                  <span>Attendance</span>
-                </div>
-                <p className="text-fg mt-1 text-lg font-bold">
-                  {analytics.attendancePercentage}%{' '}
-                  <span className="text-fg-muted text-xs font-normal">this week</span>
-                </p>
-              </div>
-              <Link
-                to="/attendance"
-                className="text-primary mt-0.5 flex shrink-0 items-center gap-1 text-xs font-bold hover:underline"
-              >
-                <span>View</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+      {/* 3. Quick Actions */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+        {canManagePlayers ? (
+          <Button
+            variant="secondary"
+            className="hover:bg-surface-muted h-auto flex-col gap-2 p-3 text-xs font-semibold sm:p-4"
+            onClick={() => navigate('/members')}
+          >
+            <div className="bg-primary/10 rounded-full p-2">
+              <UserPlus className="text-primary h-5 w-5" />
             </div>
-          </CardBody>
-        </Card>
-
-        {/* Next Session Summary Card */}
-        <Card className="hover:border-border p-3.5 transition-all">
-          <CardBody className="p-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="text-fg-muted flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase">
-                  <CalendarDays className="text-info h-3.5 w-3.5" />
-                  <span>Next Session</span>
-                </div>
-                <p className="text-fg mt-1 truncate text-sm font-bold">
-                  {nextSession ? nextSession.title : 'No upcoming session'}
-                </p>
-                <p className="text-fg-muted truncate text-xs">
-                  {nextSession
-                    ? `${formatDate(nextSession.sessionDate)} • ${nextSession.startAt || ''}`
-                    : 'Schedule new session'}
-                </p>
-              </div>
-              <Link
-                to="/sessions"
-                className="text-primary mt-0.5 flex shrink-0 items-center gap-1 text-xs font-bold hover:underline"
-              >
-                <span>View</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+            Add Player
+          </Button>
+        ) : null}
+        {canManageSessions ? (
+          <Button
+            variant="secondary"
+            className="hover:bg-surface-muted h-auto flex-col gap-2 p-3 text-xs font-semibold sm:p-4"
+            onClick={() => navigate('/sessions/new')}
+          >
+            <div className="bg-info/10 rounded-full p-2">
+              <Plus className="text-info h-5 w-5" />
             </div>
-          </CardBody>
-        </Card>
-
-        {/* Latest Match Summary Card */}
-        <Card className="hover:border-border p-3.5 transition-all">
-          <CardBody className="p-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="text-fg-muted flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase">
-                  <Trophy className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Latest Match</span>
-                </div>
-                <p className="text-fg mt-1 truncate text-sm font-bold">
-                  {latestMatch
-                    ? `${latestMatch.matchName}${latestMatch.opponentName ? ` vs ${latestMatch.opponentName}` : ''}`
-                    : 'No matches yet'}
-                </p>
-                <p className="text-fg-muted truncate text-xs">
-                  {latestMatch
-                    ? latestMatch.result
-                      ? `Result: ${latestMatch.result}`
-                      : latestMatch.teamScore || 'Completed'
-                    : 'Add match scorecard'}
-                </p>
-              </div>
-              <Link
-                to="/matches"
-                className="text-primary mt-0.5 flex shrink-0 items-center gap-1 text-xs font-bold hover:underline"
-              >
-                <span>View</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+            Create Session
+          </Button>
+        ) : null}
+        <Button
+          variant="secondary"
+          className="hover:bg-surface-muted h-auto flex-col gap-2 p-3 text-xs font-semibold sm:p-4"
+          onClick={() => navigate('/sessions')}
+        >
+          <div className="bg-success/10 rounded-full p-2">
+            <CalendarCheck className="text-success h-5 w-5" />
+          </div>
+          Mark Attendance
+        </Button>
+        {canManageMatches ? (
+          <Button
+            variant="secondary"
+            className="hover:bg-surface-muted h-auto flex-col gap-2 p-3 text-xs font-semibold sm:p-4"
+            onClick={() => navigate('/matches/new')}
+          >
+            <div className="rounded-full bg-amber-500/10 p-2">
+              <Trophy className="h-5 w-5 text-amber-500" />
             </div>
-          </CardBody>
-        </Card>
+            Add Match
+          </Button>
+        ) : null}
       </div>
 
-      {/* 7. Recent Activity Feed */}
+      {/* 4. Today's Sessions List */}
+      <Card className="border-border-subtle bg-surface min-w-0 shadow-2xs">
+        <CardHeader
+          title={
+            <div className="flex min-w-0 items-center gap-2">
+              <Clock className="text-info h-4 w-4 shrink-0" />
+              <span className="truncate">Today's Sessions</span>
+            </div>
+          }
+          action={
+            <Link
+              to="/sessions"
+              className="text-primary flex shrink-0 items-center gap-1 text-xs font-bold hover:underline"
+            >
+              <span>View All</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        />
+        <CardBody className="min-w-0 p-3 pt-0">
+          {todaySessions.length === 0 ? (
+            <div className="py-6 text-center">
+              <p className="text-fg-muted text-xs font-medium">No sessions scheduled for today.</p>
+              {canManageSessions && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/sessions/new')}
+                  className="text-primary mt-2 text-xs"
+                >
+                  Create Session ?
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="min-w-0 space-y-2">
+              {todaySessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="border-border-subtle hover:border-primary/50 bg-surface flex min-w-0 flex-col gap-3 rounded-xl border p-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <p className="text-fg truncate text-sm font-bold">{session.title}</p>
+                      {session.attendanceMarked ? (
+                        <Badge tone="success" className="shrink-0 text-[10px] uppercase">
+                          Marked
+                        </Badge>
+                      ) : (
+                        <Badge tone="neutral" className="shrink-0 text-[10px] uppercase">
+                          Pending
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-fg-muted flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                      <span className="flex items-center gap-1 truncate font-medium">
+                        <Clock className="text-fg-muted/80 h-3.5 w-3.5 shrink-0" />
+                        {session.startAt || 'TBD'} {session.endAt ? `- ${session.endAt}` : ''}
+                      </span>
+                      {session.batchName && (
+                        <span className="flex items-center gap-1 truncate font-medium">
+                          <Layers className="text-fg-muted/80 h-3.5 w-3.5 shrink-0" />
+                          {session.batchName} ({session.playerCount} players)
+                        </span>
+                      )}
+                      {session.coach?.fullName && (
+                        <span className="flex items-center gap-1 truncate font-medium">
+                          <UserCheck className="text-fg-muted/80 h-3.5 w-3.5 shrink-0" />
+                          {session.coach.fullName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant={session.attendanceMarked ? 'secondary' : 'primary'}
+                    onClick={() => navigate(`/sessions/${session.id}/attendance`)}
+                    className="h-9 w-full shrink-0 px-3.5 text-xs font-bold sm:w-auto"
+                  >
+                    {session.attendanceMarked ? (
+                      <>
+                        <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                        View Attendance
+                      </>
+                    ) : (
+                      'Mark Attendance'
+                    )}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* 5. Player Join Code Card */}
+      {academyId ? <JoinCodeCard academyId={academyId} /> : null}
+
+      {/* 6. Recent Activity Feed */}
       <ActivityFeed title="Recent Activity" activities={activities} />
     </div>
   );
