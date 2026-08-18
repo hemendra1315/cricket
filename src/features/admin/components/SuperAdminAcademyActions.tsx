@@ -23,7 +23,7 @@ export function SuperAdminAcademyActions() {
   return (
     <>
       <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-2.5">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <Building2 className="h-4 w-4 shrink-0 text-amber-500" />
           <span className="truncate text-xs font-bold text-amber-500">Super Admin Controls</span>
         </div>

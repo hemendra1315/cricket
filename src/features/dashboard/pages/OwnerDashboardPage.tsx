@@ -52,18 +52,18 @@ export default function OwnerDashboardPage() {
     <div className="space-y-4 pb-20 md:pb-6">
       {/* 1. Header with Academy Branding */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <Avatar
             name={membership?.academyName}
             src={membership?.logoUrl}
             shape="rounded"
-            className="h-10 w-10 text-base sm:h-12 sm:w-12 sm:text-lg"
+            className="h-10 w-10 shrink-0 text-base sm:h-12 sm:w-12 sm:text-lg"
           />
-          <div>
-            <h1 className="text-fg text-xl font-bold tracking-tight md:text-2xl">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-fg truncate text-xl font-bold tracking-tight md:text-2xl">
               {membership?.academyName ?? 'Academy Dashboard'}
             </h1>
-            <p className="text-fg-muted text-xs font-medium">
+            <p className="text-fg-muted truncate text-xs font-medium">
               {membership?.city ? `${membership.city} • ` : ''}Academy Operations & Performance
             </p>
           </div>

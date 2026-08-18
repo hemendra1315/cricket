@@ -74,18 +74,18 @@ export default function PlayerDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <Avatar
             name={membership?.academyName}
             src={membership?.logoUrl}
             shape="rounded"
-            className="h-10 w-10 text-base sm:h-12 sm:w-12 sm:text-lg"
+            className="h-10 w-10 shrink-0 text-base sm:h-12 sm:w-12 sm:text-lg"
           />
-          <div>
-            <h1 className="text-fg text-2xl font-bold tracking-tight md:text-3xl">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-fg truncate text-2xl font-bold tracking-tight md:text-3xl">
               My Cricket Dashboard
             </h1>
-            <p className="text-fg-muted text-xs font-medium md:text-sm">
+            <p className="text-fg-muted truncate text-xs font-medium md:text-sm">
               {membership?.academyName ?? 'Academy'}
             </p>
           </div>

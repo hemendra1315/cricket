@@ -40,9 +40,16 @@ export function AcademySwitcher({ className }: { className?: string }) {
   // Regular user with only one academy needs no dropdown.
   if (!isSuperAdmin && active.length < 2 && membership) {
     return (
-      <div className={cn('flex items-center gap-2', className)}>
-        <Avatar name={membership.academyName} src={membership.logoUrl} size="sm" />
-        <span className="text-fg truncate text-sm font-medium">{membership.academyName}</span>
+      <div className={cn('flex min-w-0 items-center gap-2', className)}>
+        <Avatar
+          name={membership.academyName}
+          src={membership.logoUrl}
+          size="sm"
+          className="shrink-0"
+        />
+        <span className="text-fg min-w-0 flex-1 truncate text-sm font-medium">
+          {membership.academyName}
+        </span>
       </div>
     );
   }
@@ -57,10 +64,10 @@ export function AcademySwitcher({ className }: { className?: string }) {
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="min-h-[38px] max-w-[140px] sm:max-w-none"
+        className={cn('min-h-[38px] max-w-[140px] min-w-0 sm:max-w-none', className)}
       >
-        <Avatar name={currentName} src={membership?.logoUrl} size="xs" />
-        <span className="max-w-20 truncate sm:max-w-44">{currentName}</span>
+        <Avatar name={currentName} src={membership?.logoUrl} size="xs" className="shrink-0" />
+        <span className="min-w-0 flex-1 truncate text-left sm:max-w-44">{currentName}</span>
         {isSuperAdmin && !active.some((m) => m.academyId === activeAcademyId) ? (
           <span className="hidden rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 sm:inline-block dark:text-amber-400">
             Super Admin

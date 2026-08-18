@@ -21,14 +21,14 @@ export default function ParentDashboardPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-20">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-md font-bold">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-md font-bold">
             {membership?.academyName?.charAt(0) || 'A'}
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Welcome</h1>
-            <p className="text-fg-muted mt-0.5 text-xs">{membership?.academyName}</p>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-bold tracking-tight">Welcome</h1>
+            <p className="text-fg-muted mt-0.5 truncate text-xs">{membership?.academyName}</p>
           </div>
         </div>
         <Link

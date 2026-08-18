@@ -156,11 +156,11 @@ export function AppShell() {
     <div className="bg-bg min-h-screen">
       {/* HEADER: Compact & Responsive */}
       <header className="border-border-subtle bg-surface/95 sticky top-0 z-30 flex h-14 items-center justify-between border-b px-4 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <AcademySwitcher />
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <AcademySwitcher className="min-w-0" />
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {!online ? (
             <span
               className="text-warning flex items-center gap-1 text-xs font-medium"

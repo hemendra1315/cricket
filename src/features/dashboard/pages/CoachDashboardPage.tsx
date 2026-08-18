@@ -158,18 +158,18 @@ export default function CoachDashboardPage() {
     <div className="space-y-4 pb-20 md:pb-6">
       {/* 1. Compact Header with Academy Branding */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <Avatar
             name={membership?.academyName}
             src={membership?.logoUrl}
             shape="rounded"
-            className="h-10 w-10 text-base sm:h-12 sm:w-12 sm:text-lg"
+            className="h-10 w-10 shrink-0 text-base sm:h-12 sm:w-12 sm:text-lg"
           />
-          <div>
-            <h1 className="text-fg text-xl font-bold tracking-tight md:text-2xl">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-fg truncate text-xl font-bold tracking-tight md:text-2xl">
               {getTimeOfDayGreeting()}, Coach
             </h1>
-            <p className="text-fg-muted text-xs font-medium">
+            <p className="text-fg-muted truncate text-xs font-medium">
               {membership?.academyName ?? 'Academy'} • Daily Training & Squad Overview
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function CoachDashboardPage() {
 
       {/* 2. Today's Overview (2-column compact grid) */}
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-        <div className="border-border-subtle bg-surface flex items-center justify-between rounded-2xl border p-3.5 shadow-2xs">
+        <div className="border-border-subtle bg-surface flex min-w-0 items-center justify-between rounded-2xl border p-3.5 shadow-2xs">
           <div className="min-w-0">
             <span className="text-fg-muted truncate text-xs font-semibold tracking-wider uppercase">
               Today&apos;s Sessions
@@ -197,7 +197,7 @@ export default function CoachDashboardPage() {
           </div>
         </div>
 
-        <div className="border-border-subtle bg-surface flex items-center justify-between rounded-2xl border p-3.5 shadow-2xs">
+        <div className="border-border-subtle bg-surface flex min-w-0 items-center justify-between rounded-2xl border p-3.5 shadow-2xs">
           <div className="min-w-0">
             <span className="text-fg-muted truncate text-xs font-semibold tracking-wider uppercase">
               Coached Players

@@ -70,7 +70,7 @@ test.describe('2. Academy Creation & Join by Code UI Flows', () => {
 
     // Trying to directly navigate to /onboarding/create-academy redirects normal user
     await page.goto('/onboarding/create-academy');
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/forbidden$/);
   });
 
   test('join academy by code onboarding page renders code input and request button', async ({

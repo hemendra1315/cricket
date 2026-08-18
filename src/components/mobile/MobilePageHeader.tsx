@@ -46,7 +46,7 @@ export function MobilePageHeader({
       className={`from-primary via-primary/95 to-brand-800 mb-5 rounded-b-3xl bg-gradient-to-br p-5 pt-6 text-white shadow-sm ${className}`}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           {showBack && (
             <button
               onClick={handleBack}
