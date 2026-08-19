@@ -1,1 +1,0 @@
-select id, email, is_super_admin from profiles where is_super_admin = true order by created_at;

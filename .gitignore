@@ -43,3 +43,23 @@ supabase/.branches
 .git_disabled/
 
 .git_disabled/
+
+# Scratch/debug artifacts from agent-session testing (root-level only)
+# SQL scratch queries used during direct-database testing
+/_q_*.sql
+/test_query.sql
+
+# Scratch/patch/fix scripts from agent sessions
+/patch*.cjs
+/patch*.py
+/fix*.cjs
+/fix*.py
+/test-*.cjs
+/test-*.mjs
+/update_*.py
+/rewrite_*.py
+/final_*.py
+/get_*.py
+
+# Misc scratch files
+/structure.txt
