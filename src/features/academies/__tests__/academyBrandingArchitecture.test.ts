@@ -76,7 +76,11 @@ describe('Academy Branding & Storage Architecture', () => {
 
     const publicUrl = await uploadAcademyLogo('acad-123', validFile);
 
-    expect(publicUrl).toBe('https://storage.example.com/academy-logos/acad-123/1786972000000.png');
+    // The returned URL is tenant-scoped and carries a cache-busting `?t=` timestamp
+    // (so updated logos are never served from a stale browser cache).
+    expect(publicUrl).toMatch(
+      /^https:\/\/storage\.example\.com\/academy-logos\/acad-123\/1786972000000\.png\?t=\d+$/,
+    );
     expect(supabase.storage.from).toHaveBeenCalledWith('academy-logos');
   });
 

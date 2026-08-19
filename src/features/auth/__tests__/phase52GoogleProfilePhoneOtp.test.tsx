@@ -9,6 +9,7 @@ import { useAuthStore, useTestModeStore, useAcademyStore } from '@/stores';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '@/lib/query/queryClient';
 import { act } from '@testing-library/react';
+import * as mediaModule from '@/lib/media';
 import type { Profile } from '@/types';
 
 describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () => {
@@ -198,14 +199,11 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
         screen.queryByPlaceholderText(/image url or keep google photo/i),
       ).not.toBeInTheDocument();
 
-      // Verify accessible upload button and file input
+      // Verify accessible upload button (fires the native/file picker via
+      // pickImageFile) is the upload control — not a plain text URL input.
       expect(
         screen.getByRole('button', { name: /change photo|upload profile picture/i }),
       ).toBeInTheDocument();
-      const fileInput = screen.getByLabelText(/upload profile picture/i) as HTMLInputElement;
-      expect(fileInput).toBeInTheDocument();
-      expect(fileInput.type).toBe('file');
-      expect(fileInput.accept).toBe('image/jpeg,image/png,image/webp');
     });
 
     it('displays existing Google avatar initially when present', () => {
@@ -221,7 +219,7 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
       expect(avatarImg.src).toContain('https://lh3.googleusercontent.com/a/mock-photo');
     });
 
-    it('updates preview upon valid image selection', () => {
+    it('updates preview upon valid image selection', async () => {
       const createObjectURLSpy = vi
         .spyOn(URL, 'createObjectURL')
         .mockReturnValue('blob:mock/new-avatar.png');
@@ -233,19 +231,20 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
         { wrapper: queryWrapper },
       );
 
-      const fileInput = screen.getByLabelText(/upload profile picture/i);
       const validFile = new File(['valid content'], 'new-avatar.png', { type: 'image/png' });
+      vi.spyOn(mediaModule, 'pickImageFile').mockResolvedValue(validFile);
+      fireEvent.click(screen.getByRole('button', { name: /change photo|upload profile picture/i }));
 
-      fireEvent.change(fileInput, { target: { files: [validFile] } });
-
-      const avatarImg = screen.getByAltText(/rahul google user/i) as HTMLImageElement;
-      expect(avatarImg.src).toBe('blob:mock/new-avatar.png');
+      await waitFor(() => {
+        const avatarImg = screen.getByAltText(/rahul google user/i) as HTMLImageElement;
+        expect(avatarImg.src).toBe('blob:mock/new-avatar.png');
+      });
       expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument();
 
       createObjectURLSpy.mockRestore();
     });
 
-    it('rejects invalid file types with a clear validation error', () => {
+    it('rejects invalid file types with a clear validation error', async () => {
       render(
         <BrowserRouter>
           <ProfileOnboardingPage />
@@ -253,17 +252,16 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
         { wrapper: queryWrapper },
       );
 
-      const fileInput = screen.getByLabelText(/upload profile picture/i);
       const invalidFile = new File(['pdf data'], 'document.pdf', { type: 'application/pdf' });
-
-      fireEvent.change(fileInput, { target: { files: [invalidFile] } });
+      vi.spyOn(mediaModule, 'pickImageFile').mockResolvedValue(invalidFile);
+      fireEvent.click(screen.getByRole('button', { name: /change photo|upload profile picture/i }));
 
       expect(
-        screen.getByText(/please select a valid image file \(jpeg, png, or webp\)/i),
+        await screen.findByText(/please select a valid image file \(jpeg, png, or webp\)/i),
       ).toBeInTheDocument();
     });
 
-    it('rejects oversized files exceeding 5MB with a clear validation error', () => {
+    it('rejects oversized files exceeding 5MB with a clear validation error', async () => {
       render(
         <BrowserRouter>
           <ProfileOnboardingPage />
@@ -271,14 +269,13 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
         { wrapper: queryWrapper },
       );
 
-      const fileInput = screen.getByLabelText(/upload profile picture/i);
       // Create a 6MB file
       const bigFile = new File(['x'], 'huge.jpg', { type: 'image/jpeg' });
       Object.defineProperty(bigFile, 'size', { value: 6 * 1024 * 1024 });
+      vi.spyOn(mediaModule, 'pickImageFile').mockResolvedValue(bigFile);
+      fireEvent.click(screen.getByRole('button', { name: /change photo|upload profile picture/i }));
 
-      fireEvent.change(fileInput, { target: { files: [bigFile] } });
-
-      expect(screen.getByText(/image size must be less than 5mb/i)).toBeInTheDocument();
+      expect(await screen.findByText(/image size must be less than 5mb/i)).toBeInTheDocument();
     });
 
     it('allows user to remove avatar and resets preview', () => {
@@ -321,9 +318,13 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
         { wrapper: queryWrapper },
       );
 
-      const fileInput = screen.getByLabelText(/upload profile picture/i);
       const validFile = new File(['valid content'], 'profile.png', { type: 'image/png' });
-      fireEvent.change(fileInput, { target: { files: [validFile] } });
+      vi.spyOn(mediaModule, 'pickImageFile').mockResolvedValue(validFile);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /change photo|upload profile picture/i }),
+        );
+      });
 
       const dobInput = screen.getByLabelText(/date of birth/i);
       fireEvent.change(dobInput, { target: { value: '2000-01-15' } });
@@ -374,9 +375,13 @@ describe('Phase 52 — Google Profile + Phone OTP Onboarding Verification', () =
         { wrapper: queryWrapper },
       );
 
-      const fileInput = screen.getByLabelText(/upload profile picture/i);
       const validFile = new File(['valid content'], 'profile.png', { type: 'image/png' });
-      fireEvent.change(fileInput, { target: { files: [validFile] } });
+      vi.spyOn(mediaModule, 'pickImageFile').mockResolvedValue(validFile);
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: /change photo|upload profile picture/i }),
+        );
+      });
 
       const dobInput = screen.getByLabelText(/date of birth/i);
       fireEvent.change(dobInput, { target: { value: '2000-01-15' } });

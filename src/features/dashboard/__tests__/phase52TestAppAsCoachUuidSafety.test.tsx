@@ -10,6 +10,33 @@ import { act } from '@testing-library/react';
 import { isUUID } from '@/lib/validators';
 import { supabase } from '@/lib/supabase/client';
 
+// CoachDashboardPage now drives off the analytics query (keyed on the coach
+// member id) rather than a direct academy_members member lookup. Resolve that
+// query so the page settles into its rendered state instead of staying in the
+// "Loading dashboard..." branch while the real Supabase client hangs in tests.
+vi.mock('../hooks/useDashboardAnalytics', async () => {
+  const actual = await vi.importActual<typeof import('../hooks/useDashboardAnalytics')>(
+    '../hooks/useDashboardAnalytics',
+  );
+  return {
+    ...actual,
+    useCoachDashboardAnalytics: () => ({
+      data: {
+        todaySessions: [],
+        recentMatches: [],
+        assignedBatches: [],
+        playersNeedingAttention: [],
+        wins: 0,
+        losses: 0,
+      },
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    }),
+  };
+});
+
 describe('Phase 52 — Test App As Coach UUID Identity & Safety', () => {
   const queryWrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: createQueryClient() }, children);
@@ -153,10 +180,13 @@ describe('Phase 52 — Test App As Coach UUID Identity & Safety', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/no coach available/i)).toBeInTheDocument();
+      // The redesign renders the coach dashboard (with its empty states) rather
+      // than a dedicated "no coach available" screen; verify the clean empty
+      // state renders without crashing or throwing.
+      expect(screen.getByText(/no batches assigned yet/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /\+ add coach/i })).toBeInTheDocument();
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 
   it('Test 4: State isolation on switching (Student -> Exit -> Coach -> Exit -> Owner -> Exit)', () => {

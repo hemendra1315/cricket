@@ -90,7 +90,7 @@ describe('Phase 50 — Academy Owner Players Page UI Redesign Verification', () 
     expect(addPlayerButtons.length).toBeGreaterThan(0);
   });
 
-  it('renders summary stat cards (Total Members, Active Players, Coaches & Staff, Batches)', () => {
+  it('renders the roster count badge and the search + status/batch/role management toolbar', () => {
     render(
       <BrowserRouter>
         <MembersPage />
@@ -98,9 +98,12 @@ describe('Phase 50 — Academy Owner Players Page UI Redesign Verification', () 
       { wrapper: queryWrapper },
     );
 
-    expect(screen.getAllByText(/total members/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/active players/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/coaches & staff/i).length).toBeGreaterThan(0);
+    // The redesign replaced the old stat cards with a live member count badge ...
+    expect(screen.getByText('1 found')).toBeInTheDocument();
+    // ... and a filter toolbar for managing the roster.
+    expect(screen.getByText('All Status')).toBeInTheDocument();
+    expect(screen.getByText('All Batches')).toBeInTheDocument();
+    expect(screen.getByText('All Roles')).toBeInTheDocument();
   });
 
   it('renders search field filtering players dynamically', () => {
@@ -113,11 +116,11 @@ describe('Phase 50 — Academy Owner Players Page UI Redesign Verification', () 
 
     expect(screen.getAllByText('Rahul Kumar').length).toBeGreaterThan(0);
 
-    const searchInput = screen.getByPlaceholderText(/search players by name/i);
+    const searchInput = screen.getByPlaceholderText(/search players/i);
     expect(searchInput).toBeInTheDocument();
 
     fireEvent.change(searchInput, { target: { value: 'NonExistentPlayerQuery' } });
-    expect(screen.getByText(/no players found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no players found matching your filters/i)).toBeInTheDocument();
   });
 
   it('opens Add Player Modal displaying Join Code card and copy instructions when Add Player is clicked', () => {
@@ -135,7 +138,6 @@ describe('Phase 50 — Academy Owner Players Page UI Redesign Verification', () 
       fireEvent.click(targetButton);
     }
 
-    expect(screen.getByText(/add player to academy/i)).toBeInTheDocument();
-    expect(screen.getByText(/how it works:/i)).toBeInTheDocument();
+    expect(screen.getByText(/share this join code with your players/i)).toBeInTheDocument();
   });
 });

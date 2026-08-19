@@ -11,6 +11,33 @@ import { isUUID } from '@/lib/validators';
 import { supabase } from '@/lib/supabase/client';
 import CoachDashboardPage from '@/features/dashboard/pages/CoachDashboardPage';
 
+// CoachDashboardPage now settles via the coach analytics query (keyed on the
+// real coach member id) rather than a direct academy_members lookup. Resolve it
+// so Audit 3 reaches the rendered dashboard instead of hanging on "Loading
+// dashboard..." against the real Supabase client.
+vi.mock('@/features/dashboard/hooks/useDashboardAnalytics', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/features/dashboard/hooks/useDashboardAnalytics')
+  >('@/features/dashboard/hooks/useDashboardAnalytics');
+  return {
+    ...actual,
+    useCoachDashboardAnalytics: () => ({
+      data: {
+        todaySessions: [],
+        recentMatches: [],
+        assignedBatches: [],
+        playersNeedingAttention: [],
+        wins: 0,
+        losses: 0,
+      },
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    }),
+  };
+});
+
 describe('Phase 53 — Complete Test App As Identity Audit Suite', () => {
   const queryWrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: createQueryClient() }, children);
