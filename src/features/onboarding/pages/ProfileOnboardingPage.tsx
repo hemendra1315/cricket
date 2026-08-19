@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, CheckCircle2, ShieldCheck, Smartphone, User } from 'lucide-react';
 
 import { Avatar, Button, Card, CardBody, Input } from '@/components/ui';
-import { useAuth, updateMyProfile, uploadAvatar } from '@/features/auth';
+import { useAuth, updateMyProfile, uploadAvatar, removeAvatar } from '@/features/auth';
 import { isProfileComplete } from '@/features/auth/utils/profileCompletion';
+import { pickImageFile } from '@/lib/media';
 import { supabase } from '@/lib/supabase/client';
 import { errorMessage as errorMessageText } from '@/lib/api/errors';
 import { useAuthStore, useUiStore } from '@/stores';
@@ -61,33 +62,47 @@ export default function ProfileOnboardingPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(30);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   // Max DOB is today, min DOB is 100 years ago
   const todayStr = new Date().toISOString().split('T')[0];
 
   // File picker handler
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAvatarError(null);
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handlePickPhoto = async () => {
+    try {
+      setAvatarError(null);
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setAvatarError('Please select a valid image file (JPEG, PNG, or WebP).');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
+      const file = await pickImageFile();
+
+      let fileType = file.type;
+      const fileName = file.name || '';
+      if (!fileType && fileName) {
+        if (fileName.match(/\.(jpg|jpeg)$/i)) fileType = 'image/jpeg';
+        else if (fileName.match(/\.png$/i)) fileType = 'image/png';
+        else if (fileName.match(/\.webp$/i)) fileType = 'image/webp';
+      }
+
+      if (!fileType || !ALLOWED_IMAGE_TYPES.includes(fileType)) {
+        setAvatarError('Please select a valid image file (JPEG, PNG, or WebP).');
+        return;
+      }
+
+      if (file.size > MAX_AVATAR_SIZE) {
+        setAvatarError('Image size must be less than 5MB.');
+        return;
+      }
+
+      setAvatarFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+    } catch (err: unknown) {
+      const e = err as Error;
+      if (e?.message === 'Picker cancelled') {
+        return;
+      }
+      console.error('[AVATAR] Photo pick failed:', e);
+      setAvatarError(e?.message || 'Failed to select photo');
     }
-
-    if (file.size > MAX_AVATAR_SIZE) {
-      setAvatarError('Image size must be less than 5MB.');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
-    setAvatarFile(file);
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
   };
 
   // Remove photo handler
@@ -96,7 +111,6 @@ export default function ProfileOnboardingPage() {
     setPreviewUrl('');
     setAvatarUrl('');
     setAvatarError(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // Countdown timer for resending OTP
@@ -154,7 +168,8 @@ export default function ProfileOnboardingPage() {
         const uploadedUrl = await uploadAvatar(user.id, avatarFile);
         setAvatarUrl(uploadedUrl);
         setAvatarFile(null);
-      } catch {
+      } catch (err) {
+        console.error('[PFP] error during upload:', err);
         setIsUploadingAvatar(false);
         setAvatarError('Failed to upload profile picture. Please try again or remove it.');
         return;
@@ -261,6 +276,11 @@ export default function ProfileOnboardingPage() {
         avatarUrl: avatarUrl.trim() || null,
       });
 
+      // Cleanup old avatar if changed
+      if (profile?.avatarUrl && profile.avatarUrl !== updatedProfile.avatarUrl) {
+        removeAvatar(user.id, profile.avatarUrl).catch(() => {});
+      }
+
       // Update Zustand Store
       setProfile(updatedProfile);
 
@@ -278,6 +298,7 @@ export default function ProfileOnboardingPage() {
         navigate('/', { replace: true });
       }
     } catch (err: unknown) {
+      console.error('[PFP] profile update result: Failed', err);
       setErrorMessage(errorMessageText(err));
     } finally {
       setIsVerifyingOtp(false);
@@ -394,58 +415,44 @@ export default function ProfileOnboardingPage() {
                 </div>
 
                 <div className="flex flex-col items-center gap-2 text-center">
-                  <label
-                    htmlFor="avatar-upload"
-                    className="text-fg-muted text-xs font-semibold uppercase"
-                  >
+                  <label className="text-fg-muted text-xs font-semibold uppercase">
                     Profile Picture (Optional)
                   </label>
 
-                  <input
-                    id="avatar-upload"
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    aria-label="Upload profile picture"
-                    className="sr-only"
-                    onChange={handleFileChange}
-                    disabled={isUploadingAvatar || isSendingOtp}
-                  />
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingAvatar || isSendingOtp}
-                      className="gap-1.5"
-                    >
-                      <Camera className="h-4 w-4" />
-                      {previewUrl ? 'Change Photo' : 'Upload Profile Picture'}
-                    </Button>
-
-                    {previewUrl ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
-                        onClick={handleRemoveAvatar}
+                        onClick={handlePickPhoto}
                         disabled={isUploadingAvatar || isSendingOtp}
-                        className="text-fg-muted hover:text-danger text-xs"
+                        className="gap-1.5"
                       >
-                        Remove
+                        <Camera className="h-4 w-4" />
+                        {previewUrl ? 'Change Photo' : 'Upload Profile Picture'}
                       </Button>
-                    ) : null}
+
+                      {previewUrl ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveAvatar}
+                          disabled={isUploadingAvatar || isSendingOtp}
+                          className="text-fg-muted hover:text-danger text-xs"
+                        >
+                          Remove
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    {avatarError ? (
+                      <p className="text-danger text-xs">{avatarError}</p>
+                    ) : (
+                      <p className="text-fg-muted text-[11px]">JPEG, PNG, or WebP (max 5MB)</p>
+                    )}
                   </div>
-
-                  <p className="text-fg-muted text-[11px]">JPEG, PNG, or WebP (max 5MB)</p>
-
-                  {avatarError ? (
-                    <p role="alert" className="text-danger text-xs font-medium">
-                      {avatarError}
-                    </p>
-                  ) : null}
                 </div>
               </div>
 

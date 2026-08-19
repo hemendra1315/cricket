@@ -30,11 +30,12 @@ import type {
   PlayerMilestone,
   PlayerStatistics,
 } from '../api/playersTypes';
-import { SimpleBarChart } from '@/components/charts/SimpleBarChart';
+import { SimpleBarChart, SimpleLineChart } from '@/components/charts/SimpleBarChart';
 import { CricketCard } from '../components/CricketCard';
 import { FamilyTab } from '../components/FamilyTab';
 
-type TabId = 'overview' | 'attendance' | 'training' | 'matches' | 'batting' | 'bowling' | 'awards' | 'parent';
+type TabId =
+  'overview' | 'attendance' | 'training' | 'matches' | 'batting' | 'bowling' | 'awards' | 'parent';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -89,13 +90,13 @@ export default function PlayerProfilePage() {
   }
 
   const isLoading =
-      profileQuery.isPending ||
-      (activeTab === 'batting' && statsQuery.isPending) ||
-      (activeTab === 'bowling' && statsQuery.isPending) ||
-      (activeTab === 'matches' && matchesQuery.isPending) ||
-      (activeTab === 'awards' && (awardsQuery.isPending || highlightsQuery.isPending)) ||
-      (activeTab === 'training' && (drillsQuery.isPending || notesQuery.isPending)) ||
-      (activeTab === 'attendance' && attendanceQuery.isPending);
+    profileQuery.isPending ||
+    (activeTab === 'batting' && statsQuery.isPending) ||
+    (activeTab === 'bowling' && statsQuery.isPending) ||
+    (activeTab === 'matches' && matchesQuery.isPending) ||
+    (activeTab === 'awards' && (awardsQuery.isPending || highlightsQuery.isPending)) ||
+    (activeTab === 'training' && (drillsQuery.isPending || notesQuery.isPending)) ||
+    (activeTab === 'attendance' && attendanceQuery.isPending);
 
   const renderTabContent = () => {
     if (isLoading) {
@@ -124,13 +125,28 @@ export default function PlayerProfilePage() {
       case 'matches':
         return <MatchHistoryTab matches={matchesQuery.data ?? []} />;
       case 'batting':
-        return <StatisticsTab stats={statsQuery.data ?? null} chartData={chartDataQuery.data ?? null} view="batting" />;
+        return (
+          <StatisticsTab
+            stats={statsQuery.data ?? null}
+            chartData={chartDataQuery.data ?? null}
+            view="batting"
+          />
+        );
       case 'bowling':
-        return <StatisticsTab stats={statsQuery.data ?? null} chartData={chartDataQuery.data ?? null} view="bowling" />;
+        return (
+          <StatisticsTab
+            stats={statsQuery.data ?? null}
+            chartData={chartDataQuery.data ?? null}
+            view="bowling"
+          />
+        );
       case 'awards':
         return (
           <div className="space-y-6">
-            <HighlightsTab highlights={highlightsQuery.data ?? []} milestones={milestonesQuery.data ?? []} />
+            <HighlightsTab
+              highlights={highlightsQuery.data ?? []}
+              milestones={milestonesQuery.data ?? []}
+            />
             <AwardsTab awards={awardsQuery.data ?? []} />
           </div>
         );
@@ -399,91 +415,99 @@ function StatisticsTab({
     stats.bowlingOvers > 0 ? (stats.bowlingRunsConceded / stats.bowlingOvers).toFixed(2) : '0.00';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {(view === 'all' || view === 'batting') && (
-        <div className="space-y-4">
-          <h3 className="text-fg text-lg font-bold">Batting</h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody className="p-4">
-                <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">Innings</p>
-                <p className="text-fg mt-1 text-2xl font-extrabold">{stats.battingInnings}</p>
-              </CardBody>
-            </Card>
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody className="p-4">
-                <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">Runs</p>
-                <p className="mt-1 text-2xl font-extrabold text-blue-600 dark:text-blue-400">
-                  {stats.battingRuns}
-                </p>
-              </CardBody>
-            </Card>
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody className="p-4">
-                <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">Average</p>
-                <p className="text-fg mt-1 text-2xl font-extrabold">{battingAverage}</p>
-              </CardBody>
-            </Card>
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody className="p-4">
-                <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">High Score</p>
-                <p className="text-fg mt-1 text-2xl font-extrabold">
-                  {stats.highestScore}
-                  {stats.highestScoreNotOut ? '*' : ''}
-                </p>
-              </CardBody>
-            </Card>
-          </div>
-          {chartData?.batting && chartData.batting.length > 0 && (
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody>
-                <h4 className="text-fg mb-4 text-sm font-bold">Recent Form (Runs)</h4>
-                <div className="h-48">
-                  <SimpleBarChart
-                    data={chartData.batting}
-                    dataKey="runs"
-                    labelKey="matchDate"
-                    color="hsl(var(--primary))"
+        <Card>
+          <CardHeader title="Batting" />
+          <CardBody>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <StatItem label="Innings" value={stats.battingInnings.toString()} />
+              <StatItem label="Runs" value={stats.battingRuns.toString()} />
+              <StatItem label="Highest" value={stats.battingHighestScore?.toString() ?? '-'} />
+              <StatItem label="Average" value={battingAverage} />
+              <StatItem label="Strike Rate" value={strikeRate} />
+              <StatItem label="Fifties" value={stats.battingFifties.toString()} />
+              <StatItem label="Centuries" value={stats.battingCenturies.toString()} />
+              <StatItem label="Fours" value={stats.battingFours.toString()} />
+              <StatItem label="Sixes" value={stats.battingSixes.toString()} />
+            </div>
+            {Boolean(chartData?.runsByMatch && chartData.runsByMatch.length > 0) && chartData && (
+              <div className="mt-6">
+                <h4 className="text-fg-muted mb-2 text-sm font-medium">Runs by Match</h4>
+                <SimpleBarChart
+                  data={chartData.runsByMatch.map((m) => ({ label: m.matchName, value: m.runs }))}
+                  height={200}
+                />
+              </div>
+            )}
+            {Boolean(chartData?.strikeRateTrend && chartData.strikeRateTrend.length > 0) &&
+              chartData && (
+                <div className="mt-6">
+                  <h4 className="text-fg-muted mb-2 text-sm font-medium">Strike Rate Trend</h4>
+                  <SimpleLineChart
+                    data={chartData.strikeRateTrend.map((m) => ({
+                      label: m.matchName,
+                      value: m.strikeRate,
+                    }))}
+                    height={200}
                   />
                 </div>
-              </CardBody>
-            </Card>
-          )}
-        </div>
+              )}
+          </CardBody>
+        </Card>
       )}
-
       {(view === 'all' || view === 'bowling') && (
-        <div className="space-y-4">
-          <h3 className="text-fg text-lg font-bold">Bowling</h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody className="p-4">
-                <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">Innings</p>
-                <p className="text-fg mt-1 text-2xl font-extrabold">{stats.bowlingInnings}</p>
-              </CardBody>
-            </Card>
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody className="p-4">
-                <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">Wickets</p>
-                <p className="text-fg mt-1 text-2xl font-extrabold">{stats.bowlingWickets}</p>
-              </CardBody>
-            </Card>
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody className="p-4">
-                <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">Economy</p>
-                <p className="text-fg mt-1 text-2xl font-extrabold">{economy}</p>
-              </CardBody>
-            </Card>
-            <Card className="border-border-subtle bg-surface shadow-2xs">
-              <CardBody className="p-4">
-                <p className="text-fg-muted text-[11px] font-bold tracking-wider uppercase">Best</p>
-                <p className="text-fg mt-1 text-2xl font-extrabold">
-                  {stats.bestBowlingWickets}/{stats.bestBowlingRuns}
-                </p>
-              </CardBody>
-            </Card>
-          </div>
-        </div>
+        <Card>
+          <CardHeader title="Bowling" />
+          <CardBody>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
+              <StatItem label="Overs" value={stats.bowlingOvers.toString()} />
+              <StatItem label="Maidens" value={stats.bowlingMaidens.toString()} />
+              <StatItem label="Runs" value={stats.bowlingRunsConceded.toString()} />
+              <StatItem label="Wickets" value={stats.bowlingWickets.toString()} />
+              <StatItem label="Average" value={bowlingAverage} />
+              <StatItem label="Economy" value={economy} />
+              <StatItem label="Best" value={stats.bowlingBestBowling ?? '-'} />
+            </div>
+            {Boolean(chartData?.wicketsByMatch && chartData.wicketsByMatch.length > 0) &&
+              chartData && (
+                <div className="mt-6">
+                  <h4 className="text-fg-muted mb-2 text-sm font-medium">Wickets by Match</h4>
+                  <SimpleBarChart
+                    data={chartData.wicketsByMatch.map((m) => ({
+                      label: m.matchName,
+                      value: m.wickets,
+                    }))}
+                    height={200}
+                  />
+                </div>
+              )}
+            {Boolean(chartData?.economyTrend && chartData.economyTrend.length > 0) && chartData && (
+              <div className="mt-6">
+                <h4 className="text-fg-muted mb-2 text-sm font-medium">Economy Trend</h4>
+                <SimpleLineChart
+                  data={chartData.economyTrend.map((m) => ({
+                    label: m.matchName,
+                    value: m.economy,
+                  }))}
+                  height={200}
+                />
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      )}
+      {(view === 'all' || view === 'bowling') && (
+        <Card>
+          <CardHeader title="Fielding" />
+          <CardBody>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <StatItem label="Catches" value={stats.fieldingCatches.toString()} />
+              <StatItem label="Run Outs" value={stats.fieldingRunOuts.toString()} />
+              <StatItem label="Stumpings" value={stats.fieldingStumpings.toString()} />
+            </div>
+          </CardBody>
+        </Card>
       )}
     </div>
   );

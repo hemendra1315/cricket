@@ -145,7 +145,7 @@ export default function AcademySettingsPage() {
     setLogoError(null);
     setIsRemovingLogo(true);
     try {
-      await removeAcademyLogo(academyId as UUID);
+      await removeAcademyLogo(academyId as UUID, academy?.logoUrl);
       await updateAcademy.mutateAsync({});
       pushToast({ title: 'Academy logo removed', variant: 'success' });
     } catch (err) {

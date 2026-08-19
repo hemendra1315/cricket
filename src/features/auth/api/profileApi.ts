@@ -98,17 +98,59 @@ export async function updateMyProfile(userId: UUID, input: UpdateProfileInput): 
   return toProfile(row);
 }
 
-export async function uploadAvatar(userId: UUID, file: File): Promise<string> {
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const filePath = `${userId}/${Date.now()}.${ext}`;
+export async function removeAvatar(userId: UUID, avatarUrl: string): Promise<void> {
+  if (!avatarUrl.includes('/storage/v1/object/public/avatars/')) return;
+  // Strip query params if any exist (e.g. cache busters)
+  const baseUrl = avatarUrl.split('?')[0];
+  if (!baseUrl) return;
+  const oldPath = baseUrl.split('/storage/v1/object/public/avatars/')[1];
+  if (oldPath && oldPath.startsWith(`${userId}/`)) {
+    const { error } = await supabase.storage.from('avatars').remove([oldPath]);
+    if (error) {
+      console.warn('[PFP] failed to remove old avatar:', error);
+    }
+  }
+}
 
-  const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, {
-    upsert: true,
-    contentType: file.type,
-  });
+export async function uploadAvatar(userId: UUID, file: File | Blob): Promise<string> {
+  const isFile = file instanceof File;
+  const fileName = isFile && file.name ? file.name : 'avatar.jpg';
+  let fileType = file.type;
+
+  // Fallback if mime type is missing
+  if (!fileType) {
+    if (fileName.match(/\.(jpg|jpeg)$/i)) fileType = 'image/jpeg';
+    else if (fileName.match(/\.png$/i)) fileType = 'image/png';
+    else if (fileName.match(/\.webp$/i)) fileType = 'image/webp';
+    else fileType = 'image/jpeg';
+  }
+
+  const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+  // Use a completely unique timestamp-based path to guarantee no server-side cache collisions
+  const filePath = `${userId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+  // Some Android WebViews fail to send File objects directly, so we attempt ArrayBuffer conversion
+  let uploadBody: Blob | File = file;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    if (arrayBuffer.byteLength > 0) {
+      uploadBody = new Blob([arrayBuffer], { type: fileType });
+    }
+  } catch (err: unknown) {
+    console.warn('[PFP] ArrayBuffer conversion failed, falling back to raw file', err);
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, uploadBody, {
+      upsert: true,
+      contentType: fileType,
+    });
 
   if (uploadError) throw toApiError(uploadError);
 
   const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-  return data.publicUrl;
+
+  // Append a cache-buster query parameter to force the browser/WebView to bypass its local image cache
+  return `${data.publicUrl}?t=${Date.now()}`;
 }

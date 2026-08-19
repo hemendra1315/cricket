@@ -112,7 +112,7 @@ CREATE OR REPLACE FUNCTION generate_parent_linking_code(
   p_player_user_id uuid,
   p_relationship_type text
 ) RETURNS text
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 DECLARE
   v_code text;
 BEGIN

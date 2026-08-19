@@ -4,6 +4,7 @@ export {
   fetchMyProfile,
   updateMyProfile,
   uploadAvatar,
+  removeAvatar,
   type UpdateProfileInput,
 } from './api/profileApi';
 export { AuthProvider } from './components/AuthProvider';

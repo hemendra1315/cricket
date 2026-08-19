@@ -38,7 +38,7 @@ CREATE OR REPLACE FUNCTION create_academy(
   p_timezone text DEFAULT 'Asia/Kolkata',
   p_fee_mode fee_mode DEFAULT 'player_pays'
 ) RETURNS academies
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions AS $$
 DECLARE
   v_user     uuid := auth.uid();
   v_slug     text;

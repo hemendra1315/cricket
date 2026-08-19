@@ -196,8 +196,12 @@ export async function updateAcademy(academyId: UUID, input: UpdateAcademyInput):
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
-export async function uploadAcademyLogo(academyId: UUID, file: File): Promise<string> {
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+export async function uploadAcademyLogo(academyId: UUID, file: File | Blob): Promise<string> {
+  const isFile = file instanceof File;
+  const fileName = isFile && file.name ? file.name : 'logo.jpg';
+  const fileType = file.type || 'image/jpeg';
+
+  if (!ALLOWED_IMAGE_TYPES.includes(fileType)) {
     throw new Error('Invalid file format. Please upload a JPG, PNG, or WebP image.');
   }
 
@@ -205,27 +209,52 @@ export async function uploadAcademyLogo(academyId: UUID, file: File): Promise<st
     throw new Error('Image file is too large. Maximum allowed size is 5 MB.');
   }
 
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
   const filePath = `${academyId}/${Date.now()}.${ext}`;
+
+  // Android WebView/Capacitor often fails to send native File objects via fetch.
+  // Convert to Blob.
+  let safeBlob: Blob = file;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    safeBlob = new Blob([arrayBuffer], { type: fileType });
+  } catch (err: unknown) {
+    console.warn('[LOGO] arrayBuffer conversion failed:', err);
+  }
 
   const { error: uploadError } = await supabase.storage
     .from('academy-logos')
-    .upload(filePath, file, {
+    .upload(filePath, safeBlob, {
       upsert: true,
-      contentType: file.type,
+      contentType: fileType,
     });
 
   if (uploadError) throw toApiError(uploadError);
 
   const { data } = supabase.storage.from('academy-logos').getPublicUrl(filePath);
-  const publicUrl = data.publicUrl;
+  const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
 
   await updateAcademy(academyId, { logoUrl: publicUrl });
   return publicUrl;
 }
 
-export async function removeAcademyLogo(academyId: UUID): Promise<void> {
+export async function removeAcademyLogo(academyId: UUID, logoUrl?: string | null): Promise<void> {
   await updateAcademy(academyId, { logoUrl: null });
+
+  if (logoUrl && logoUrl.includes('/storage/v1/object/public/academy-logos/')) {
+    const baseUrl = logoUrl.split('?')[0];
+    if (!baseUrl) return;
+    const oldPath = baseUrl.split('/storage/v1/object/public/academy-logos/')[1];
+    if (oldPath && oldPath.startsWith(`${academyId}/`)) {
+      // Non-blocking cleanup
+      supabase.storage
+        .from('academy-logos')
+        .remove([oldPath])
+        .catch((err) => {
+          console.warn('[LOGO] failed to remove old logo:', err);
+        });
+    }
+  }
 }
 
 export type OwnerInvitationDetails = {
