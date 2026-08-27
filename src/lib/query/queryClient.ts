@@ -1,15 +1,8 @@
-import {
-  dehydrate,
-  hydrate,
-  type DehydratedState,
-  MutationCache,
-  QueryCache,
-  QueryClient,
-} from '@tanstack/react-query';
+import { dehydrate, MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 
 import { ApiErrorCode, toApiError } from '@/lib/api';
 import { reportError } from '@/lib/logger';
-import { loadOfflineQueryCache, saveOfflineQueryCache } from '@/lib/offline/indexedDb';
+import { saveOfflineQueryCache } from '@/lib/offline/indexedDb';
 
 /**
  * App-wide TanStack Query client. Auth/permission errors are never retried;
@@ -71,12 +64,3 @@ queryClient.getQueryCache().subscribe((event) => {
     scheduleCacheSave();
   }
 });
-
-// Hydrate query cache from IndexedDB on startup
-if (typeof window !== 'undefined') {
-  void loadOfflineQueryCache().then((cached) => {
-    if (cached) {
-      hydrate(queryClient, cached as DehydratedState);
-    }
-  });
-}
