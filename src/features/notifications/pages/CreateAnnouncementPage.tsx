@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -35,10 +36,12 @@ type FormValues = z.infer<typeof schema>;
 
 export function CreateAnnouncementPage() {
   const navigate = useNavigate();
-  const { academyId } = useActiveAcademy();
+  const { academyId, membership } = useActiveAcademy();
   const createAnnouncement = useCreateAnnouncement();
   const { data: batches = [] } = useBatches(academyId || null);
   const pushToast = useUiStore((s) => s.pushToast);
+
+  const isOwner = membership?.role === 'academy_owner';
 
   const {
     register,
@@ -56,8 +59,17 @@ export function CreateAnnouncementPage() {
     },
   });
 
+  // Set default audience to batch if the user is a coach
+  useEffect(() => {
+    if (membership && membership.role !== 'academy_owner') {
+      setValue('audience', 'batch');
+    }
+  }, [membership, setValue]);
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const audience = watch('audience');
+
+  const filteredBatches = isOwner ? batches : batches.filter((b) => b.coachId === membership?.id);
 
   const onSubmit = async (data: FormValues) => {
     if (!academyId) return;
@@ -138,10 +150,10 @@ export function CreateAnnouncementPage() {
                   }
                 }}
               >
-                <option value="all">Entire Academy</option>
-                <option value="coaches">All Coaches</option>
-                <option value="players">All Players</option>
-                <option value="all_parents">All Parents</option>
+                {isOwner && <option value="all">Entire Academy</option>}
+                {isOwner && <option value="coaches">All Coaches</option>}
+                {isOwner && <option value="players">All Players</option>}
+                {isOwner && <option value="all_parents">All Parents</option>}
                 <option value="batch">Specific Batch</option>
               </Select>
             </div>
@@ -155,7 +167,7 @@ export function CreateAnnouncementPage() {
                   className={errors.batch_id ? 'border-danger' : ''}
                 >
                   <option value="">Select a batch...</option>
-                  {batches.map((batch) => (
+                  {filteredBatches.map((batch) => (
                     <option key={batch.id} value={batch.id}>
                       {batch.name}
                     </option>
