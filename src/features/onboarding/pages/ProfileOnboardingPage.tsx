@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, CheckCircle2, ShieldCheck, Smartphone, User } from 'lucide-react';
+import { ArrowLeft, Camera, CheckCircle2, ShieldCheck, Mail, User } from 'lucide-react';
 
 import { Avatar, Button, Card, CardBody, Input } from '@/components/ui';
 import { useAuth, updateMyProfile, uploadAvatar, removeAvatar } from '@/features/auth';
@@ -162,10 +162,12 @@ export default function ProfileOnboardingPage() {
     }
 
     // Upload avatar if a new file was chosen
+    let finalAvatarUrl = avatarUrl;
     if (avatarFile && user?.id) {
       setIsUploadingAvatar(true);
       try {
         const uploadedUrl = await uploadAvatar(user.id, avatarFile);
+        finalAvatarUrl = uploadedUrl;
         setAvatarUrl(uploadedUrl);
         setAvatarFile(null);
       } catch (err) {
@@ -178,29 +180,72 @@ export default function ProfileOnboardingPage() {
       }
     }
 
+    if (!user?.id) {
+      setErrorMessage('User session expired. Please sign in again.');
+      return;
+    }
+
+    // If email is already verified, skip OTP send/verify step entirely
+    if (user.email_confirmed_at) {
+      setIsSendingOtp(true);
+      try {
+        const updatedProfile = await updateMyProfile(user.id, {
+          fullName: fullName.trim(),
+          dateOfBirth,
+          phone: fullPhoneNumber,
+          avatarUrl: finalAvatarUrl.trim() || null,
+        });
+
+        if (profile?.avatarUrl && profile.avatarUrl !== updatedProfile.avatarUrl) {
+          removeAvatar(user.id, profile.avatarUrl).catch(() => {});
+        }
+
+        setProfile(updatedProfile);
+
+        pushToast({
+          title: 'Profile onboarding complete!',
+          description: 'Your profile has been set up successfully.',
+          variant: 'success',
+        });
+
+        const pendingInviteToken = sessionStorage.getItem('pending_owner_invite_token');
+        if (pendingInviteToken) {
+          navigate(`/academy/invite/${pendingInviteToken}`, { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+      } catch (err: unknown) {
+        console.error('[PFP] profile update result: Failed', err);
+        setErrorMessage(errorMessageText(err));
+      } finally {
+        setIsSendingOtp(false);
+      }
+      return;
+    }
+
     setIsSendingOtp(true);
     try {
-      // Trigger Supabase Phone OTP send
-      const { error: otpError } = await supabase.auth.updateUser({
-        phone: fullPhoneNumber,
+      // Trigger Supabase Email OTP send
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: user.email || '',
       });
 
-      if (otpError && !otpError.message.includes('not configured')) {
-        // Log friendly error if SMS gateway error occurs
-        console.warn('Supabase Auth Phone OTP info:', otpError.message);
+      if (otpError) {
+        setErrorMessage(otpError.message);
+        setIsSendingOtp(false);
+        return;
       }
 
       setStep('otp');
       setCountdown(30);
       pushToast({
         title: 'Verification code sent',
-        description: `6-digit code sent to ${fullPhoneNumber}`,
+        description: `6-digit code sent to ${user.email || ''}`,
         variant: 'info',
       });
-    } catch {
-      // Fallback to step OTP gracefully
-      setStep('otp');
-      setCountdown(30);
+    } catch (err: unknown) {
+      const e = err as Error;
+      setErrorMessage(e?.message || 'Failed to send verification code. Please try again.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -211,19 +256,25 @@ export default function ProfileOnboardingPage() {
     setErrorMessage(null);
     setIsSendingOtp(true);
     try {
-      await supabase.auth.updateUser({ phone: fullPhoneNumber });
+      const { error: otpError } = await supabase.auth.signInWithOtp({ email: user?.email || '' });
+      if (otpError) {
+        setErrorMessage(otpError.message);
+        setIsSendingOtp(false);
+        return;
+      }
       setCountdown(30);
       setOtpDigits(['', '', '', '', '', '']);
       pushToast({
         title: 'Code resent',
-        description: `A new 6-digit code was sent to ${fullPhoneNumber}`,
+        description: `A new 6-digit code was sent to ${user?.email || ''}`,
         variant: 'info',
       });
       setTimeout(() => {
         otpInputsRef.current[0]?.focus();
       }, 50);
-    } catch {
-      setErrorMessage('Could not resend verification code. Please try again.');
+    } catch (err: unknown) {
+      const e = err as Error;
+      setErrorMessage(e?.message || 'Could not resend verification code. Please try again.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -248,23 +299,20 @@ export default function ProfileOnboardingPage() {
     try {
       // Attempt Supabase OTP verification
       const { error: verifyError } = await supabase.auth.verifyOtp({
-        phone: fullPhoneNumber,
+        email: user?.email || '',
         token: otpCode,
-        type: 'phone_change',
+        type: 'email',
       });
 
-      if (verifyError && !verifyError.message.includes('not configured')) {
-        // If OTP token is invalid or expired, reject cleanly
-        if (
+      if (verifyError) {
+        setErrorMessage(
           verifyError.message.toLowerCase().includes('invalid') ||
-          verifyError.message.toLowerCase().includes('expired')
-        ) {
-          setErrorMessage(
-            'The verification code entered is invalid or expired. Please check and try again.',
-          );
-          setIsVerifyingOtp(false);
-          return;
-        }
+            verifyError.message.toLowerCase().includes('expired')
+            ? 'The verification code entered is invalid or expired. Please check and try again.'
+            : verifyError.message,
+        );
+        setIsVerifyingOtp(false);
+        return;
       }
 
       // Update Database Profile
@@ -272,7 +320,6 @@ export default function ProfileOnboardingPage() {
         fullName: fullName.trim(),
         dateOfBirth,
         phone: fullPhoneNumber,
-        phoneVerified: true,
         avatarUrl: avatarUrl.trim() || null,
       });
 
@@ -534,20 +581,28 @@ export default function ProfileOnboardingPage() {
                 disabled={isSendingOtp || isUploadingAvatar}
                 className="w-full font-bold shadow-2xs"
               >
-                <Smartphone className="mr-2 h-4 w-4" /> Continue to Phone Verification
+                {user?.email_confirmed_at ? (
+                  <>
+                    <CheckCircle2 className="mr-2 h-4 w-4" /> Complete Profile
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" /> Continue to Email Verification
+                  </>
+                )}
               </Button>
             </form>
           ) : (
-            /* STEP 2: PHONE OTP VERIFICATION */
+            /* STEP 2: EMAIL OTP VERIFICATION */
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div className="space-y-1.5 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
-                <h1 className="text-fg text-2xl font-bold tracking-tight">Verify Your Phone</h1>
+                <h1 className="text-fg text-2xl font-bold tracking-tight">Verify Your Email</h1>
                 <p className="text-fg-muted text-sm">
                   Enter the 6-digit code sent to{' '}
-                  <strong className="text-fg font-bold">{fullPhoneNumber}</strong>
+                  <strong className="text-fg font-bold">{user?.email || ''}</strong>
                 </p>
               </div>
 
@@ -600,7 +655,7 @@ export default function ProfileOnboardingPage() {
                     }}
                     className="text-fg-muted hover:text-primary flex items-center font-medium transition"
                   >
-                    <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Change phone number
+                    <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Change email address
                   </button>
 
                   <button

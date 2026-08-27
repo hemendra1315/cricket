@@ -179,8 +179,8 @@ Deno.serve(async (req: Request) => {
     const staleIds: string[] = [];
     let sent = 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       subs.map(async (sub: any) => {
         try {
           const origin = new URL(sub.endpoint).origin;
