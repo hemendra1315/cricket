@@ -8,6 +8,8 @@ import { useCreateAnnouncement } from '../hooks/useAnnouncements';
 import { useActiveAcademy } from '@/features/academies/hooks/useAcademies';
 import { useBatches } from '@/features/batches/hooks/useBatches';
 import { useUiStore } from '@/stores';
+import { supabase } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 
 const schema = z
   .object({
@@ -61,7 +63,7 @@ export function CreateAnnouncementPage() {
     if (!academyId) return;
 
     try {
-      await createAnnouncement.mutateAsync({
+      const announcement = await createAnnouncement.mutateAsync({
         academy_id: academyId,
         title: data.title,
         message: data.message,
@@ -70,6 +72,14 @@ export function CreateAnnouncementPage() {
       });
 
       pushToast({ title: 'Announcement sent successfully', variant: 'success' });
+
+      // Trigger push notifications in the background (non-blocking)
+      void supabase.functions
+        .invoke('send-push-notification', { body: { announcement_id: announcement.id } })
+        .then(({ error }) => {
+          if (error) logger.warn('push_dispatch_failed', { error: String(error) });
+        });
+
       navigate('/academy/announcements');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to send announcement';
