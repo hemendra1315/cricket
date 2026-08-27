@@ -99,7 +99,7 @@ describe('Phase 50 — Academy Owner Players Page UI Redesign Verification', () 
     );
 
     // The redesign replaced the old stat cards with a live member count badge ...
-    expect(screen.getByText('1 found')).toBeInTheDocument();
+    expect(screen.getByText(/1\s+found/i)).toBeInTheDocument();
     // ... and a filter toolbar for managing the roster.
     expect(screen.getByText('All Status')).toBeInTheDocument();
     expect(screen.getByText('All Batches')).toBeInTheDocument();

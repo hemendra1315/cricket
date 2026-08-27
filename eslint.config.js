@@ -15,6 +15,8 @@ export default tseslint.config(
       'test-results',
       'supabase/.temp',
       'android',
+      'player-dashboard-refresh',
+      'cricket_academy_flutter',
     ],
   },
   {

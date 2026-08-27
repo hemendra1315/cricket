@@ -2,16 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import {
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  Input,
-  Select,
-  Textarea,
-} from '@/components/ui';
+import { Button, Input, Select, Textarea } from '@/components/ui';
 import { EmptyState, ErrorState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
@@ -105,25 +96,50 @@ export default function TrainingSessionDetailPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-fg text-xl font-semibold">Session details</h1>
-          <p className="text-fg-muted">Review the session and make updates.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {canManage ? (
-            <Button variant="secondary" size="sm" onClick={() => setShowEditForm((open) => !open)}>
-              {showEditForm ? 'Cancel edit' : 'Edit session'}
+      {/* 1. App Bar Header */}
+      <div className="border-border-subtle/40 flex flex-col gap-2 border-b pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void navigate('/sessions')}
+              aria-label="Back to sessions"
+              className="text-fg hover:bg-surface-muted/60 h-auto px-2 py-1 font-semibold"
+            >
+              &larr; Back
             </Button>
-          ) : null}
-          <Button variant="secondary" size="sm" onClick={() => void navigate('/sessions')}>
-            Back to sessions
-          </Button>
+            <h1 className="font-heading text-fg truncate text-2xl font-extrabold tracking-tight uppercase md:text-3xl">
+              {session?.title ?? 'Session Detail'}
+            </h1>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {canManage && session && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowEditForm((open) => !open)}
+                className="h-11 min-h-[44px] rounded-[10px] px-3.5 text-xs font-bold"
+              >
+                {showEditForm ? 'Cancel Edit' : 'Edit Session'}
+              </Button>
+            )}
+          </div>
         </div>
+        {session && (
+          <div className="text-fg-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-sans text-xs">
+            <span className="bg-surface-muted/60 border-border-subtle/40 text-fg-muted rounded border px-2 py-0.5 font-mono text-[11px] font-bold">
+              BATCH: {session.batch.name}
+            </span>
+            <span className="bg-surface-muted/60 border-border-subtle/40 rounded border px-2 py-0.5 font-mono text-[11px]">
+              {formatDate(session.sessionDate)}
+            </span>
+          </div>
+        )}
       </div>
 
       {sessionQuery.isPending ? (
-        <p className="text-fg-muted">Loading session…</p>
+        <p className="text-fg-muted py-8 text-center font-sans text-sm">Loading session…</p>
       ) : sessionQuery.isError ? (
         <ErrorState error={sessionQuery.error} onRetry={() => void sessionQuery.refetch()} />
       ) : !session ? (
@@ -133,83 +149,123 @@ export default function TrainingSessionDetailPage() {
         />
       ) : (
         <>
-          <Card>
-            <CardHeader title={session.title} description={session.batch.name} />
-            <CardBody className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-fg-muted text-xs tracking-wide uppercase">Date</p>
-                <p className="text-fg text-base font-medium">{formatDate(session.sessionDate)}</p>
-              </div>
-              <div>
-                <p className="text-fg-muted text-xs tracking-wide uppercase">Time</p>
-                <p className="text-fg text-base font-medium">
+          {/* 2. Session Detail Scorecard */}
+          <div className="border-border-subtle bg-surface divide-border-subtle/50 divide-y overflow-hidden rounded-xl border shadow-2xs">
+            <div className="flex flex-col gap-1.5 p-4">
+              <span className="text-fg-muted font-sans text-[10px] font-bold tracking-wider uppercase">
+                Topic & Focus
+              </span>
+              <p className="text-fg font-heading text-lg font-bold tracking-tight uppercase">
+                {session.title}
+              </p>
+              {session.focusArea && (
+                <p className="text-fg-muted mt-0.5 font-sans text-xs">Focus: {session.focusArea}</p>
+              )}
+            </div>
+
+            <div className="bg-border-subtle/50 grid grid-cols-1 gap-px sm:grid-cols-2">
+              <div className="bg-surface flex flex-col gap-1 p-4">
+                <span className="text-fg-muted font-sans text-[10px] font-bold tracking-wider uppercase">
+                  Date & Time
+                </span>
+                <p className="text-fg mt-1 font-mono text-sm font-bold">
+                  {formatDate(session.sessionDate)}
+                </p>
+                <p className="text-fg-muted mt-0.5 font-mono text-xs">
                   {formatDateTime(session.startAt)} – {formatDateTime(session.endAt)}
                 </p>
               </div>
-              <div>
-                <p className="text-fg-muted text-xs tracking-wide uppercase">Coach</p>
-                <p className="text-fg text-base font-medium">
+
+              <div className="bg-surface flex flex-col justify-center gap-1 p-4">
+                <span className="text-fg-muted font-sans text-[10px] font-bold tracking-wider uppercase">
+                  Assigned Coach
+                </span>
+                <p className="text-fg mt-1 text-sm font-semibold">
                   {session.coach.fullName ?? session.coach.email}
                 </p>
+                <p className="text-fg-muted mt-0.5 font-sans text-xs">{session.coach.email}</p>
               </div>
-              <div>
-                <p className="text-fg-muted text-xs tracking-wide uppercase">Status</p>
-                <p className="text-fg text-base font-medium">{session.status}</p>
+            </div>
+
+            <div className="flex flex-col gap-1 p-4">
+              <span className="text-fg-muted font-sans text-[10px] font-bold tracking-wider uppercase">
+                Status
+              </span>
+              <div className="mt-1">
+                <span
+                  className={`inline-flex items-center rounded border px-2.5 py-0.5 font-sans text-[10px] font-bold uppercase ${
+                    session.status === 'completed'
+                      ? 'bg-success-pale text-success border-success/30'
+                      : session.status === 'cancelled'
+                        ? 'bg-error-pale text-error border-error/30'
+                        : 'bg-saffron-pale text-saffron border-saffron/30'
+                  }`}
+                >
+                  {session.status}
+                </span>
               </div>
-              <div className="sm:col-span-2">
-                <p className="text-fg-muted text-xs tracking-wide uppercase">Focus area</p>
-                <p className="text-fg text-base font-medium">
-                  {session.focusArea ?? 'Not specified'}
+            </div>
+
+            {session.notes && (
+              <div className="flex flex-col gap-1 p-4">
+                <span className="text-fg-muted font-sans text-[10px] font-bold tracking-wider uppercase">
+                  Training Notes
+                </span>
+                <p className="text-fg mt-1 font-sans text-sm leading-relaxed whitespace-pre-wrap">
+                  {session.notes}
                 </p>
               </div>
-              <div className="sm:col-span-2">
-                <p className="text-fg-muted text-xs tracking-wide uppercase">Notes</p>
-                <p className="text-fg text-base font-medium">
-                  {session.notes ?? 'No notes added.'}
-                </p>
-              </div>
-            </CardBody>
-            {canManage ? (
-              <CardBody className="flex flex-wrap items-center justify-between gap-2">
+            )}
+
+            {canManage && (
+              <div className="bg-surface-muted/30 flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
-                    variant="secondary"
+                    variant="primary"
                     size="sm"
                     onClick={() => void navigate(`/sessions/${session.id}/attendance`)}
+                    className="min-h-[40px] rounded-[10px] px-4 text-xs font-bold"
                   >
-                    Manage attendance
+                    Manage Attendance
                   </Button>
-                  {session.status === 'scheduled' ? (
+                  {session.status === 'scheduled' && (
                     <>
                       <Button
-                        variant="primary"
+                        variant="secondary"
                         size="sm"
                         isLoading={updateSession.isPending}
                         onClick={() => void handleStatusChange('completed')}
+                        className="min-h-[40px] rounded-[10px] px-4 text-xs font-bold"
                       >
-                        Mark completed
+                        Mark Completed
                       </Button>
                       <Button
-                        variant="danger"
+                        variant="ghost"
                         size="sm"
                         isLoading={updateSession.isPending}
                         onClick={() => void handleStatusChange('cancelled')}
+                        className="text-error hover:bg-error-pale min-h-[40px] rounded-[10px] px-4 text-xs font-bold"
                       >
-                        Cancel session
+                        Cancel Session
                       </Button>
                     </>
-                  ) : null}
+                  )}
                 </div>
                 <Button
-                  variant="danger"
-                  onClick={() => void handleDelete()}
+                  variant="ghost"
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this training session?')) {
+                      void handleDelete();
+                    }
+                  }}
                   isLoading={deleteSession.isPending}
+                  className="text-error hover:bg-error-pale min-h-[40px] rounded-[10px] px-4 text-xs font-bold"
                 >
-                  Delete session
+                  Delete Session
                 </Button>
-              </CardBody>
-            ) : null}
-          </Card>
+              </div>
+            )}
+          </div>
 
           {showEditForm && canManage ? (
             <SessionEditForm
@@ -219,6 +275,7 @@ export default function TrainingSessionDetailPage() {
                 setShowEditForm(false);
                 pushToast({ title: 'Session updated', variant: 'success' });
               }}
+              onCancel={() => setShowEditForm(false)}
             />
           ) : null}
         </>
@@ -231,10 +288,12 @@ function SessionEditForm({
   session,
   updateSession,
   onSuccess,
+  onCancel,
 }: {
   session: TrainingSession;
   updateSession: ReturnType<typeof useUpdateTrainingSession>;
   onSuccess: () => void;
+  onCancel: () => void;
 }) {
   const { academyId } = useActiveAcademy();
   const batchesQuery = useBatches(academyId);
@@ -285,16 +344,24 @@ function SessionEditForm({
   });
 
   return (
-    <Card>
+    <div className="border-border-subtle bg-surface mt-4 rounded-xl border p-4 shadow-2xs">
       <form onSubmit={handleSubmitEdit} noValidate>
-        <CardHeader title="Edit session" description="Update the session details." />
-        <CardBody className="space-y-4">
+        <div className="border-border-subtle/50 mb-4 border-b pb-3">
+          <h2 className="font-heading text-fg text-lg font-extrabold tracking-tight uppercase">
+            Edit Session
+          </h2>
+          <p className="text-fg-muted mt-0.5 font-sans text-xs">Update the session details</p>
+        </div>
+        <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-fg block text-sm font-medium">Batch</label>
+              <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                Batch
+              </label>
               <Select
                 {...register('batchId', { required: 'Batch is required' })}
                 hasError={Boolean(errors.batchId)}
+                className="border-border-subtle h-11 min-h-[44px] rounded-lg"
               >
                 <option value="">Select batch</option>
                 {batchesQuery.data?.map((batch) => (
@@ -304,14 +371,19 @@ function SessionEditForm({
                 ))}
               </Select>
               {errors.batchId ? (
-                <p className="text-danger text-xs">{errors.batchId.message}</p>
+                <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                  {errors.batchId.message}
+                </p>
               ) : null}
             </div>
             <div>
-              <label className="text-fg block text-sm font-medium">Coach</label>
+              <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                Coach
+              </label>
               <Select
                 {...register('coachId', { required: 'Coach is required' })}
                 hasError={Boolean(errors.coachId)}
+                className="border-border-subtle h-11 min-h-[44px] rounded-lg"
               >
                 <option value="">Select coach</option>
                 {coaches.map((coach) => (
@@ -321,75 +393,120 @@ function SessionEditForm({
                 ))}
               </Select>
               {errors.coachId ? (
-                <p className="text-danger text-xs">{errors.coachId.message}</p>
+                <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                  {errors.coachId.message}
+                </p>
               ) : null}
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-fg block text-sm font-medium">Title</label>
+              <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                Title
+              </label>
               <Input
                 {...register('title', { required: 'Title is required' })}
                 hasError={Boolean(errors.title)}
+                className="border-border-subtle h-11 min-h-[44px] rounded-lg"
               />
-              {errors.title ? <p className="text-danger text-xs">{errors.title.message}</p> : null}
+              {errors.title ? (
+                <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                  {errors.title.message}
+                </p>
+              ) : null}
             </div>
             <div>
-              <label className="text-fg block text-sm font-medium">Focus area</label>
-              <Input {...register('focusArea')} />
+              <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                Focus area
+              </label>
+              <Input
+                {...register('focusArea')}
+                className="border-border-subtle h-11 min-h-[44px] rounded-lg"
+              />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-fg block text-sm font-medium">Session date</label>
+              <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                Session date
+              </label>
               <Input
                 {...register('sessionDate', { required: 'Session date is required' })}
                 type="date"
                 hasError={Boolean(errors.sessionDate)}
+                className="border-border-subtle h-11 min-h-[44px] rounded-lg font-mono"
               />
               {errors.sessionDate ? (
-                <p className="text-danger text-xs">{errors.sessionDate.message}</p>
+                <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                  {errors.sessionDate.message}
+                </p>
               ) : null}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="text-fg block text-sm font-medium">Start time</label>
+                <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                  Start time
+                </label>
                 <Input
                   {...register('startAt', { required: 'Start time is required' })}
                   type="datetime-local"
                   hasError={Boolean(errors.startAt)}
+                  className="border-border-subtle h-11 min-h-[44px] rounded-lg font-mono"
                 />
                 {errors.startAt ? (
-                  <p className="text-danger text-xs">{errors.startAt.message}</p>
+                  <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                    {errors.startAt.message}
+                  </p>
                 ) : null}
               </div>
               <div>
-                <label className="text-fg block text-sm font-medium">End time</label>
+                <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                  End time
+                </label>
                 <Input
                   {...register('endAt', { required: 'End time is required' })}
                   type="datetime-local"
                   hasError={Boolean(errors.endAt)}
+                  className="border-border-subtle h-11 min-h-[44px] rounded-lg font-mono"
                 />
                 {errors.endAt ? (
-                  <p className="text-danger text-xs">{errors.endAt.message}</p>
+                  <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                    {errors.endAt.message}
+                  </p>
                 ) : null}
               </div>
             </div>
           </div>
 
           <div>
-            <label className="text-fg block text-sm font-medium">Notes</label>
-            <Textarea {...register('notes')} rows={4} />
+            <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+              Notes
+            </label>
+            <Textarea {...register('notes')} rows={4} className="border-border-subtle rounded-lg" />
           </div>
-        </CardBody>
-        <CardFooter>
-          <Button type="submit" isLoading={updateSession.isPending} disabled={!isDirty}>
+        </div>
+        <div className="border-border-subtle/40 mt-6 flex items-center justify-end gap-3 border-t pt-4">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCancel}
+            className="h-11 min-h-[44px] rounded-[10px] px-4 text-xs font-bold"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={updateSession.isPending}
+            disabled={!isDirty}
+            className="h-11 min-h-[44px] rounded-[10px] px-5 text-xs font-bold"
+          >
             Save changes
           </Button>
-        </CardFooter>
+        </div>
       </form>
-    </Card>
+    </div>
   );
 }

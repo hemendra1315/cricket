@@ -11,7 +11,9 @@ export function parseCricHeroesText(text: string): ExtractedMatchData {
     .map((l) => l.trim())
     .filter(Boolean);
 
-  let matchName = 'CricHeroes Match';
+  // Bug 2 fix: initialize to '' so the firstLine fallback can run.
+  // The final return uses `matchName || 'CricHeroes Match'` as the ultimate default.
+  let matchName = '';
   let matchDate = new Date().toISOString().split('T')[0] ?? '';
   const venue = '';
   const tournament = '';
@@ -26,6 +28,12 @@ export function parseCricHeroesText(text: string): ExtractedMatchData {
   let teamBScore = '';
 
   const innings: ExtractedInnings[] = [];
+  // Bug 1 fix: accumulate parse-quality warnings instead of fabricating data.
+  const warnings: string[] = [];
+
+  // Regexes reused for the firstLine heuristic (Bug 2)
+  const scoreLine = /\d+\/\d+|\d+\s*\([\d.]+\)/;
+  const dateLine = /\b\d{1,2}[-/]([A-Za-z]{3}|\d{1,2})[-/]\d{2,4}\b/;
 
   // 1. Extract Date (e.g. 15-Aug-2024 or 2024-08-15)
   const dateMatch = text.match(/\b(\d{1,2})[-/]([A-Za-z]{3}|\d{1,2})[-/](\d{2,4})\b/);
@@ -157,9 +165,24 @@ export function parseCricHeroesText(text: string): ExtractedMatchData {
     }
   }
 
+  // Bug 2 fix: use the first line as a title fallback — but only when it is not a
+  // score line or a date line (those are data, not a human-readable match title).
   const firstLine = lines[0];
   if (firstLine && !matchName) {
-    matchName = firstLine;
+    const isScoreLineCandidate = scoreLine.test(firstLine);
+    const isDateLineCandidate = dateLine.test(firstLine);
+    if (!isScoreLineCandidate && !isDateLineCandidate) {
+      matchName = firstLine;
+    }
+  }
+
+  // Bug 1 fix: emit warnings when scores could not be detected so the UI can
+  // prompt the user to verify, rather than silently trusting fabricated values.
+  if (!teamAScore) {
+    warnings.push(`Score for "${teamAName}" could not be detected — please verify manually.`);
+  }
+  if (!teamBScore) {
+    warnings.push(`Score for "${teamBName}" could not be detected — please verify manually.`);
   }
 
   return {
@@ -171,8 +194,9 @@ export function parseCricHeroesText(text: string): ExtractedMatchData {
     format,
     result,
     winningMargin,
-    teamA: { name: teamAName, score: teamAScore || '100/5' },
-    teamB: { name: teamBName, score: teamBScore || '98/8' },
+    teamA: { name: teamAName, score: teamAScore },
+    teamB: { name: teamBName, score: teamBScore },
     innings,
+    warnings,
   };
 }

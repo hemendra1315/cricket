@@ -4,18 +4,9 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Link } from 'react-router-dom';
 
 import { TimeRangePicker } from '@/components/form';
-import {
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  Input,
-  Select,
-  Textarea,
-} from '@/components/ui';
+import { Button, Input, Select, Textarea } from '@/components/ui';
 import { ErrorState } from '@/components/feedback';
-import { MobilePageHeader, MobileFilterChips, MobileEmptyState } from '@/components/mobile';
+import { MobileEmptyState } from '@/components/mobile';
 import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
 import { useCan } from '@/lib/rbac';
@@ -132,64 +123,91 @@ export default function TrainingSessionsPage() {
 
   if (!academyId) return null;
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
   return (
     <div className="space-y-4 pb-24 md:pb-6">
-      {/* Mobile Header */}
-      <div className="md:hidden">
-        <MobilePageHeader
-          title="Sessions"
-          count={sessionsQuery.data?.length}
-          subtitle="Training schedules & attendance"
-          primaryAction={
-            canManage
-              ? {
-                  label: showForm ? 'Hide' : 'New',
-                  onClick: () => setShowForm((prev) => !prev),
-                }
-              : undefined
-          }
-        />
-        <div className="mb-3 px-4">
-          <MobileFilterChips
-            options={[
-              { id: 'all', label: 'All', count: sessionsQuery.data?.length },
-              { id: 'today', label: 'Today' },
-              { id: 'upcoming', label: 'Upcoming' },
-              { id: 'completed', label: 'Completed' },
-            ]}
-            activeId={sessionFilter}
-            onChange={setSessionFilter}
-          />
+      {/* 1. App Bar Header */}
+      <div className="border-border-subtle/40 flex flex-col gap-2 border-b pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-heading text-fg text-2xl font-extrabold tracking-tight uppercase md:text-3xl">
+            Sessions
+          </h1>
+          {canManage && (
+            <Button
+              variant={showForm ? 'secondary' : 'primary'}
+              onClick={() => setShowForm((prev) => !prev)}
+              className="min-h-[44px] rounded-[10px] px-4 text-xs font-bold"
+            >
+              {showForm ? 'Cancel' : 'New Session'}
+            </Button>
+          )}
         </div>
-      </div>
-
-      {/* Desktop Header */}
-      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
-        <div>
-          <h1 className="text-fg text-xl font-semibold">Sessions</h1>
-          <p className="text-fg-muted">Schedule and log academy training sessions.</p>
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="bg-surface-muted border-border-subtle/50 text-fg-muted rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase">
+              {sessionsQuery.data?.length ?? 0} SESSIONS
+            </span>
+            <span className="text-fg-muted font-mono text-[10px] font-bold tracking-wider uppercase">
+              {new Date().toLocaleDateString([], {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: '2-digit',
+              })}
+            </span>
+          </div>
+          <div className="overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center gap-1.5">
+              {[
+                { id: 'all', label: 'All' },
+                { id: 'today', label: 'Today' },
+                { id: 'upcoming', label: 'Upcoming' },
+                { id: 'completed', label: 'Completed' },
+              ].map((chip) => {
+                const isActive = sessionFilter === chip.id;
+                return (
+                  <button
+                    key={chip.id}
+                    onClick={() =>
+                      setSessionFilter(chip.id as 'today' | 'upcoming' | 'completed' | 'all')
+                    }
+                    className={`h-8 min-h-[32px] rounded-full border px-3 text-xs font-bold transition-all ${
+                      isActive
+                        ? 'bg-primary border-primary text-white shadow-2xs'
+                        : 'bg-surface text-fg-muted border-border-subtle hover:bg-surface-muted/50'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        {canManage ? (
-          <Button onClick={() => setShowForm((open) => !open)}>
-            {showForm ? 'Hide form' : 'New session'}
-          </Button>
-        ) : null}
       </div>
 
       {showForm && canManage ? (
-        <Card>
+        <div className="border-border-subtle bg-surface rounded-xl border p-4 shadow-2xs">
           <form onSubmit={handleCreate} noValidate>
-            <CardHeader
-              title="Create session"
-              description="Schedule a practice or training session for a batch."
-            />
-            <CardBody className="space-y-4">
+            <div className="border-border-subtle/50 mb-4 border-b pb-3">
+              <h2 className="font-heading text-fg text-lg font-extrabold tracking-tight uppercase">
+                Create Session
+              </h2>
+              <p className="text-fg-muted mt-0.5 font-sans text-xs">
+                Schedule a practice or training session for a batch
+              </p>
+            </div>
+            <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-fg block text-sm font-medium">Batch</label>
+                  <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                    Batch
+                  </label>
                   <Select
                     {...register('batchId', { required: 'Batch is required' })}
                     hasError={Boolean(errors.batchId)}
+                    className="border-border-subtle h-11 min-h-[44px] rounded-lg"
                   >
                     <option value="">Select batch</option>
                     {batchesQuery.data?.map((batch) => (
@@ -199,15 +217,20 @@ export default function TrainingSessionsPage() {
                     ))}
                   </Select>
                   {errors.batchId ? (
-                    <p className="text-danger text-xs">{errors.batchId.message}</p>
+                    <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                      {errors.batchId.message}
+                    </p>
                   ) : null}
                 </div>
 
                 <div>
-                  <label className="text-fg block text-sm font-medium">Coach</label>
+                  <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                    Coach
+                  </label>
                   <Select
                     {...register('coachId', { required: 'Coach is required' })}
                     hasError={Boolean(errors.coachId)}
+                    className="border-border-subtle h-11 min-h-[44px] rounded-lg"
                   >
                     <option value="">Select coach</option>
                     {coaches.map((coach) => (
@@ -217,38 +240,55 @@ export default function TrainingSessionsPage() {
                     ))}
                   </Select>
                   {errors.coachId ? (
-                    <p className="text-danger text-xs">{errors.coachId.message}</p>
+                    <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                      {errors.coachId.message}
+                    </p>
                   ) : null}
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-fg block text-sm font-medium">Title</label>
+                  <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                    Title
+                  </label>
                   <Input
                     {...register('title', { required: 'Title is required' })}
                     hasError={Boolean(errors.title)}
+                    className="border-border-subtle h-11 min-h-[44px] rounded-lg"
                   />
                   {errors.title ? (
-                    <p className="text-danger text-xs">{errors.title.message}</p>
+                    <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                      {errors.title.message}
+                    </p>
                   ) : null}
                 </div>
                 <div>
-                  <label className="text-fg block text-sm font-medium">Focus area</label>
-                  <Input {...register('focusArea')} />
+                  <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                    Focus area
+                  </label>
+                  <Input
+                    {...register('focusArea')}
+                    className="border-border-subtle h-11 min-h-[44px] rounded-lg"
+                  />
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-fg block text-sm font-medium">Session date</label>
+                  <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                    Session date
+                  </label>
                   <Input
                     {...register('sessionDate', { required: 'Session date is required' })}
                     type="date"
                     hasError={Boolean(errors.sessionDate)}
+                    className="border-border-subtle h-11 min-h-[44px] rounded-lg font-mono"
                   />
                   {errors.sessionDate ? (
-                    <p className="text-danger text-xs">{errors.sessionDate.message}</p>
+                    <p className="text-error mt-1 font-sans text-[11px] font-semibold">
+                      {errors.sessionDate.message}
+                    </p>
                   ) : null}
                 </div>
                 <TimeRangePicker
@@ -262,8 +302,13 @@ export default function TrainingSessionsPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-fg block text-sm font-medium">Status</label>
-                  <Select {...register('status')}>
+                  <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                    Status
+                  </label>
+                  <Select
+                    {...register('status')}
+                    className="border-border-subtle h-11 min-h-[44px] rounded-lg"
+                  >
                     <option value="scheduled">Scheduled</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
@@ -272,87 +317,135 @@ export default function TrainingSessionsPage() {
               </div>
 
               <div>
-                <label className="text-fg block text-sm font-medium">Notes</label>
-                <Textarea {...register('notes')} rows={4} />
+                <label className="font-heading text-fg-muted mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                  Notes
+                </label>
+                <Textarea
+                  {...register('notes')}
+                  rows={4}
+                  className="border-border-subtle rounded-lg"
+                />
               </div>
-            </CardBody>
-            <CardFooter>
-              <Button type="submit" isLoading={createSession.isPending} disabled={!isDirty}>
-                Create session
+            </div>
+            <div className="border-border-subtle/40 mt-6 flex items-center justify-end gap-3 border-t pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowForm(false)}
+                className="h-11 min-h-[44px] rounded-[10px] px-4 text-xs font-bold"
+              >
+                Cancel
               </Button>
-            </CardFooter>
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={createSession.isPending}
+                disabled={!isDirty}
+                className="h-11 min-h-[44px] rounded-[10px] px-5 text-xs font-bold"
+              >
+                Create Session
+              </Button>
+            </div>
           </form>
-        </Card>
+        </div>
       ) : null}
 
-      <Card>
-        <CardHeader
-          title="All sessions"
-          description="Upcoming and recently completed sessions."
-          className="hidden md:block"
-        />
-        <CardBody className="p-4">
-          {sessionsQuery.isPending ? (
-            <p className="text-fg-muted">Loading sessions…</p>
-          ) : sessionsQuery.isError ? (
-            <ErrorState error={sessionsQuery.error} onRetry={() => void sessionsQuery.refetch()} />
-          ) : filteredSessions.length === 0 ? (
-            <MobileEmptyState
-              title="No sessions"
-              description="No training sessions match your selected filter."
-              action={
-                canManage
-                  ? { label: 'Create Session', onClick: () => setShowForm(true) }
-                  : undefined
-              }
-            />
-          ) : (
-            <div className="space-y-3">
-              {filteredSessions.map((session) => (
+      {/* 2. Sessions List */}
+      <div className="min-w-0">
+        {sessionsQuery.isPending ? (
+          <p className="text-fg-muted py-8 text-center font-sans text-sm">Loading sessions…</p>
+        ) : sessionsQuery.isError ? (
+          <ErrorState error={sessionsQuery.error} onRetry={() => void sessionsQuery.refetch()} />
+        ) : filteredSessions.length === 0 ? (
+          <MobileEmptyState
+            title="No sessions"
+            description="No training sessions match your selected filter."
+            action={
+              canManage ? { label: 'Create Session', onClick: () => setShowForm(true) } : undefined
+            }
+          />
+        ) : (
+          <div className="border-border-subtle bg-surface divide-border-subtle/50 divide-y overflow-hidden rounded-xl border shadow-2xs">
+            {filteredSessions.map((session) => {
+              const isToday = session.sessionDate === todayStr;
+              const isPast = session.status === 'completed' || session.status === 'cancelled';
+              const rowBg = isToday
+                ? 'bg-saffron-pale hover:bg-saffron-pale/80'
+                : isPast
+                  ? 'opacity-85 hover:bg-surface-muted/20'
+                  : 'hover:bg-surface-muted/10';
+
+              return (
                 <div
                   key={session.id}
-                  className="border-border-subtle bg-surface rounded-2xl border p-4 shadow-2xs"
+                  className={`flex flex-col justify-between gap-4 p-4 transition-colors sm:flex-row sm:items-center ${rowBg}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                  <div className="flex min-w-0 flex-1 items-start gap-4">
+                    <div className="flex shrink-0 flex-col items-start gap-1 pt-0.5">
+                      <span className="text-fg font-mono text-xs font-bold tracking-wider uppercase">
+                        {formatTime(session.startAt)} - {formatTime(session.endAt)}
+                      </span>
+                      <span className="text-fg-muted font-mono text-[10px] uppercase">
+                        {formatDate(session.sessionDate)}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
                       <Link
                         to={`/sessions/${session.id}`}
-                        className="text-fg text-base font-semibold hover:underline"
+                        className="text-fg font-heading block truncate text-sm font-bold tracking-tight uppercase hover:underline"
                       >
                         {session.title}
                       </Link>
-                      <p className="text-fg-muted mt-0.5 text-xs">
-                        {formatDate(session.sessionDate)} • {formatTime(session.startAt)} -{' '}
-                        {formatTime(session.endAt)}
-                      </p>
-                      {session.batch?.name && (
-                        <p className="text-primary mt-1 text-xs font-medium">
-                          Batch: {session.batch.name}
-                        </p>
-                      )}
+                      <div className="text-fg-muted mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-sans text-xs">
+                        {session.batch?.name && (
+                          <span className="bg-surface-muted border-border-subtle/50 text-fg-muted rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold">
+                            BATCH: {session.batch.name}
+                          </span>
+                        )}
+                        {session.coach?.fullName && <span>• Coach: {session.coach.fullName}</span>}
+                        {session.focusArea && (
+                          <span className="truncate">• Focus: {session.focusArea}</span>
+                        )}
+                      </div>
                     </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                    <span
+                      className={`inline-flex items-center rounded border px-2 py-0.5 font-sans text-[10px] font-bold uppercase ${
+                        session.status === 'completed'
+                          ? 'bg-success-pale text-success border-success/30'
+                          : session.status === 'cancelled'
+                            ? 'bg-error-pale text-error border-error/30'
+                            : 'bg-saffron-pale text-saffron border-saffron/30'
+                      }`}
+                    >
+                      {session.status}
+                    </span>
+
                     {canManage ? (
                       <Link
                         to={`/sessions/${session.id}/attendance`}
-                        className="bg-primary/10 text-primary hover:bg-primary/20 shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+                        className="bg-primary flex min-h-[38px] shrink-0 items-center justify-center rounded-[10px] px-3.5 text-xs font-bold text-white shadow-2xs transition hover:opacity-90"
                       >
                         Attendance
                       </Link>
                     ) : (
                       <Link
                         to={`/sessions/${session.id}`}
-                        className="bg-surface-elevated text-fg-muted hover:text-fg shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+                        className="bg-surface border-border-subtle hover:bg-surface-muted text-fg-muted flex min-h-[38px] shrink-0 items-center justify-center rounded-[10px] border px-3.5 text-xs font-bold transition"
                       >
-                        View Session
+                        View
                       </Link>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

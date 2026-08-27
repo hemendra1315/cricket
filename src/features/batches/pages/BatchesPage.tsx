@@ -17,7 +17,7 @@ import {
   Textarea,
 } from '@/components/ui';
 import { ErrorState } from '@/components/feedback';
-import { MobilePageHeader, MobileFilterChips, MobileEmptyState } from '@/components/mobile';
+import { MobileEmptyState } from '@/components/mobile';
 import { useActiveAcademy } from '@/features/academies';
 import { useAcademyMembers } from '@/features/members';
 import { useCan } from '@/lib/rbac';
@@ -185,46 +185,56 @@ export default function BatchesPage() {
 
   return (
     <div className="space-y-4 pb-24 md:pb-6">
-      {/* Mobile Page Header */}
-      <div className="md:hidden">
-        <MobilePageHeader
-          title="Batches"
-          count={batchesQuery.data?.length}
-          subtitle="Training groups & squads"
-          primaryAction={
-            canManage
-              ? {
-                  label: showForm ? 'Cancel' : 'New Batch',
-                  onClick: () => setShowForm((prev) => !prev),
-                }
-              : undefined
-          }
-        />
-        <div className="mb-3 px-4">
-          <MobileFilterChips
-            options={[
-              { id: 'all', label: 'All', count: batchesQuery.data?.length },
-              { id: 'morning', label: 'Morning' },
-              { id: 'afternoon', label: 'Afternoon' },
-              { id: 'evening', label: 'Evening' },
-            ]}
-            activeId={selectedFilter}
-            onChange={setSelectedFilter}
-          />
+      {/* 1. App Bar Header */}
+      <div className="border-border-subtle/40 flex flex-col gap-2 border-b pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-heading text-fg text-2xl font-extrabold tracking-tight uppercase md:text-3xl">
+            Batches
+          </h1>
+          {canManage && (
+            <Button
+              variant={showForm ? 'secondary' : 'primary'}
+              onClick={() => setShowForm((prev) => !prev)}
+              className="min-h-[44px] rounded-[10px] px-4 text-xs font-bold"
+            >
+              {showForm ? 'Cancel' : 'New Batch'}
+            </Button>
+          )}
         </div>
-      </div>
-
-      {/* Desktop Header */}
-      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
-        <div>
-          <h1 className="text-fg text-xl font-bold">Batches</h1>
-          <p className="text-fg-muted text-sm">Create and manage your academy training groups.</p>
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="bg-surface-muted border-border-subtle/50 text-fg-muted rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase">
+              {batchesQuery.data?.length ?? 0} BATCHES
+            </span>
+          </div>
+          <div className="overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center gap-1.5">
+              {[
+                { id: 'all', label: 'All' },
+                { id: 'morning', label: 'Morning' },
+                { id: 'afternoon', label: 'Afternoon' },
+                { id: 'evening', label: 'Evening' },
+              ].map((chip) => {
+                const isActive = selectedFilter === chip.id;
+                return (
+                  <button
+                    key={chip.id}
+                    onClick={() =>
+                      setSelectedFilter(chip.id as 'all' | 'morning' | 'afternoon' | 'evening')
+                    }
+                    className={`h-8 min-h-[32px] rounded-full border px-3 text-xs font-bold transition-all ${
+                      isActive
+                        ? 'bg-primary border-primary text-white shadow-2xs'
+                        : 'bg-surface text-fg-muted border-border-subtle hover:bg-surface-muted/50'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        {canManage ? (
-          <Button onClick={() => setShowForm((open) => !open)} className="min-h-[44px]">
-            {showForm ? 'Cancel' : 'New Batch'}
-          </Button>
-        ) : null}
       </div>
 
       {showForm && canManage ? (
@@ -325,90 +335,90 @@ export default function BatchesPage() {
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader
-          title="All Batches"
-          description="See every training group in this academy."
-          className="hidden md:block"
-        />
-        <CardBody className="p-3 sm:p-4">
-          {batchesQuery.isPending ? (
-            <p className="text-fg-muted py-6 text-center">Loading batches…</p>
-          ) : batchesQuery.isError ? (
-            <ErrorState error={batchesQuery.error} onRetry={() => void batchesQuery.refetch()} />
-          ) : filteredBatches.length === 0 ? (
-            <MobileEmptyState
-              title="No batches found"
-              description="Create your first training batch to organize players."
-              action={
-                canManage ? { label: 'Create Batch', onClick: () => setShowForm(true) } : undefined
-              }
-            />
-          ) : (
-            <div className="space-y-3">
-              {filteredBatches.map((batch) => (
-                <div
-                  key={batch.id}
-                  className="border-border-subtle bg-surface hover:border-border rounded-2xl border p-4 shadow-2xs transition-all"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        to={`/batches/${batch.id}`}
-                        className="text-fg block truncate text-base font-bold hover:underline"
-                      >
-                        {batch.name}
-                      </Link>
-                      <span className="text-primary bg-primary/10 mt-1 inline-block rounded-md px-2 py-0.5 text-xs font-bold">
-                        {batch.ageGroup}
-                      </span>
-                    </div>
-
-                    <span className="bg-surface-elevated text-fg border-border-subtle shrink-0 rounded-full border px-3 py-1 text-xs font-semibold">
-                      {batch.playerCount ?? 0} Players
+      {/* 2. All Batches Grid */}
+      <div className="min-w-0">
+        {batchesQuery.isPending ? (
+          <p className="text-fg-muted py-8 text-center font-sans text-sm">Loading squads...</p>
+        ) : batchesQuery.isError ? (
+          <ErrorState error={batchesQuery.error} onRetry={() => void batchesQuery.refetch()} />
+        ) : filteredBatches.length === 0 ? (
+          <MobileEmptyState
+            title="No squads found"
+            description="Create your first training batch to organize players."
+            action={
+              canManage ? { label: 'Create Batch', onClick: () => setShowForm(true) } : undefined
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {filteredBatches.map((batch) => (
+              <div
+                key={batch.id}
+                className="border-border-subtle bg-surface hover:border-border flex flex-col gap-3.5 rounded-xl border p-4 shadow-2xs transition-all"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      to={`/batches/${batch.id}`}
+                      className="text-fg font-heading block truncate text-base font-extrabold tracking-tight uppercase hover:underline"
+                    >
+                      {batch.name}
+                    </Link>
+                    <span className="text-fg bg-surface-muted border-border-subtle/50 mt-1.5 inline-flex items-center rounded border px-2 py-0.5 font-sans text-[10px] font-bold tracking-wider uppercase">
+                      {batch.ageGroup}
                     </span>
                   </div>
 
-                  <div className="text-fg-muted mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
-                    {batch.trainingDays ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-fg font-semibold">Schedule:</span>
-                        <span className="truncate">
-                          {batch.trainingDays} {batch.trainingTime ? `• ${batch.trainingTime}` : ''}
-                        </span>
-                      </div>
-                    ) : null}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-fg font-semibold">Coach:</span>
-                      <span className="truncate">{batch.coach.fullName ?? batch.coach.email}</span>
-                    </div>
-                  </div>
-
-                  <div className="border-border-subtle mt-4 flex items-center justify-between gap-2 border-t pt-3">
-                    <Link
-                      to={`/batches/${batch.id}`}
-                      className="text-primary inline-flex min-h-[44px] items-center text-xs font-bold hover:underline"
-                    >
-                      View Batch & Roster →
-                    </Link>
-
-                    {canManage ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setBatchToDelete({ id: batch.id, name: batch.name })}
-                        className="text-danger hover:bg-danger/10 h-10 min-h-[44px] px-3 font-semibold"
-                      >
-                        Delete
-                      </Button>
-                    ) : null}
+                  <div className="bg-surface-muted/80 text-fg border-border-subtle flex min-h-[30px] shrink-0 items-center justify-center rounded-full border px-3 py-1 font-mono text-xs font-bold">
+                    {batch.playerCount ?? 0} PLAYERS
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+
+                <div className="text-fg-muted border-border-subtle/50 grid grid-cols-1 gap-2 border-t pt-3 text-xs">
+                  {batch.trainingDays ? (
+                    <div className="flex flex-wrap items-center gap-1.5 font-sans">
+                      <span className="text-fg text-[10px] font-bold tracking-wider uppercase">
+                        Schedule:
+                      </span>
+                      <span className="text-fg font-mono text-xs font-medium">
+                        {batch.trainingDays} {batch.trainingTime ? `• ${batch.trainingTime}` : ''}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap items-center gap-1.5 font-sans">
+                    <span className="text-fg text-[10px] font-bold tracking-wider uppercase">
+                      Coach:
+                    </span>
+                    <span className="text-fg text-xs font-medium">
+                      {batch.coach.fullName ?? batch.coach.email}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="border-border-subtle/40 flex items-center justify-between gap-2 border-t pt-2">
+                  <Link
+                    to={`/batches/${batch.id}`}
+                    className="text-primary inline-flex min-h-[44px] items-center font-sans text-xs font-bold hover:underline"
+                  >
+                    View Batch & Roster &rarr;
+                  </Link>
+
+                  {canManage ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setBatchToDelete({ id: batch.id, name: batch.name })}
+                      className="text-error hover:bg-error-pale h-10 min-h-[44px] rounded-[10px] px-3 font-bold"
+                    >
+                      Delete
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Delete Batch Confirmation Dialog */}
       <Modal

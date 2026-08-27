@@ -1,16 +1,12 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Plus, Search, UserCheck, X } from 'lucide-react';
 
 import { ErrorState } from '@/components/feedback';
-import {  MobilePageHeader } from '@/components/mobile';
 import {
   Avatar,
   Badge,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   Modal,
   Select,
   SkeletonText,
@@ -120,84 +116,77 @@ export default function MembersPage() {
 
   return (
     <div className="min-w-0 space-y-5 pb-24 md:pb-8">
-      <div className="md:hidden">
-        <MobilePageHeader
-          title="Players"
-          count={`${filteredMembers.length} found`}
-          subtitle="Manage academy players, batches, and profiles."
-          primaryAction={
-            canManage
-              ? {
-                  label: 'Add Player',
-                  icon: <Plus className="h-4 w-4" />,
-                  onClick: () => setIsAddModalOpen(true),
-                }
-              : undefined
-          }
-        />
-      </div>
-
-      <div className="hidden items-center justify-between gap-4 md:flex">
+      {/* 1. App Bar Header */}
+      <div className="border-border-subtle/50 flex items-center justify-between gap-4 border-b pb-4">
         <div className="min-w-0">
-          <h1 className="text-fg text-2xl font-bold tracking-tight">Players</h1>
-          <p className="text-fg-muted mt-1 text-sm font-medium">
-            Manage academy players, batches, attendance and profiles.
+          <div className="flex items-center gap-2">
+            <h1 className="font-heading text-fg text-lg font-extrabold tracking-wider uppercase sm:text-xl">
+              Players
+            </h1>
+            <span className="bg-turf-pale border-primary/20 text-primary rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold">
+              {filteredMembers.length} FOUND
+            </span>
+          </div>
+          <p className="text-fg-muted mt-0.5 font-sans text-xs">
+            Manage academy players, batches, and profiles
           </p>
         </div>
         {canManage && (
           <Button
             variant="primary"
             onClick={() => setIsAddModalOpen(true)}
-            className="min-h-[44px] shrink-0 px-4 font-semibold shadow-2xs"
+            className="min-h-[44px] shrink-0 rounded-[10px] px-4 text-xs font-bold shadow-2xs"
           >
-            <Plus className="mr-2 h-4 w-4" /> Add Player
+            <Plus className="mr-1.5 h-4 w-4" /> Add Player
           </Button>
         )}
       </div>
 
       {hasRequests && canApproveRequests && (
-        <Card className="border-warning-subtle bg-warning/5 shadow-2xs">
-          <CardHeader
-            title={
-              <div className="flex items-center gap-2">
-                <UserCheck className="text-warning h-5 w-5" />
-                <span className="text-warning font-semibold">Pending Join Requests</span>
-              </div>
-            }
-          />
-          <CardBody className="p-0">
-            <div className="divide-border-subtle divide-y">
-              {requestsQuery.data?.map((req) => (
-                <div
-                  key={req.id}
-                  className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar name={req.fullName ?? req.email} src={req.avatarUrl} size="sm" />
-                    <div>
-                      <p className="text-fg text-sm font-bold">{req.fullName ?? req.email}</p>
-                      <p className="text-fg-muted text-xs">
-                        Requested to join as {ROLE_LABELS[req.requestedRole]}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => rejectRequest.mutate({ requestId: req.id })}
-                    >
-                      Reject
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={() => handleApproveClick(req)}>
-                      Review & Approve
-                    </Button>
+        <div className="border-saffron/30 bg-saffron-pale/20 rounded-xl border p-4 shadow-2xs">
+          <div className="border-saffron/20 mb-3 flex items-center gap-2 border-b pb-2">
+            <UserCheck className="text-saffron h-4 w-4" />
+            <span className="text-saffron font-heading text-xs font-bold tracking-wider uppercase">
+              Pending Join Requests
+            </span>
+          </div>
+          <div className="divide-saffron/15 divide-y">
+            {requestsQuery.data?.map((req) => (
+              <div
+                key={req.id}
+                className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar name={req.fullName ?? req.email} src={req.avatarUrl} size="sm" />
+                  <div>
+                    <p className="text-fg text-sm font-bold">{req.fullName ?? req.email}</p>
+                    <p className="text-fg-muted text-xs">
+                      Requested to join as {ROLE_LABELS[req.requestedRole]}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardBody>
-        </Card>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-h-[40px] rounded-lg px-3 text-xs font-semibold"
+                    onClick={() => rejectRequest.mutate({ requestId: req.id })}
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="min-h-[40px] rounded-lg px-4 text-xs font-bold"
+                    onClick={() => handleApproveClick(req)}
+                  >
+                    Review & Approve
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {approvingRequest && (
@@ -253,20 +242,20 @@ export default function MembersPage() {
       )}
 
       {/* SEARCH & FILTERS */}
-      <div className="bg-surface border-border-subtle flex min-w-0 flex-col gap-3 rounded-2xl border p-3 shadow-2xs sm:flex-row sm:items-center">
+      <div className="bg-surface border-border-subtle flex min-w-0 flex-col gap-3 rounded-xl border p-3 shadow-2xs sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
-          <Search className="text-fg-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-fg-muted absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search players..."
-            className="border-border-subtle bg-surface-muted placeholder:text-fg-muted/60 focus:border-primary focus:ring-primary/20 h-10 w-full rounded-xl border py-2 pr-4 pl-9 text-sm transition-all outline-none focus:ring-2"
+            className="border-border-subtle bg-surface placeholder:text-fg-muted/60 focus:border-primary focus:ring-primary/20 h-11 min-h-[44px] w-full rounded-[10px] border py-2 pr-4 pl-10 font-sans text-xs transition-all outline-none focus:ring-2"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="text-fg-muted hover:text-fg absolute top-1/2 right-3 -translate-y-1/2"
+              className="text-fg-muted hover:text-fg absolute top-1/2 right-3.5 -translate-y-1/2"
             >
               <X className="h-4 w-4" />
             </button>
@@ -274,7 +263,7 @@ export default function MembersPage() {
         </div>
         <div className="hide-scrollbar flex shrink-0 items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           <Select
-            className="border-border-subtle h-10 min-w-[120px] rounded-xl text-sm"
+            className="border-border-subtle h-11 min-h-[44px] min-w-[120px] rounded-[10px] font-sans text-xs"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as MemberStatus | 'all')}
           >
@@ -286,7 +275,7 @@ export default function MembersPage() {
           </Select>
 
           <Select
-            className="border-border-subtle h-10 min-w-[140px] rounded-xl text-sm"
+            className="border-border-subtle h-11 min-h-[44px] min-w-[140px] rounded-[10px] font-sans text-xs"
             value={batchFilter}
             onChange={(e) => setBatchFilter(e.target.value as UUID | 'all')}
           >
@@ -299,7 +288,7 @@ export default function MembersPage() {
           </Select>
 
           <Select
-            className="border-border-subtle h-10 min-w-[110px] rounded-xl text-sm"
+            className="border-border-subtle h-11 min-h-[44px] min-w-[110px] rounded-[10px] font-sans text-xs"
             value={roleFilter}
             onChange={(e) =>
               setRoleFilter(e.target.value as JoinableRole | 'academy_owner' | 'all')
@@ -313,43 +302,49 @@ export default function MembersPage() {
         </div>
       </div>
 
-      <Card className="border-border-subtle bg-surface min-w-0 shadow-2xs">
+      <div className="border-border-subtle bg-surface min-w-0 overflow-hidden rounded-xl border shadow-2xs">
         {query.isPending ? (
-          <CardBody className="p-6">
+          <div className="p-6">
             <div className="space-y-4">
               <SkeletonText lines={2} />
               <SkeletonText lines={2} />
               <SkeletonText lines={2} />
             </div>
-          </CardBody>
+          </div>
         ) : query.isError ? (
-          <CardBody className="p-6">
+          <div className="p-6">
             <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-          </CardBody>
+          </div>
         ) : (
-          <CardBody className="min-w-0 p-0">
+          <div className="min-w-0 p-0">
             {filteredMembers.length === 0 ? (
               <div className="py-12 text-center">
-                <p className="text-fg-muted font-medium">No players found matching your filters.</p>
+                <p className="text-fg-muted font-sans font-medium">
+                  No players found matching your filters.
+                </p>
               </div>
             ) : (
               <MemberTable members={filteredMembers} academyId={academyId} canManage={canManage} />
             )}
-          </CardBody>
+          </div>
         )}
-      </Card>
+      </div>
 
       {/* ADD PLAYER MODAL */}
       {isAddModalOpen && (
         <Modal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add Player">
           <div className="space-y-4 p-1">
-            <p className="text-fg-muted text-sm">
+            <p className="text-fg-muted font-sans text-sm">
               Share this Join Code with your players. When they sign up or enter this code in the
               app, they will be automatically assigned to this academy.
             </p>
             <JoinCodeCard academyId={academyId} />
             <div className="flex justify-end pt-2">
-              <Button variant="secondary" onClick={() => setIsAddModalOpen(false)}>
+              <Button
+                variant="secondary"
+                className="h-11 min-h-[44px] rounded-[10px] px-4 text-xs font-bold"
+                onClick={() => setIsAddModalOpen(false)}
+              >
                 Close
               </Button>
             </div>
@@ -369,45 +364,57 @@ function MemberTable({
   academyId: string;
   canManage: boolean;
 }) {
-  
   const { changeRole } = useUpdateMember(academyId);
   const pushToast = useUiStore((state) => state.pushToast);
 
   return (
     <>
-      <div className="divide-border-subtle flex min-w-0 flex-col divide-y md:hidden">
+      <div className="divide-border-subtle/50 flex min-w-0 flex-col divide-y md:hidden">
         {members.map((member) => {
+          const isActive = member.status === 'active';
+          const isPending = member.status === 'pending';
+          const isMuted = !isActive && !isPending;
           return (
             <Link
               key={member.id}
               to={`/members/${member.id}`}
-              className="hover:bg-surface-muted flex min-w-0 items-center justify-between p-4 transition-colors"
+              className={`flex min-h-[64px] min-w-0 items-center justify-between p-4 transition-colors ${
+                isActive
+                  ? 'bg-turf-pale hover:bg-turf-pale/80'
+                  : 'bg-surface hover:bg-surface-muted/50'
+              } ${isMuted ? 'opacity-80' : 'opacity-100'}`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar
                   name={member.fullName ?? member.email}
                   src={member.avatarUrl}
                   size="md"
-                  className="shrink-0"
+                  className="border-border-subtle/30 shrink-0 rounded-full border"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-fg truncate text-sm font-bold">
+                  <p className="text-fg truncate font-sans text-sm font-bold">
                     {member.fullName ?? member.email}
                   </p>
                   <div className="text-fg-muted mt-1 flex flex-wrap items-center gap-2 text-xs">
-                    <Badge tone={STATUS_TONES[member.status]} className="px-1.5 py-0 text-[10px]">
+                    <Badge
+                      tone={STATUS_TONES[member.status]}
+                      className="px-1.5 py-0 font-mono text-[10px] font-bold uppercase"
+                    >
                       {member.status}
                     </Badge>
                     {member.batches && member.batches.length > 0 && member.batches[0] && (
-                      <span className="text-primary max-w-[120px] truncate font-medium">
+                      <span className="text-primary max-w-[120px] truncate font-sans text-[11px] font-bold">
                         {member.batches[0].name}
                         {member.batches.length > 1 && ` +${member.batches.length - 1}`}
                       </span>
                     )}
+                    <span className="text-fg-muted font-mono text-[10px]">
+                      {ROLE_LABELS[member.role].toUpperCase()}
+                    </span>
                   </div>
                 </div>
               </div>
-              <ChevronRight className="text-fg-muted/50 ml-2 h-5 w-5 shrink-0" />
+              <ChevronRight className="text-fg-muted/40 ml-2 h-5 w-5 shrink-0" />
             </Link>
           );
         })}
@@ -417,54 +424,68 @@ function MemberTable({
         <Table>
           <THead>
             <TR>
-              <TH>Player</TH>
-              <TH>Batch</TH>
-              <TH>Role</TH>
-              <TH>Status</TH>
-              <TH></TH>
+              <TH className="font-heading text-fg-muted py-3 text-[10px] font-bold tracking-wider uppercase">
+                Player
+              </TH>
+              <TH className="font-heading text-fg-muted py-3 text-[10px] font-bold tracking-wider uppercase">
+                Batch
+              </TH>
+              <TH className="font-heading text-fg-muted py-3 text-[10px] font-bold tracking-wider uppercase">
+                Role
+              </TH>
+              <TH className="font-heading text-fg-muted py-3 text-[10px] font-bold tracking-wider uppercase">
+                Status
+              </TH>
+              <TH className="py-3"></TH>
             </TR>
           </THead>
           <TBody>
             {members.map((member) => {
-              
+              const isActive = member.status === 'active';
               return (
-                <TR key={member.id} className="hover:bg-surface-muted group transition-colors">
-                  <TD className="min-w-[200px]">
+                <TR
+                  key={member.id}
+                  className={`group border-border-subtle/30 border-b transition-colors ${isActive ? 'bg-turf-pale/30 hover:bg-turf-pale/50' : 'hover:bg-surface-muted/30'}`}
+                >
+                  <TD className="min-w-[200px] py-3.5">
                     <div className="flex items-center gap-3">
                       <Avatar
                         name={member.fullName ?? member.email}
                         src={member.avatarUrl}
                         size="sm"
+                        className="border-border-subtle/30 rounded-full border"
                       />
                       <div className="min-w-0">
                         <Link
                           to={`/members/${member.id}`}
-                          className="text-fg hover:text-primary truncate text-sm font-bold hover:underline"
+                          className="text-fg hover:text-primary truncate font-sans text-sm font-bold hover:underline"
                         >
                           {member.fullName ?? member.email}
                         </Link>
-                        <p className="text-fg-muted truncate text-xs">{member.email}</p>
+                        <p className="text-fg-muted truncate font-sans text-[11px]">
+                          {member.email}
+                        </p>
                       </div>
                     </div>
                   </TD>
-                  <TD>
+                  <TD className="py-3.5">
                     {member.batches && member.batches.length > 0 ? (
                       <div className="flex flex-col gap-1">
                         {member.batches.map((b) => (
-                          <span key={b.id} className="text-primary text-xs font-semibold">
+                          <span key={b.id} className="text-primary font-sans text-xs font-bold">
                             {b.name}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-fg-muted text-xs">—</span>
+                      <span className="text-fg-muted font-mono text-xs">—</span>
                     )}
                   </TD>
-                  <TD>
+                  <TD className="py-3.5">
                     {canManage && member.role !== 'academy_owner' ? (
                       <Select
                         aria-label={`Role for ${member.email}`}
-                        className="h-8 w-32 py-1 text-xs"
+                        className="border-border-subtle h-9 w-32 rounded-lg py-1 font-sans text-xs"
                         value={member.role}
                         disabled={changeRole.isPending}
                         onChange={(event) =>
@@ -484,16 +505,23 @@ function MemberTable({
                         ))}
                       </Select>
                     ) : (
-                      <span className="text-xs font-semibold">{ROLE_LABELS[member.role]}</span>
+                      <span className="font-sans text-xs font-bold">
+                        {ROLE_LABELS[member.role]}
+                      </span>
                     )}
                   </TD>
-                  <TD>
-                    <Badge tone={STATUS_TONES[member.status]}>{member.status}</Badge>
+                  <TD className="py-3.5">
+                    <Badge
+                      tone={STATUS_TONES[member.status]}
+                      className="font-mono text-[10px] font-bold uppercase"
+                    >
+                      {member.status}
+                    </Badge>
                   </TD>
-                  <TD className="text-right">
+                  <TD className="py-3.5 pr-4 text-right">
                     <Link
                       to={`/members/${member.id}`}
-                      className="text-primary hover:bg-primary/10 inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 transition-colors group-hover:opacity-100"
+                      className="text-primary hover:bg-turf-pale inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold opacity-0 transition-colors group-hover:opacity-100"
                     >
                       View Profile <ChevronRight className="ml-1 h-3.5 w-3.5" />
                     </Link>

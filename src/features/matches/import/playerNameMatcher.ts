@@ -65,10 +65,14 @@ export function calculateSimilarity(name1: string, name2: string): number {
   const words1 = norm1.split(' ');
   const words2 = norm2.split(' ');
 
-  // Exact word match overlap
+  // Single-word overlap: return a moderate baseline (70) rather than a hard 90.
+  // 70 is intentionally below the 80-point high_confidence threshold so that
+  // matchPlayers() — which has full roster visibility — decides the final status.
+  // If the match is genuinely unambiguous it stays low_confidence; if it is
+  // ambiguous (multiple roster players share the word) it gets capped there too.
   const matchingWords = words1.filter((w) => words2.includes(w));
   if (matchingWords.length > 0 && (words1.length === 1 || words2.length === 1)) {
-    return 90;
+    return 70;
   }
 
   const maxLength = Math.max(norm1.length, norm2.length);
@@ -165,6 +169,25 @@ export function matchPlayers(
     } else if (highestScore >= 50 && bestMatch) {
       status = 'low_confidence';
       isGuest = false;
+    }
+
+    // Bug 3 fix: check for ambiguity — if multiple roster players scored in the
+    // same top tier for this extracted name, the match is not safe to auto-confirm.
+    // We count players whose score is within 5 points of the best and >= 50.
+    // If more than one qualifies AND the best is below the 80-point high_confidence
+    // boundary, downgrade to low_confidence to force manual disambiguation in the UI.
+    if (highestScore >= 50 && highestScore < 80) {
+      const topTierCount = academyPlayers.filter((p) => {
+        const targetName = p.fullName || p.email.split('@')[0] || '';
+        const s = calculateSimilarity(chName, targetName);
+        return s >= highestScore - 5 && s >= 50;
+      }).length;
+
+      if (topTierCount > 1) {
+        // Multiple players are equally plausible — require human review
+        status = 'low_confidence';
+        isGuest = false;
+      }
     }
 
     return {

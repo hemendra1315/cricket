@@ -8,7 +8,7 @@ export type MemberStatus = (typeof MEMBER_STATUSES)[number];
 export const JOIN_STATUSES = ['pending', 'approved', 'rejected', 'cancelled'] as const;
 export type JoinStatus = (typeof JOIN_STATUSES)[number];
 
-export const ATTENDANCE_STATUSES = ['present', 'absent'] as const;
+export const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'] as const;
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 
 export const DRILL_CATEGORIES = ['batting', 'bowling', 'fielding', 'fitness'] as const;

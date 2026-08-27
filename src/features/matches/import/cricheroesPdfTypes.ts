@@ -54,6 +54,8 @@ export type ExtractedMatchData = {
   teamA: { name: string; score: string };
   teamB: { name: string; score: string };
   innings: ExtractedInnings[];
+  /** Parse-quality warnings. Non-empty when data could not be confidently extracted and needs manual verification. */
+  warnings: string[];
   playerOfMatchName?: string;
   bestBatterName?: string;
   bestBowlerName?: string;

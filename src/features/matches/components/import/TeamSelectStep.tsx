@@ -25,6 +25,19 @@ export function TeamSelectStep({
         </p>
       </div>
 
+      {/* Bug 1 fix: surface parse warnings so users know scores need manual verification */}
+      {data.warnings.length > 0 && (
+        <div className="bg-warning-500/10 border-warning-500/30 text-warning-500 rounded-xl border p-4 text-sm">
+          <p className="font-semibold">⚠ Score data could not be fully detected</p>
+          <ul className="mt-1 list-disc pl-4">
+            {data.warnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs opacity-80">Please verify the scores manually after import.</p>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <button
           type="button"
@@ -37,7 +50,11 @@ export function TeamSelectStep({
         >
           <div className="flex items-center justify-between">
             <span className="text-fg font-bold">{data.teamA.name}</span>
-            <span className="text-fg-muted text-xs font-semibold">{data.teamA.score}</span>
+            {data.teamA.score ? (
+              <span className="text-fg-muted text-xs font-semibold">{data.teamA.score}</span>
+            ) : (
+              <span className="text-warning-500 text-xs italic">Score not detected</span>
+            )}
           </div>
           <p className="text-fg-muted mt-2 text-xs">Click to select as Academy Team</p>
         </button>
@@ -53,7 +70,11 @@ export function TeamSelectStep({
         >
           <div className="flex items-center justify-between">
             <span className="text-fg font-bold">{data.teamB.name}</span>
-            <span className="text-fg-muted text-xs font-semibold">{data.teamB.score}</span>
+            {data.teamB.score ? (
+              <span className="text-fg-muted text-xs font-semibold">{data.teamB.score}</span>
+            ) : (
+              <span className="text-warning-500 text-xs italic">Score not detected</span>
+            )}
           </div>
           <p className="text-fg-muted mt-2 text-xs">Click to select as Academy Team</p>
         </button>

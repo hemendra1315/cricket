@@ -202,8 +202,8 @@ export function AddBatchPlayersModal({
                   }}
                   className={`border-border-subtle flex min-h-[56px] cursor-pointer items-center justify-between rounded-xl border p-3.5 transition-all select-none ${
                     isSelected
-                      ? 'border-primary/50 bg-primary/10 shadow-xs'
-                      : 'hover:border-border hover:bg-surface-elevated/40'
+                      ? 'border-primary/40 bg-primary-pale shadow-xs'
+                      : 'hover:border-border hover:bg-surface-muted/30'
                   }`}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-3">

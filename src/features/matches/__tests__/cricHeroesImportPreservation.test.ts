@@ -53,6 +53,7 @@ describe('CricHeroes PDF Import to WizardState Preservation', () => {
           fielding: [],
         },
       ],
+      warnings: [],
     };
 
     const mappedPlayers: MappedPlayer[] = [

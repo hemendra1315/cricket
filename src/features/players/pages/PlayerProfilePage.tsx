@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-import { Card, CardBody, CardHeader, Badge, Button } from '@/components/ui';
-import { MobilePageHeader } from '@/components/mobile';
+import { Badge, Button } from '@/components/ui';
 import { EmptyState } from '@/components/feedback';
 import { useActiveAcademy } from '@/features/academies';
 import { isUUID } from '@/lib/validators';
@@ -68,7 +67,6 @@ export default function PlayerProfilePage() {
   if (!memberId || !academyId) {
     return (
       <div className="space-y-4">
-        <MobilePageHeader title="Player profile" />
         <EmptyState
           title="No player selected"
           description="Select a player from the members list to view their full profile."
@@ -80,7 +78,6 @@ export default function PlayerProfilePage() {
   if (!isUUID(memberId) || !isUUID(academyId)) {
     return (
       <div className="space-y-4">
-        <MobilePageHeader title="Player profile" />
         <EmptyState
           title="Invalid player link"
           description="The player link you followed is not valid. Please return to the members list."
@@ -159,55 +156,86 @@ export default function PlayerProfilePage() {
 
   return (
     <div className="space-y-4 pb-24 md:pb-6">
-      {/* Mobile Page Header */}
-      {profileQuery.data && (
-        <div className="md:hidden">
-          <MobilePageHeader
-            title={profileQuery.data.fullName ?? 'Player Profile'}
-            subtitle={
-              profileQuery.data.batchName
-                ? `Batch: ${profileQuery.data.batchName}`
-                : profileQuery.data.email
-            }
-            showBack
-          />
+      {/* Unified Compact App Bar */}
+      <div className="border-border-subtle/50 flex flex-col gap-2 border-b pb-4">
+        <div>
+          {membership?.role === 'parent' ? (
+            <Link
+              to="/parent/dashboard"
+              className="text-fg-muted hover:text-primary inline-flex items-center font-sans text-[10px] font-bold tracking-wider uppercase transition-colors"
+            >
+              ← Back to Dashboard
+            </Link>
+          ) : (
+            <Link
+              to="/members"
+              className="text-fg-muted hover:text-primary inline-flex items-center font-sans text-[10px] font-bold tracking-wider uppercase transition-colors"
+            >
+              ← Back to Roster
+            </Link>
+          )}
         </div>
-      )}
 
-      <div className="hidden items-center gap-3 md:flex">
-        {membership?.role === 'parent' ? (
-          <Link to="/parent/dashboard" className="text-fg-muted hover:text-fg text-sm">
-            ← Back to dashboard
-          </Link>
-        ) : (
-          <Link to="/members" className="text-fg-muted hover:text-fg text-sm">
-            ← Back to roster
-          </Link>
+        {profileQuery.data && (
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="font-heading text-fg truncate text-lg font-extrabold tracking-wide uppercase sm:text-xl">
+                {profileQuery.data.fullName ?? 'Player Profile'}
+              </h1>
+              <div className="text-fg-muted mt-0.5 flex flex-wrap items-center gap-1.5 font-mono text-[10px] font-bold">
+                {profileQuery.data.playerCode && (
+                  <span className="bg-surface border-border-subtle rounded border px-1.5 py-0.5">
+                    ID: {profileQuery.data.playerCode}
+                  </span>
+                )}
+                {profileQuery.data.batchName && (
+                  <span className="bg-surface border-border-subtle rounded border px-1.5 py-0.5 uppercase">
+                    {profileQuery.data.batchName}
+                  </span>
+                )}
+                <span className="bg-turf-pale text-primary border-primary/20 rounded border px-1.5 py-0.5 uppercase">
+                  {profileQuery.data.playerRole?.replace('_', ' ') || 'PLAYER'}
+                </span>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
       {profileQuery.isPending ? (
         <p className="text-fg-muted">Loading profile…</p>
       ) : profileQuery.isError || !profileQuery.data ? (
-        <Card className="p-6 text-center">
-          <CardBody className="space-y-3">
-            <h3 className="text-fg text-lg font-bold">Student profile unavailable</h3>
-            <p className="text-fg-muted text-sm">
+        <div className="border-border-subtle bg-surface rounded-xl border p-6 text-center shadow-2xs">
+          <div className="space-y-3">
+            <h3 className="font-heading text-fg text-lg font-bold tracking-tight uppercase">
+              Student profile unavailable
+            </h3>
+            <p className="text-fg-muted font-sans text-xs">
               We could not locate the requested player record for this academy.
             </p>
             <div className="pt-2">
               {membership?.role === 'parent' ? (
                 <Link to="/parent/dashboard">
-                  <Button variant="primary">View Dashboard</Button>
+                  <Button
+                    variant="primary"
+                    className="h-11 min-h-[44px] rounded-[10px] px-4 text-xs font-bold"
+                  >
+                    View Dashboard
+                  </Button>
                 </Link>
               ) : (
                 <Link to="/members">
-                  <Button variant="primary">View Roster</Button>
+                  <Button
+                    variant="primary"
+                    className="h-11 min-h-[44px] rounded-[10px] px-4 text-xs font-bold"
+                  >
+                    View Roster
+                  </Button>
                 </Link>
               )}
             </div>
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       ) : (
         <>
           <div className="mb-6">
@@ -226,10 +254,10 @@ export default function PlayerProfilePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`min-h-[44px] shrink-0 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
+                  className={`font-heading h-11 min-h-[44px] shrink-0 rounded-lg px-4 py-2 text-[10px] font-bold tracking-wider uppercase transition-all ${
                     activeTab === tab.id
                       ? 'bg-primary text-primary-fg shadow-2xs'
-                      : 'text-fg-muted hover:text-fg hover:bg-surface-muted'
+                      : 'text-fg-muted hover:text-fg hover:bg-surface-muted/50'
                   }`}
                 >
                   {tab.label}
@@ -268,119 +296,154 @@ function OverviewTab({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader title="Career Summary" description="Key performance indicators" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Career Summary
+          </h3>
+          <p className="text-fg-muted mt-0.5 font-sans text-[11px]">Key performance indicators</p>
+        </div>
+        <div className="p-4">
           {!stats ? (
-            <p className="text-fg-muted">No statistics available yet.</p>
+            <p className="text-fg-muted font-sans text-xs">No statistics available yet.</p>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 font-sans sm:grid-cols-4">
               <div>
-                <p className="text-fg-muted text-xs uppercase">Matches</p>
-                <p className="text-fg text-base font-medium">{stats.matchesPlayed}</p>
+                <p className="font-heading text-fg-muted text-[10px] font-bold tracking-wider uppercase">
+                  Matches
+                </p>
+                <p className="text-fg mt-1 font-mono text-lg font-bold">{stats.matchesPlayed}</p>
               </div>
               <div>
-                <p className="text-fg-muted text-xs uppercase">Runs</p>
-                <p className="text-fg text-base font-medium">{stats.battingRuns}</p>
+                <p className="font-heading text-fg-muted text-[10px] font-bold tracking-wider uppercase">
+                  Runs
+                </p>
+                <p className="text-fg mt-1 font-mono text-lg font-bold">{stats.battingRuns}</p>
               </div>
               <div>
-                <p className="text-fg-muted text-xs uppercase">Wickets</p>
-                <p className="text-fg text-base font-medium">{stats.bowlingWickets}</p>
+                <p className="font-heading text-fg-muted text-[10px] font-bold tracking-wider uppercase">
+                  Wickets
+                </p>
+                <p className="text-fg mt-1 font-mono text-lg font-bold">{stats.bowlingWickets}</p>
               </div>
               <div>
-                <p className="text-fg-muted text-xs uppercase">Catches</p>
-                <p className="text-fg text-base font-medium">{stats.fieldingCatches}</p>
+                <p className="font-heading text-fg-muted text-[10px] font-bold tracking-wider uppercase">
+                  Catches
+                </p>
+                <p className="text-fg mt-1 font-mono text-lg font-bold">{stats.fieldingCatches}</p>
               </div>
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader title="Recent Form" description="Last 5 matches" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Recent Form
+          </h3>
+          <p className="text-fg-muted mt-0.5 font-sans text-[11px]">Last 5 matches</p>
+        </div>
+        <div className="p-0">
           {recentMatches.length === 0 ? (
-            <p className="text-fg-muted">No matches played yet.</p>
+            <p className="text-fg-muted p-4 font-sans text-xs">No matches played yet.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-border-subtle/60 divide-y">
               {recentMatches.map((match) => (
                 <Link
                   key={match.id}
                   to={`/matches/${match.id}`}
-                  className="border-border-subtle hover:bg-surface-muted flex flex-wrap items-center justify-between rounded-xl border p-3"
+                  className="hover:bg-surface-muted/30 flex min-h-[44px] flex-col gap-2 p-3.5 transition-colors sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
-                    <p className="text-fg font-medium">{match.matchName}</p>
-                    <p className="text-fg-muted text-sm">
+                    <p className="text-fg font-sans text-xs font-bold">{match.matchName}</p>
+                    <p className="text-fg-muted mt-0.5 font-mono text-[11px]">
                       {new Date(match.matchDate).toLocaleDateString()} • {match.opponentName}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {match.batting && (
-                      <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
+                      <span className="bg-surface-muted border-border-subtle/40 text-fg-muted rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold">
                         {match.batting.runs} ({match.batting.balls})
                       </span>
                     )}
                     {match.bowling && (
-                      <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
+                      <span className="bg-surface-muted border-border-subtle/40 text-fg-muted rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold">
                         {match.bowling.wickets}/{match.bowling.runsConceded}
                       </span>
                     )}
-                    {match.awards.playerOfMatch && <Badge tone="success">POM</Badge>}
+                    {match.awards.playerOfMatch && (
+                      <Badge
+                        tone="success"
+                        className="font-mono text-[9px] font-bold tracking-wider uppercase"
+                      >
+                        POM
+                      </Badge>
+                    )}
                   </div>
                 </Link>
               ))}
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader title="Upcoming Session" description="Next scheduled training" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Upcoming Session
+          </h3>
+          <p className="text-fg-muted mt-0.5 font-sans text-[11px]">Next scheduled training</p>
+        </div>
+        <div className="p-0">
           {sessions?.length === 0 ? (
-            <p className="text-fg-muted">No upcoming sessions.</p>
+            <p className="text-fg-muted p-4 font-sans text-xs">No upcoming sessions.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-border-subtle/60 divide-y font-sans">
               {sessions?.slice(0, 1).map((session) => (
-                <div key={session.id} className="rounded-xl border p-3">
-                  <p className="text-fg font-medium">{session.title}</p>
-                  <p className="text-fg-muted text-sm">
+                <div key={session.id} className="p-3.5">
+                  <p className="text-fg text-xs font-bold">{session.title}</p>
+                  <p className="text-fg-muted mt-0.5 font-mono text-[11px]">
                     {new Date(session.sessionDate).toLocaleDateString()} • {session.startAt} -{' '}
                     {session.endAt}
                   </p>
                   {session.ground && (
-                    <p className="text-fg-muted text-sm">Ground: {session.ground}</p>
+                    <p className="text-fg-muted mt-0.5 text-[11px]">Ground: {session.ground}</p>
                   )}
                   {session.coachName && (
-                    <p className="text-fg-muted text-sm">Coach: {session.coachName}</p>
+                    <p className="text-fg-muted mt-0.5 text-[11px]">Coach: {session.coachName}</p>
                   )}
                 </div>
               ))}
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader title="Latest Coach Feedback" description="Most recent note" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border font-sans shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Latest Coach Feedback
+          </h3>
+          <p className="text-fg-muted mt-0.5 text-[11px]">Most recent note</p>
+        </div>
+        <div className="p-0">
           {notes?.length === 0 ? (
-            <p className="text-fg-muted">No coach notes yet.</p>
+            <p className="text-fg-muted p-4 text-xs">No coach notes yet.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-border-subtle/60 divide-y">
               {notes?.slice(0, 1).map((note) => (
-                <div key={note.id} className="rounded-xl border p-3">
-                  <p className="text-fg-muted text-sm">
+                <div key={note.id} className="p-3.5">
+                  <p className="text-fg-muted font-mono text-[10px] font-bold uppercase">
                     {note.matchName} • {note.coachName}
                   </p>
-                  <p className="text-fg mt-1">{note.notes}</p>
+                  <p className="text-fg mt-1 text-xs">{note.notes}</p>
                 </div>
               ))}
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -395,7 +458,7 @@ function StatisticsTab({
   view?: 'batting' | 'bowling' | 'all';
 }) {
   if (!stats) {
-    return <p className="text-fg-muted">No statistics available.</p>;
+    return <p className="text-fg-muted font-sans text-xs">No statistics available.</p>;
   }
 
   const dismissals = stats.battingInnings - stats.battingNotOuts;
@@ -417,10 +480,14 @@ function StatisticsTab({
   return (
     <div className="space-y-4">
       {(view === 'all' || view === 'batting') && (
-        <Card>
-          <CardHeader title="Batting" />
-          <CardBody>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border font-sans shadow-2xs">
+          <div className="border-border-subtle/50 border-b p-4">
+            <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+              Batting
+            </h3>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
               <StatItem label="Innings" value={stats.battingInnings.toString()} />
               <StatItem label="Runs" value={stats.battingRuns.toString()} />
               <StatItem label="Highest" value={stats.battingHighestScore?.toString() ?? '-'} />
@@ -433,7 +500,9 @@ function StatisticsTab({
             </div>
             {Boolean(chartData?.runsByMatch && chartData.runsByMatch.length > 0) && chartData && (
               <div className="mt-6">
-                <h4 className="text-fg-muted mb-2 text-sm font-medium">Runs by Match</h4>
+                <h4 className="font-heading text-fg-muted mb-2 text-[10px] font-bold tracking-wider uppercase">
+                  Runs by Match
+                </h4>
                 <SimpleBarChart
                   data={chartData.runsByMatch.map((m) => ({ label: m.matchName, value: m.runs }))}
                   height={200}
@@ -443,7 +512,9 @@ function StatisticsTab({
             {Boolean(chartData?.strikeRateTrend && chartData.strikeRateTrend.length > 0) &&
               chartData && (
                 <div className="mt-6">
-                  <h4 className="text-fg-muted mb-2 text-sm font-medium">Strike Rate Trend</h4>
+                  <h4 className="font-heading text-fg-muted mb-2 text-[10px] font-bold tracking-wider uppercase">
+                    Strike Rate Trend
+                  </h4>
                   <SimpleLineChart
                     data={chartData.strikeRateTrend.map((m) => ({
                       label: m.matchName,
@@ -453,14 +524,18 @@ function StatisticsTab({
                   />
                 </div>
               )}
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       )}
       {(view === 'all' || view === 'bowling') && (
-        <Card>
-          <CardHeader title="Bowling" />
-          <CardBody>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
+        <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border font-sans shadow-2xs">
+          <div className="border-border-subtle/50 border-b p-4">
+            <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+              Bowling
+            </h3>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-7">
               <StatItem label="Overs" value={stats.bowlingOvers.toString()} />
               <StatItem label="Maidens" value={stats.bowlingMaidens.toString()} />
               <StatItem label="Runs" value={stats.bowlingRunsConceded.toString()} />
@@ -472,7 +547,9 @@ function StatisticsTab({
             {Boolean(chartData?.wicketsByMatch && chartData.wicketsByMatch.length > 0) &&
               chartData && (
                 <div className="mt-6">
-                  <h4 className="text-fg-muted mb-2 text-sm font-medium">Wickets by Match</h4>
+                  <h4 className="font-heading text-fg-muted mb-2 text-[10px] font-bold tracking-wider uppercase">
+                    Wickets by Match
+                  </h4>
                   <SimpleBarChart
                     data={chartData.wicketsByMatch.map((m) => ({
                       label: m.matchName,
@@ -484,7 +561,9 @@ function StatisticsTab({
               )}
             {Boolean(chartData?.economyTrend && chartData.economyTrend.length > 0) && chartData && (
               <div className="mt-6">
-                <h4 className="text-fg-muted mb-2 text-sm font-medium">Economy Trend</h4>
+                <h4 className="font-heading text-fg-muted mb-2 text-[10px] font-bold tracking-wider uppercase">
+                  Economy Trend
+                </h4>
                 <SimpleLineChart
                   data={chartData.economyTrend.map((m) => ({
                     label: m.matchName,
@@ -494,20 +573,24 @@ function StatisticsTab({
                 />
               </div>
             )}
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       )}
       {(view === 'all' || view === 'bowling') && (
-        <Card>
-          <CardHeader title="Fielding" />
-          <CardBody>
-            <div className="grid gap-4 sm:grid-cols-3">
+        <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border font-sans shadow-2xs">
+          <div className="border-border-subtle/50 border-b p-4">
+            <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+              Fielding
+            </h3>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-3 gap-4">
               <StatItem label="Catches" value={stats.fieldingCatches.toString()} />
               <StatItem label="Run Outs" value={stats.fieldingRunOuts.toString()} />
               <StatItem label="Stumpings" value={stats.fieldingStumpings.toString()} />
             </div>
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -515,30 +598,35 @@ function StatisticsTab({
 
 function MatchHistoryTab({ matches }: { matches: PlayerMatch[] }) {
   return (
-    <Card>
-      <CardHeader title="Match History" description="All recorded matches" />
-      <CardBody>
+    <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+      <div className="border-border-subtle/50 border-b p-4">
+        <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+          Match History
+        </h3>
+        <p className="text-fg-muted mt-0.5 font-sans text-[11px]">All recorded matches</p>
+      </div>
+      <div className="p-0">
         {matches?.length === 0 ? (
-          <p className="text-fg-muted">No matches recorded yet.</p>
+          <p className="text-fg-muted p-4 font-sans text-xs">No matches recorded yet.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="divide-border-subtle/60 divide-y">
             {matches?.map((match) => (
               <Link
                 key={match.id}
                 to={`/matches/${match.id}`}
-                className="border-border-subtle hover:bg-surface-muted flex flex-wrap items-center justify-between rounded-xl border p-3"
+                className="hover:bg-surface-muted/30 flex min-h-[44px] flex-col gap-2 p-3.5 transition-colors sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="text-fg font-medium">{match.matchName}</p>
-                  <p className="text-fg-muted text-sm">
+                  <p className="text-fg font-sans text-xs font-bold">{match.matchName}</p>
+                  <p className="text-fg-muted mt-0.5 font-mono text-[11px]">
                     {new Date(match.matchDate).toLocaleDateString()} • {match.opponentName}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
+                <div className="flex flex-wrap items-center gap-1.5 font-sans">
+                  <span className="bg-surface-muted border-border-subtle/40 text-fg-muted rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
                     {match.matchType}
                   </span>
-                  <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
+                  <span className="bg-surface-muted border-border-subtle/40 text-fg-muted rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase">
                     {match.format.toUpperCase()}
                   </span>
                   {match.result && (
@@ -550,22 +638,23 @@ function MatchHistoryTab({ matches }: { matches: PlayerMatch[] }) {
                             ? 'danger'
                             : 'warning'
                       }
+                      className="font-mono text-[10px] font-bold tracking-wider uppercase"
                     >
                       {match.result}
                     </Badge>
                   )}
                   {match.battingOrder !== undefined && match.battingOrder !== null && (
-                    <span className="bg-surface-muted rounded-full px-2 py-1 text-xs font-medium">
+                    <span className="bg-surface-muted border-border-subtle/40 text-fg-muted rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold">
                       Pos: {match.battingOrder === 0 ? 'Opening' : match.battingOrder}
                     </span>
                   )}
                   {match.batting && (
-                    <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
+                    <span className="bg-surface-muted border-border-subtle/40 text-fg-muted rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold">
                       {match.batting.runs} ({match.batting.balls})
                     </span>
                   )}
                   {match.bowling && (
-                    <span className="bg-surface-muted rounded-full px-2 py-1 text-xs">
+                    <span className="bg-surface-muted border-border-subtle/40 text-fg-muted rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold">
                       {match.bowling.wickets}/{match.bowling.runsConceded}
                     </span>
                   )}
@@ -574,8 +663,8 @@ function MatchHistoryTab({ matches }: { matches: PlayerMatch[] }) {
             ))}
           </div>
         )}
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -590,46 +679,58 @@ function AwardsTab({ awards }: { awards: PlayerAward[] }) {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader title="Award Counts" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border font-sans shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Award Counts
+          </h3>
+        </div>
+        <div className="p-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {Object.entries(counts).map(([award, count]) => (
               <div key={award}>
-                <p className="text-fg-muted text-xs uppercase">{award}</p>
-                <p className="text-fg text-lg font-semibold">{count}</p>
+                <p className="font-heading text-fg-muted text-[10px] font-bold tracking-wider uppercase">
+                  {award}
+                </p>
+                <p className="text-fg mt-1 font-mono text-lg font-bold">{count}</p>
               </div>
             ))}
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader title="All Awards" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            All Awards
+          </h3>
+        </div>
+        <div className="p-0">
           {awards?.length === 0 ? (
-            <p className="text-fg-muted">No awards yet.</p>
+            <p className="text-fg-muted p-4 font-sans text-xs">No awards yet.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-border-subtle/60 divide-y">
               {awards?.map((award) => (
                 <Link
                   key={award.id}
                   to={`/matches/${award.matchId}`}
-                  className="border-border-subtle hover:bg-surface-muted flex items-center justify-between rounded-xl border p-3"
+                  className="hover:bg-surface-muted/30 flex min-h-[44px] items-center justify-between p-3.5 transition-colors"
                 >
                   <div>
-                    <p className="text-fg font-medium">{award.awardType}</p>
-                    <p className="text-fg-muted text-sm">{award.matchName}</p>
+                    <p className="text-fg font-sans text-xs font-bold tracking-wide uppercase">
+                      {award.awardType}
+                    </p>
+                    <p className="text-fg-muted mt-0.5 font-sans text-[11px]">{award.matchName}</p>
                   </div>
-                  <p className="text-fg-muted text-sm">
+                  <p className="text-fg-muted font-mono text-[10px] font-bold">
                     {new Date(award.matchDate).toLocaleDateString()}
                   </p>
                 </Link>
               ))}
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -643,95 +744,129 @@ function HighlightsTab({
 }) {
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader title="Career Highlights" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border font-sans shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Career Highlights
+          </h3>
+        </div>
+        <div className="p-4">
           {highlights?.length === 0 ? (
-            <p className="text-fg-muted">No highlights yet.</p>
+            <p className="text-fg-muted text-xs">No highlights yet.</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {highlights?.map((highlight) => (
-                <div key={highlight.type} className="rounded-xl border p-3">
-                  <p className="text-fg-muted text-xs uppercase">{highlight.label}</p>
-                  <p className="text-fg text-lg font-semibold">{highlight.value}</p>
+                <div
+                  key={highlight.type}
+                  className="border-border-subtle/50 bg-surface-muted/20 rounded-xl border p-3"
+                >
+                  <p className="font-heading text-fg-muted text-[10px] font-bold tracking-wider uppercase">
+                    {highlight.label}
+                  </p>
+                  <p className="text-fg mt-1 font-mono text-base font-bold">{highlight.value}</p>
                 </div>
               ))}
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader title="Milestones" description="Achieved career milestones" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Milestones
+          </h3>
+          <p className="text-fg-muted mt-0.5 font-sans text-[11px]">Achieved career milestones</p>
+        </div>
+        <div className="p-4">
           {milestones?.length === 0 ? (
-            <p className="text-fg-muted">No milestones achieved yet.</p>
+            <p className="text-fg-muted font-sans text-xs">No milestones achieved yet.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {milestones?.map((milestone) => (
-                <Badge key={milestone.id} tone="brand">
+                <Badge
+                  key={milestone.id}
+                  tone="brand"
+                  className="font-mono text-[9px] font-bold tracking-wider uppercase"
+                >
                   {milestone.milestoneType.replace(/_/g, ' ')}
                 </Badge>
               ))}
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
 
 function CoachNotesTab({ notes }: { notes: PlayerCoachNote[] }) {
   return (
-    <Card>
-      <CardHeader title="Coach Notes" description="Feedback from coaches" />
-      <CardBody>
+    <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+      <div className="border-border-subtle/50 border-b p-4">
+        <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+          Coach Notes
+        </h3>
+        <p className="text-fg-muted mt-0.5 font-sans text-[11px]">Feedback from coaches</p>
+      </div>
+      <div className="p-0">
         {notes?.length === 0 ? (
-          <p className="text-fg-muted">No coach notes yet.</p>
+          <p className="text-fg-muted p-4 font-sans text-xs">No coach notes yet.</p>
         ) : (
-          <div className="space-y-4">
+          <div className="divide-border-subtle/60 divide-y">
             {notes?.map((note) => (
-              <div key={note.id} className="border-border-subtle rounded-xl border p-4">
+              <div
+                key={note.id}
+                className="hover:bg-surface-muted/10 flex flex-col gap-1.5 p-4 font-sans transition-colors"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-fg font-medium">{note.matchName}</p>
-                  <p className="text-fg-muted text-sm">
+                  <p className="text-fg text-xs font-bold">{note.matchName}</p>
+                  <p className="text-fg-muted font-mono text-[10px] font-bold">
                     {new Date(note.matchDate).toLocaleDateString()}
                   </p>
                 </div>
-                <p className="text-fg-muted text-sm">Coach: {note.coachName}</p>
-                <p className="text-fg mt-2">{note.notes}</p>
+                <p className="text-fg-muted text-[11px]">Coach: {note.coachName}</p>
+                <p className="text-fg mt-1 text-xs leading-relaxed">{note.notes}</p>
               </div>
             ))}
           </div>
         )}
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }
 
 function AttendanceTab({ summary }: { summary: PlayerAttendanceSummary | null }) {
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader title="Attendance Summary" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border font-sans shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Attendance Summary
+          </h3>
+        </div>
+        <div className="p-4">
           {!summary ? (
-            <p className="text-fg-muted">No attendance data yet.</p>
+            <p className="text-fg-muted text-xs">No attendance data yet.</p>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <StatItem label="Total Sessions" value={summary.totalSessions.toString()} />
               <StatItem label="Attended" value={summary.attended.toString()} />
               <StatItem label="Absent" value={summary.absent.toString()} />
               <StatItem label="Percentage" value={`${summary.attendancePercentage}%`} />
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       {Boolean(summary?.monthlyData && summary.monthlyData.length > 0) && summary && (
-        <Card>
-          <CardHeader title="Monthly Attendance" />
-          <CardBody>
+        <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border font-sans shadow-2xs">
+          <div className="border-border-subtle/50 border-b p-4">
+            <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+              Monthly Attendance
+            </h3>
+          </div>
+          <div className="p-4">
             <SimpleBarChart
               data={summary.monthlyData.map((m) => ({
                 label: m.month,
@@ -739,8 +874,8 @@ function AttendanceTab({ summary }: { summary: PlayerAttendanceSummary | null })
               }))}
               height={200}
             />
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -748,48 +883,59 @@ function AttendanceTab({ summary }: { summary: PlayerAttendanceSummary | null })
 
 function DrillsTab({ summary }: { summary: PlayerDrillSummary | null }) {
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader title="Drill Summary" />
-        <CardBody>
+    <div className="space-y-4 font-sans">
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Drill Summary
+          </h3>
+        </div>
+        <div className="p-4">
           {!summary ? (
-            <p className="text-fg-muted">No drill assignments yet.</p>
+            <p className="text-fg-muted text-xs">No drill assignments yet.</p>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <StatItem label="Assigned" value={summary.assigned.toString()} />
               <StatItem label="Completed" value={summary.completed.toString()} />
               <StatItem label="Pending" value={summary.pending.toString()} />
               <StatItem label="Completion" value={`${summary.completionPercentage}%`} />
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader title="Recent Assignments" />
-        <CardBody>
+      <div className="border-border-subtle bg-surface overflow-hidden rounded-xl border shadow-2xs">
+        <div className="border-border-subtle/50 border-b p-4">
+          <h3 className="font-heading text-fg text-xs font-bold tracking-wider uppercase">
+            Recent Assignments
+          </h3>
+        </div>
+        <div className="p-0">
           {summary?.recentAssignments?.length === 0 ? (
-            <p className="text-fg-muted">No assignments yet.</p>
+            <p className="text-fg-muted p-4 text-xs">No assignments yet.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-border-subtle/60 divide-y">
               {summary?.recentAssignments?.map((assignment) => (
                 <div
                   key={assignment.id}
-                  className="border-border-subtle flex items-center justify-between rounded-xl border p-3"
+                  className="hover:bg-surface-muted/10 flex min-h-[44px] items-center justify-between p-3.5 transition-colors"
                 >
                   <div>
-                    <p className="text-fg font-medium">{assignment.drillName}</p>
-                    <p className="text-fg-muted text-sm">{assignment.category}</p>
+                    <p className="text-fg text-xs font-bold">{assignment.drillName}</p>
+                    <p className="text-fg-muted mt-0.5 text-[11px]">{assignment.category}</p>
                   </div>
-                  <Badge tone={assignment.status === 'completed' ? 'success' : 'warning'}>
+                  <Badge
+                    tone={assignment.status === 'completed' ? 'success' : 'warning'}
+                    className="font-mono text-[9px] font-bold tracking-wider uppercase"
+                  >
                     {assignment.status}
                   </Badge>
                 </div>
               ))}
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -797,8 +943,10 @@ function DrillsTab({ summary }: { summary: PlayerDrillSummary | null }) {
 function StatItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-fg-muted text-xs tracking-wide uppercase">{label}</p>
-      <p className="text-fg text-base font-medium">{value}</p>
+      <p className="font-heading text-fg-muted text-[10px] font-bold tracking-wider uppercase">
+        {label}
+      </p>
+      <p className="text-fg mt-1 font-mono text-base font-bold">{value}</p>
     </div>
   );
 }
