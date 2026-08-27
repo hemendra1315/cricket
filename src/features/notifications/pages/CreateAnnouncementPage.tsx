@@ -80,7 +80,7 @@ export function CreateAnnouncementPage() {
           if (error) logger.warn('push_dispatch_failed', { error: String(error) });
         });
 
-      navigate('/academy/announcements');
+      navigate('/announcements');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to send announcement';
       pushToast({ title: message, variant: 'error' });
